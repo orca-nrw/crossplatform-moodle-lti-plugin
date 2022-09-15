@@ -1,0 +1,6 @@
+{
+    "plugintypes": {
+        "orcaltisource": "mod/orcalti/source",
+        "orcaltiservice": "mod\/orcalti\/service"
+    }
+}

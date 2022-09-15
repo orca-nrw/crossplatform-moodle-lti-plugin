@@ -1,0 +1,3 @@
+[submodule "clientapp"]
+	path = clientapp
+	url = git@github.com:orca-nrw/crossplatform-lti-plugin.git
