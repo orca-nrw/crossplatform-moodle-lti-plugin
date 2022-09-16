@@ -215,7 +215,7 @@ class mod_orcalti_mod_form extends moodleform_mod
         $request_url = $request_config["request_url"];
 
         // Get answer.
-        $json = $this->get_content_by_url("/ltidir/shared");
+        $json = $this->get_content_by_url("/shared");
         // HTTP-Error-handling
         if ($json === false) {
             throw new Exception('http-error');
@@ -254,7 +254,7 @@ class mod_orcalti_mod_form extends moodleform_mod
 
     public function get_orcalti_categories()
     {
-        $json = $this->get_content_by_url("/ltidir/categories");
+        $json = $this->get_content_by_url("/categories");
         return $json;
     }
 
@@ -262,7 +262,7 @@ class mod_orcalti_mod_form extends moodleform_mod
     {
         $secret = "";
 
-        $json = $this->get_content_by_url("/ltidir/shared");
+        $json = $this->get_content_by_url("/shared");
         if ($json && $tool_id) {
             $tools_data = json_decode($json);
 
