@@ -69,15 +69,8 @@ class mod_orcalti_mod_form extends moodleform_mod
         }
 
         $auth = base64_encode("{$config_username}:{$config_passwort}");
-        $context = stream_context_create([
-            "http" => [
-                "header" => "Authorization: Basic $auth"
-            ],
-            "ssl" => [
-                "verify_peer" => true,
-                "verify_peer_name" => true,
-            ],
-        ]);
+        $context["http"]=["header" => "Authorization: Basic $auth"];
+        $context["ssl"]=["verify_peer" => true,"verify_peer_name"=> true];
 
         return array(
             "request_url" => $config_url,
@@ -192,7 +185,6 @@ class mod_orcalti_mod_form extends moodleform_mod
                 }
             }
         }
-
         $result_json = $curl->get(rtrim(rtrim($request_url, " "), "/") . $subpath, $request_context);
       
         if(!empty($curl->info)&& !empty($curl->info['http_code']) && $curl->info['http_code'] != 200 ){
