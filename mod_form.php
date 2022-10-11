@@ -448,7 +448,28 @@ class mod_orcalti_mod_form extends moodleform_mod
             } catch (Exception $e) {
                 $ltierror = $e->getMessage();
             }
-            $PAGE->requires->js_call_amd('mod_orcalti/orca_lti_selector-lazy', 'init', array($spa_content, $spa_categories, $spa_translations, $spa_options, $ltierror));
+
+            $mform->addElement('hidden', 'lti_selector_tools');
+            $mform->setType('lti_selector_tools', PARAM_TEXT);
+            $mform->setDefault('lti_selector_tools', $spa_content);
+
+            $mform->addElement('hidden', 'lti_selector_categories');
+            $mform->setType('lti_selector_categories', PARAM_TEXT);
+            $mform->setDefault('lti_selector_categories', $spa_categories);
+
+            $mform->addElement('hidden', 'lti_selector_translations');
+            $mform->setType('lti_selector_translations', PARAM_TEXT);
+            $mform->setDefault('lti_selector_translations', $spa_translations);
+
+            $mform->addElement('hidden', 'lti_selector_options');
+            $mform->setType('lti_selector_options', PARAM_TEXT);
+            $mform->setDefault('lti_selector_options', $spa_options);
+
+            $mform->addElement('hidden', 'lti_selector_error');
+            $mform->setType('lti_selector_error', PARAM_TEXT);
+            $mform->setDefault('lti_selector_error', $ltierror);
+
+            $PAGE->requires->js_call_amd('mod_orcalti/orca_lti_selector-lazy', 'init');
        // }
     }
 
