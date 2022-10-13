@@ -83,7 +83,7 @@ class mod_orcalti_mod_form extends moodleform_mod
             "request_url" => $config_url,
             "request_context" => $context
         );
-        }
+    }
 
     /**
      * Get the Basic Auth Header.
@@ -105,7 +105,7 @@ class mod_orcalti_mod_form extends moodleform_mod
      */
     public function get_orcalti_translations()
     {
-        $string_arr = array("modal_fullscreen_description", "modal_close", "orca_logo_alt", "website_url_orca", "orca_link_title", "categories", "contact", "email_address_orca", "send_support_request", "input_search_id", "input_search_placeholder", "searching_in_all_categories", "searching_in_category", "search_no_content_found", "no_search_no_content_found", "expand_description", "collapse_description", "button_select", "pagination_label", "pagination_next", "pagination_prev","error","open_category_menu");
+        $string_arr = array("modal_fullscreen_description", "modal_close", "orca_logo_alt", "website_url_orca", "orca_link_title", "categories", "contact", "email_address_orca", "send_support_request", "input_search_id", "input_search_placeholder", "searching_in_all_categories", "searching_in_category", "search_no_content_found", "no_search_no_content_found", "expand_description", "collapse_description", "button_select", "pagination_label", "pagination_next", "pagination_prev", "error", "open_category_menu");
 
         $en = get_strings($string_arr, 'orcalti');
         $de = get_strings($string_arr, 'orcalti');
@@ -114,7 +114,7 @@ class mod_orcalti_mod_form extends moodleform_mod
             "en" => $en,
             "de" => $de
         );
-        
+
         return json_encode($translations);
     }
 
@@ -125,11 +125,16 @@ class mod_orcalti_mod_form extends moodleform_mod
      */
     public function get_orcalti_options()
     {
+        global $CFG;
+
+        $asset_base = parse_url($CFG->wwwroot)["path"];
+
         $options = array(
             "root_id" => "mnrw-orca-lti-root",
             "selected_tool_url_field_name" => "toolurl",
             "selected_tool_id_field_name" => "toolid",
-            "selected_tool_toolname_field_name" => "TOOL_NAME"
+            "selected_tool_toolname_field_name" => "TOOL_NAME",
+            "asset_base" => $asset_base
         );
 
         return $options;
@@ -194,12 +199,12 @@ class mod_orcalti_mod_form extends moodleform_mod
         }
 
         $result_json = $curl->get(rtrim(rtrim($request_url, " "), "/") . $subpath, $request_context);
-      
-        if(!empty($curl->info)&& !empty($curl->info['http_code']) && $curl->info['http_code'] != 200 ){
+
+        if (!empty($curl->info) && !empty($curl->info['http_code']) && $curl->info['http_code'] != 200) {
             throw new Exception($curl->info['http_code']);
-        }else if(!empty($curl->error)){
-            throw new Exception($curl->error);  
-            }
+        } else if (!empty($curl->error)) {
+            throw new Exception($curl->error);
+        }
 
         return $result_json;
     }
@@ -225,10 +230,10 @@ class mod_orcalti_mod_form extends moodleform_mod
 
             $tools_data = json_decode($json);
             // Http Code 200 but empty or wrong json returned
-            if(empty($tools_data)){
+            if (empty($tools_data)) {
                 throw new Exception("incorrectresponse");
             }
-            
+
             $orcalti_tools = array();
             foreach ((array) $tools_data as $tool_data) {
                 $orcalti_tool = array();
@@ -266,13 +271,12 @@ class mod_orcalti_mod_form extends moodleform_mod
         if ($json && $tool_id) {
             $tools_data = json_decode($json);
 
-            $filteredItems = array_filter($tools_data, function($item, $k) use ($tool_id, $toolurl) {
+            $filteredItems = array_filter($tools_data, function ($item, $k) use ($tool_id, $toolurl) {
                 return $item->toolid == $tool_id && $item->tool_url == $toolurl;
-              }, ARRAY_FILTER_USE_BOTH);
+            }, ARRAY_FILTER_USE_BOTH);
 
-            $item = ($filteredItems)? reset($filteredItems) : null;
-            $secret = ($item)? $item->secret : "";
-
+            $item = ($filteredItems) ? reset($filteredItems) : null;
+            $secret = ($item) ? $item->secret : "";
         }
 
         if ($secret == "") {
@@ -284,7 +288,7 @@ class mod_orcalti_mod_form extends moodleform_mod
     public function definition()
     {
         global $PAGE, $OUTPUT, $COURSE;
-        $ltierror= "";
+        $ltierror = "";
         // Gets options for all orcalti related settings, also used for SPA
         $orcalti_options = $this->get_orcalti_options();
 
@@ -350,7 +354,7 @@ class mod_orcalti_mod_form extends moodleform_mod
         //    ');
         // } else {
         $mform->addElement('html', $this->get_orcalti_spa_domstring($orcalti_options["root_id"]));
-     //   }
+        //   }
 
         $tool_url_dom_name = $orcalti_options["selected_tool_url_field_name"];
         $mform->addElement('hidden', $tool_url_dom_name);
@@ -392,15 +396,15 @@ class mod_orcalti_mod_form extends moodleform_mod
         // All these icon uses are incorrect. LTI JS needs updating to use AMD modules and templates so it can use
         // the mustache pix helper - until then LTI will have inconsistent icons.
         $jsinfo = (object)array(
-                        'edit_icon_url' => (string)$OUTPUT->image_url('t/edit'),
-                        'add_icon_url' => (string)$OUTPUT->image_url('t/add'),
-                        'delete_icon_url' => (string)$OUTPUT->image_url('t/delete'),
-                        'green_check_icon_url' => (string)$OUTPUT->image_url('i/valid'),
-                        'warning_icon_url' => (string)$OUTPUT->image_url('warning', 'orcalti'),
-                        'instructor_tool_type_edit_url' => $editurl->out(false),
-                        'ajax_url' => $ajaxurl->out(true),
-                        'courseId' => $COURSE->id
-                  );
+            'edit_icon_url' => (string)$OUTPUT->image_url('t/edit'),
+            'add_icon_url' => (string)$OUTPUT->image_url('t/add'),
+            'delete_icon_url' => (string)$OUTPUT->image_url('t/delete'),
+            'green_check_icon_url' => (string)$OUTPUT->image_url('i/valid'),
+            'warning_icon_url' => (string)$OUTPUT->image_url('warning', 'orcalti'),
+            'instructor_tool_type_edit_url' => $editurl->out(false),
+            'ajax_url' => $ajaxurl->out(true),
+            'courseId' => $COURSE->id
+        );
 
         $module = array(
             'name' => 'mod_orcalti_edit',
@@ -437,19 +441,19 @@ class mod_orcalti_mod_form extends moodleform_mod
 
         // Render SPA
         //if (!isset($ltierror)) {
-            // Prepare SPA data
-            // TODO Implement proper error handling... Should probably done earlier in the pipe
-            try {   
-                $spa_translations = $this->get_orcalti_translations();
-                $spa_options = json_encode($orcalti_options);
+        // Prepare SPA data
+        // TODO Implement proper error handling... Should probably done earlier in the pipe
+        try {
+            $spa_translations = $this->get_orcalti_translations();
+            $spa_options = json_encode($orcalti_options);
 
-                $spa_content= $this->get_orcalti_tools();
-                $spa_categories= $this->get_orcalti_categories();          
-            } catch (Exception $e) {
-                $ltierror = $e->getMessage();
-            }
-            $PAGE->requires->js_call_amd('mod_orcalti/orca_lti_selector-lazy', 'init', array($spa_content, $spa_categories, $spa_translations, $spa_options, $ltierror));
-       // }
+            $spa_content = $this->get_orcalti_tools();
+            $spa_categories = $this->get_orcalti_categories();
+        } catch (Exception $e) {
+            $ltierror = $e->getMessage();
+        }
+        $PAGE->requires->js_call_amd('mod_orcalti/orca_lti_selector-lazy', 'init', array($spa_content, $spa_categories, $spa_translations, $spa_options, $ltierror));
+        // }
     }
 
     /**
@@ -457,7 +461,8 @@ class mod_orcalti_mod_form extends moodleform_mod
      *
      * @param object $defaultvalues default values to populate the form with.
      */
-    public function set_data($defaultvalues) {
+    public function set_data($defaultvalues)
+    {
         $services = orcalti_get_services();
         if (is_object($defaultvalues)) {
             foreach ($services as $service) {
@@ -478,7 +483,7 @@ class mod_orcalti_mod_form extends moodleform_mod
             parse_str(parse_url($data->toolurl, PHP_URL_QUERY), $params);
             $toolid = $params["id"];
 
-            if(is_null($toolid)) {
+            if (is_null($toolid)) {
                 $toolid = $data->toolid;
             }
 
