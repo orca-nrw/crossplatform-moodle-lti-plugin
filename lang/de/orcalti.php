@@ -490,5 +490,5 @@ $string["button_select"] = "Auswählen";
 $string["pagination_label"] = "Suchergebnisseiten";
 $string["pagination_next"] = "Weiter";
 $string["pagination_prev"] = "Zurück";
-$string["error"] = "Ein Fehler ist aufgetreten. Ihr Administrator/in kann Ihnen weiter helfen.";
+$string["error"] = "ORCA-LTI Plugin hat eine falsche oder nicht funktionierende URL in der Konfiguration";
 $string["open_category_menu"] = "MENÜ";
