@@ -32,7 +32,6 @@ use core_privacy\local\request\transform;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Privacy Subsystem implementation for mod_orcalti.
@@ -313,7 +312,8 @@ class provider implements
 
         list($insql, $inparams) = $DB->get_in_or_equal($orcaltiids, SQL_PARAMS_NAMED);
         $params = array_merge($inparams, ['userid' => $user->id]);
-        $recordset = $DB->get_recordset_select('orcalti_submission', "orcaltiid $insql AND userid = :userid", $params, 'dateupdated, id');
+        $recordset = $DB->get_recordset_select('orcalti_submission',
+        "orcaltiid $insql AND userid = :userid", $params, 'dateupdated, id');
         self::recordset_loop_and_export($recordset, 'orcaltiid', [], function($carry, $record) use ($user, $orcaltiidstocmids) {
             $carry[] = [
                 'gradepercent' => $record->gradepercent,

@@ -26,7 +26,6 @@
 
 namespace mod_orcalti\local\orcaltiservice;
 
-defined('MOODLE_INTERNAL') || die;
 
 /**
  * The mod_orcalti\local\orcaltiservice\response class.

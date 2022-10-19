@@ -51,8 +51,8 @@ require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->dirroot.'/mod/orcalti/lib.php');
 require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 
-$id = optional_param('id', 0, PARAM_INT); // Course Module ID, or
-$l  = optional_param('l', 0, PARAM_INT);  // lti ID.
+$id = optional_param('id', 0, PARAM_INT); // Course Module ID, or.
+$l  = optional_param('l', 0, PARAM_INT);  // Lti ID.
 $forceview = optional_param('forceview', 0, PARAM_BOOL);
 
 if ($l) {  // Two ways to specify the module.
