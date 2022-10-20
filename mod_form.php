@@ -429,6 +429,12 @@ class mod_orcalti_mod_form extends moodleform_mod {
         $PAGE->requires->js_init_call('M.mod_orcalti.editor.init', array(json_encode($jsinfo)), true, $module);
 
         // Render SPA.
+        $spacontent = null;
+        $spacategories = null;
+        $spatranslations = null;
+        $spaoptions = null;
+        $ltierror = null;
+        
         try {
             $spatranslations = $this->get_orcalti_translations();
             $spaoptions = json_encode($orcaltioptions);
