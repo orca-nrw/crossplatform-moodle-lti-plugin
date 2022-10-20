@@ -67,15 +67,8 @@ class mod_orcalti_mod_form extends moodleform_mod {
         }
 
         $auth = base64_encode("{$configusername}:{$configpassword}");
-        $context = stream_context_create([
-            "http" => [
-                "header" => "Authorization: Basic $auth"
-            ],
-            "ssl" => [
-                "verify_peer" => true,
-                "verify_peer_name" => true,
-            ],
-        ]);
+        $context["http"]=["header" => "Authorization: Basic $auth"];
+        $context["ssl"]=["verify_peer" => true,"verify_peer_name"=> true];
 
         return array(
             "request_url" => $configurl,
