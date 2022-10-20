@@ -599,9 +599,9 @@ $string['organizationid_help'] = 'A unique identifier for this Moodle instance. 
 
 If this field is left blank, the host name of this Moodle site will be used as the default value.';
 
-// Custom
+// Custom.
 $string['choose_activity'] = 'Choose an ORCA-activity';
-$string['http-error'] = 'An error occurred, when trying to connect to the ORCA-Provider. 
+$string['http-error'] = 'An error occurred, when trying to connect to the ORCA-Provider.
 
 Please contact your local System-administrator or Moodle-Administrator.';
 $string['no-tools-error'] = 'An error occured, when trying to get ORCA-tools from the provider.

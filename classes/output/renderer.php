@@ -23,8 +23,6 @@
  */
 namespace mod_orcalti\output;
 
-defined('MOODLE_INTERNAL') || die;
-
 use plugin_renderer_base;
 
 /**

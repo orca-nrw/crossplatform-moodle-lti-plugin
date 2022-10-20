@@ -24,7 +24,6 @@
 
 namespace mod_orcalti\analytics\indicator;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Cognitive depth indicator - lti.

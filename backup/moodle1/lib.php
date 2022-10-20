@@ -23,7 +23,6 @@
  * @author     Darko Miletic
  */
 
-defined('MOODLE_INTERNAL') || die();
 
 class moodle1_mod_orcalti_handler extends moodle1_mod_handler {
 

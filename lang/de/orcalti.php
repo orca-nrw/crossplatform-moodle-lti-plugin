@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -176,7 +175,7 @@ $string['invalidid'] = 'LTI ID war fehlerhaft';
 $string['launch_in_moodle'] = 'Tool in Moodle starten';
 $string['launchinpopup'] = 'Inhalte öffnen in';
 $string['launch_in_popup'] = 'Tool in Pop-Up starten';
-$string['launchinpopup_help'] = 'Diese Einstellung beeinflusst die Anzeige der Inhalte beim Start aus dem Kurs heraus. 
+$string['launchinpopup_help'] = 'Diese Einstellung beeinflusst die Anzeige der Inhalte beim Start aus dem Kurs heraus.
 
 * **Einbetten** - Die Inhalte werden in einem bestehenden Moodle-Fenster angezeigt, ählich wie andere Aktivitäten.
 * **Neues Fenster** - Die Inhalte öffnen in einem neuen Fenster und nutzt den gesamten Raum im Fenster aus. Abhängig vom Browser  wird ein neuer Tab angelegt oder ein neues Fenster geöffnet.';

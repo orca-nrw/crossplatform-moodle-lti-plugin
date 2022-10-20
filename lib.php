@@ -46,7 +46,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
 
 /**
  * List of features supported in URL module
@@ -166,12 +165,6 @@ function orcalti_update_instance($lti, $mform) {
         orcalti_grade_item_delete($lti);
     }
 
-/*
-    if ($lti->typeid == 0 && isset($lti->urlmatchedtypeid)) {
-        $lti->typeid = $lti->urlmatchedtypeid;
-    }
-*/
-
     $services = orcalti_get_services();
     foreach ($services as $service) {
         $service->instance_updated( $lti );
@@ -283,7 +276,8 @@ function orcalti_get_course_content_items(\core_course\local\entity\content_item
             $defaultmodulecontentitem->get_icon(),
             $defaultmodulecontentitem->get_help(),
             $defaultmodulecontentitem->get_archetype(),
-            $defaultmodulecontentitem->get_component_name()
+            $defaultmodulecontentitem->get_component_name(),
+            $defaultmodulecontentitem->get_purpose()
         )];
     }
 
@@ -472,7 +466,7 @@ function orcalti_user_complete($course, $user, $mod, $basiclti) {
  * @TODO: implement this moodle function
  **/
 function orcalti_print_recent_activity($course, $isteacher, $timestart) {
-    return false;  //  True if anything was printed, otherwise false.
+    return false;  // True if anything was printed, otherwise false.
 }
 
 /**
@@ -526,7 +520,7 @@ function orcalti_scale_used() {
 function orcalti_scale_used_anywhere($scaleid) {
     global $DB;
 
-    if ($scaleid and $DB->record_exists('orcalti', array('grade' => -$scaleid))) {
+    if ($scaleid && $DB->record_exists('orcalti', array('grade' => -$scaleid))) {
         return true;
     } else {
         return false;
