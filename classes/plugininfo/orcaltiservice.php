@@ -26,8 +26,6 @@ namespace mod_orcalti\plugininfo;
 
 use core\plugininfo\base;
 
-defined('MOODLE_INTERNAL') || die();
-
 
 /**
  * The mod_orcalti\plugininfo\orcaltiservice class.

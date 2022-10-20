@@ -23,7 +23,6 @@
  */
 
 namespace mod_orcalti\event;
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * The mod_orcalti unknown service api called event class.

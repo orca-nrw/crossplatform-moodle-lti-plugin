@@ -65,7 +65,7 @@ if (!empty($errormsg) || !empty($msg)) {
     }
 
     echo $OUTPUT->header();
-    if (!empty($lti) and !empty($context)) {
+    if (!empty($lti) && !empty($context)) {
         echo $OUTPUT->heading(format_string($lti->name, true, array('context' => $context)));
     }
 }
@@ -90,7 +90,10 @@ if (!empty($errormsg)) {
         }
 
         if (!empty($lti) && has_capability('mod/orcalti:requesttooladd', $contextcourse)) {
-            $adminrequesturl = new moodle_url('/mod/orcalti/request_tool.php', array('instanceid' => $lti->id, 'sesskey' => sesskey()));
+            $adminrequesturl = new moodle_url('/mod/orcalti/request_tool.php', array(
+                'instanceid' => $lti->id,
+                'sesskey' => sesskey()
+            ));
             $links->admin_request_url = $adminrequesturl->out(false);
 
             echo get_string('lti_launch_error_tool_request', 'orcalti', $links);
