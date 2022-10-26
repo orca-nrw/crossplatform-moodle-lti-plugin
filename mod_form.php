@@ -503,4 +503,13 @@ class mod_orcalti_mod_form extends moodleform_mod {
             }
         }
     }
+
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        if($data['toolurl'] === '') {
+            $errors['name'] = get_string('missing_orca_content', 'mod_orcalti');
+        }
+        return $errors;
+    }
 }

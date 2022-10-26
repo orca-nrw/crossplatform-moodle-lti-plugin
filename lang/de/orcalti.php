@@ -491,3 +491,4 @@ $string["pagination_next"] = "Weiter";
 $string["pagination_prev"] = "Zurück";
 $string["error"] = "ORCA-LTI Plugin hat eine falsche oder nicht funktionierende URL in der Konfiguration";
 $string["open_category_menu"] = "MENÜ";
+$string["missing_orca_content"] = "Bitte wählen Sie ORCA-Inhalte aus";
