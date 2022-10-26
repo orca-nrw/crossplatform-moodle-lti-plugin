@@ -636,3 +636,4 @@ $string['orcalti_password'] = 'ORCA-LTI password';
 $string['orcalti_password_details'] = 'Password for accessing ORCA content. This is a required field.';
 $string['orcalti_url'] = 'ORCA-LTI-Provider-URL';
 $string['orcalti_url_details'] = 'URL of the ORCA server. If empty the default values will be used.';
+$string["missing_orca_content"] = "Please select ORCA-content";
