@@ -276,8 +276,7 @@ function orcalti_get_course_content_items(\core_course\local\entity\content_item
             $defaultmodulecontentitem->get_icon(),
             $defaultmodulecontentitem->get_help(),
             $defaultmodulecontentitem->get_archetype(),
-            $defaultmodulecontentitem->get_component_name(),
-            $defaultmodulecontentitem->get_purpose()
+            $defaultmodulecontentitem->get_component_name()
         )];
     }
 
