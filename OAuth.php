@@ -302,7 +302,7 @@ class OAuthRequest {
             "oauth_version" => self::$version,
             "oauth_nonce" => self::generate_nonce(),
             "oauth_timestamp" => self::generate_timestamp(),
-            "oauth_consumerkey" => $consumer->key
+            "oauth_consumer_key" => $consumer->key
         );
         if ($token) {
             $defaults['oauth_token'] = $token->key;
@@ -589,7 +589,7 @@ class OAuthServer {
      * try to find the consumer for the provided request's consumer key
      */
     private function get_consumer(&$request) {
-        $consumerkey = @ $request->get_parameter("oauth_consumerkey");
+        $consumerkey = @ $request->get_parameter("oauth_consumer_key");
         if (!$consumerkey) {
             throw new OAuthException("Invalid consumer key");
         }
