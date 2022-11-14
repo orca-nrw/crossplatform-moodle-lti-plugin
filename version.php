@@ -49,6 +49,6 @@
 defined('MOODLE_INTERNAL') || die;
 
 $plugin->version   = 2022091500;    // The current module version (Date: YYYYMMDDXX).
-$plugin->requires  = 2020060900;    // Requires this Moodle version.
+$plugin->requires  = 2017111300;    // Requires this Moodle version (Moodle 3.4	13 November 2017).
 $plugin->component = 'mod_orcalti';     // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
