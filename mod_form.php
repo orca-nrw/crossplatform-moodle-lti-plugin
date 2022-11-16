@@ -134,11 +134,13 @@ class mod_orcalti_mod_form extends moodleform_mod {
      * @return array
      */
     public function get_orcalti_options() {
+        global $CFG;
         $options = array(
             "root_id" => "mnrw-orca-lti-root",
             "selected_tool_url_field_name" => "toolurl",
             "selected_tool_id_field_name" => "toolid",
-            "selected_tool_toolname_field_name" => "TOOL_NAME"
+            "selected_tool_toolname_field_name" => "TOOL_NAME",
+            "asset_base" => $CFG->wwwroot
         );
 
         return $options;
