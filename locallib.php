@@ -2439,28 +2439,11 @@ function orcalti_get_shared_secrets_by_key($key) {
     // Look up the shared secret for the specified key in both the types_config table (for configured tools)
     // And in the lti resource table for ad-hoc tools.
     $lti13 = ORCALTI_VERSION_1P3;
-    $query = "SELECT " . $DB->sql_compare_text('t2.value', 256) . " AS value
-                FROM {orcalti_types_config} t1
-                JOIN {orcalti_types_config} t2 ON t1.typeid = t2.typeid
-                JOIN {orcalti_types} type ON t2.typeid = type.id
-              WHERE t1.name = 'resourcekey'
-                AND " . $DB->sql_compare_text('t1.value', 256) . " = :key1
-                AND t2.name = 'password'
-                AND type.state = :configured1
-                AND type.ltiversion <> :ltiversion
-               UNION
-              SELECT tp.secret AS value
-                FROM {orcalti_tool_proxies} tp
-                JOIN {orcalti_types} t ON tp.id = t.toolproxyid
-              WHERE tp.guid = :key2
-                AND t.state = :configured2
-               UNION
-              SELECT password AS value
+    $query = "SELECT password AS value
                FROM {orcalti}
               WHERE resourcekey = :key3";
 
-    $sharedsecrets = $DB->get_records_sql($query, array('configured1' => ORCALTI_TOOL_STATE_CONFIGURED, 'ltiversion' => $lti13,
-        'configured2' => ORCALTI_TOOL_STATE_CONFIGURED, 'key1' => $key, 'key2' => $key, 'key3' => $key));
+    $sharedsecrets = $DB->get_records_sql($query, array('key3' => $key));
 
     $values = array_map(function($item) {
         return $item->value;
