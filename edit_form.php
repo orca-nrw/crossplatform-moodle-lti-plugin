@@ -88,7 +88,8 @@ class mod_orcalti_edit_types_form extends moodleform {
         $mform->setType('lti_toolurl', PARAM_URL);
         $mform->addHelpButton('lti_toolurl', 'toolurl', 'orcalti');
 
-        $mform->addElement('textarea', 'lti_description', get_string('tooldescription', 'orcalti'), array('rows' => 4, 'cols' => 60));
+        $mform->addElement('textarea', 'lti_description', get_string('tooldescription', 'orcalti'),
+        array('rows' => 4, 'cols' => 60));
         $mform->setType('lti_description', PARAM_TEXT);
         $mform->addHelpButton('lti_description', 'tooldescription', 'orcalti');
         if (!$istool) {
@@ -295,7 +296,8 @@ class mod_orcalti_edit_types_form extends moodleform {
                     ORCALTI_DEFAULT_ORGID_SITEHOST => get_string('sitehost', 'orcalti'),
                 );
 
-                $mform->addElement('select', 'lti_organizationid_default', get_string('organizationid_default', 'orcalti'), $options);
+                $mform->addElement('select', 'lti_organizationid_default', get_string('organizationid_default', 'orcalti'),
+                $options);
                 $mform->setType('lti_organizationid_default', PARAM_TEXT);
                 $mform->setDefault('lti_organizationid_default', ORCALTI_DEFAULT_ORGID_SITEID);
                 $mform->addHelpButton('lti_organizationid_default', 'organizationid_default', 'orcalti');
@@ -309,12 +311,6 @@ class mod_orcalti_edit_types_form extends moodleform {
                 $mform->addHelpButton('lti_organizationurl', 'organizationurl', 'orcalti');
             }
         }
-
-        /* Suppress this for now - Chuck
-         * mform->addElement('text', 'lti_organizationdescr', get_string('organizationdescr', 'orcalti'))
-         * mform->setType('lti_organizationdescr', PARAM_TEXT)
-         * mform->addHelpButton('lti_organizationdescr', 'organizationdescr', 'orcalti')
-         */
 
         /*
         // Add a hidden element to signal a tool fixing operation after a problematic backup - restore process

@@ -23,6 +23,8 @@
  */
 namespace mod_orcalti\output;
 
+defined('MOODLE_INTERNAL') || die;
+
 require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 
 use renderable;

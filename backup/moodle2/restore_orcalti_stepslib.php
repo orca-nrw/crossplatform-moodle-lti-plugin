@@ -46,7 +46,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
 
 /**
  * Structure step to restore one lti activity
@@ -66,9 +65,15 @@ class restore_orcalti_activity_structure_step extends restore_activity_structure
         $paths[] = $lti;
         $paths[] = new restore_path_element('orcaltitype', '/activity/orcalti/orcaltitype');
         $paths[] = new restore_path_element('orcaltitypesconfig', '/activity/orcalti/orcaltitype/ltitypesconfigs/ltitypesconfig');
-        $paths[] = new restore_path_element('orcaltitypesconfigencrypted','/activity/orcalti/orcaltitype/ltitypesconfigs/ltitypesconfigencrypted');
+        $paths[] = new restore_path_element(
+            'orcaltitypesconfigencrypted',
+            '/activity/orcalti/orcaltitype/ltitypesconfigs/ltitypesconfigencrypted'
+        );
         $paths[] = new restore_path_element('orcaltitoolproxy', '/activity/orcalti/orcaltitype/ltitoolproxy');
-        $paths[] = new restore_path_element('orcaltitoolsetting', '/activity/orcalti/orcaltitype/ltitoolproxy/ltitoolsettings/ltitoolsetting');
+        $paths[] = new restore_path_element(
+            'orcaltitoolsetting',
+            '/activity/orcalti/orcaltitype/ltitoolproxy/ltitoolsettings/ltitoolsetting'
+        );
 
         if ($userinfo) {
             $submission = new restore_path_element('orcaltisubmission', '/activity/orcalti/ltisubmissions/ltisubmission');

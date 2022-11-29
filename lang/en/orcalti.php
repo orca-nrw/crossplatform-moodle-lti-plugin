@@ -599,9 +599,9 @@ $string['organizationid_help'] = 'A unique identifier for this Moodle instance. 
 
 If this field is left blank, the host name of this Moodle site will be used as the default value.';
 
-// Custom
+// Custom.
 $string['choose_activity'] = 'Choose an ORCA-activity';
-$string['http-error'] = 'An error occurred, when trying to connect to the ORCA-Provider. 
+$string['http-error'] = 'An error occurred, when trying to connect to the ORCA-Provider.
 
 Please contact your local System-administrator or Moodle-Administrator.';
 $string['no-tools-error'] = 'An error occured, when trying to get ORCA-tools from the provider.
@@ -628,7 +628,7 @@ $string["button_select"] = "Select";
 $string["pagination_label"] = "search result pages";
 $string["pagination_next"] = "Next";
 $string["pagination_prev"] = "Back";
-$string["error"] = "An error has occurred. Your administrator can help you.";
+$string["error"] = "ORCA-LTI Plugin has a wrong or not working URL in configuration";
 $string["open_category_menu"] = "MENÜ";
 $string['orcalti_username'] = 'ORCA-LTI username';
 $string['orcalti_username_details'] = 'Username for accessing ORCA content. This is a required field.';
@@ -636,3 +636,4 @@ $string['orcalti_password'] = 'ORCA-LTI password';
 $string['orcalti_password_details'] = 'Password for accessing ORCA content. This is a required field.';
 $string['orcalti_url'] = 'ORCA-LTI-Provider-URL';
 $string['orcalti_url_details'] = 'URL of the ORCA server. If empty the default values will be used.';
+$string["missing_orca_content"] = "Please select ORCA-content";

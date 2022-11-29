@@ -24,7 +24,6 @@
 
 namespace mod_orcalti\event;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * The mod_orcalti instance list viewed event class.

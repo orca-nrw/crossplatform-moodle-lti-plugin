@@ -51,50 +51,40 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->dirroot . '/course/moodleform_mod.php');
 require_once($CFG->dirroot . '/mod/orcalti/locallib.php');
 
-class mod_orcalti_mod_form extends moodleform_mod
-{
+class mod_orcalti_mod_form extends moodleform_mod {
     /**
      * Get the request options for orcalti tools.
      *
      * @return array
      */
-    private function get_orcalti_request_options()
-    {
-        $config_username = get_config('orcalti', 'orcalti_username');
-        $config_passwort = get_config('orcalti', 'orcalti_password');
-        $config_url = get_config('orcalti', 'orcalti_url');
+    private function get_orcalti_request_options() {
+        $configusername = get_config('orcalti', 'orcalti_username');
+        $configpassword = get_config('orcalti', 'orcalti_password');
+        $configurl = get_config('orcalti', 'orcalti_url');
 
-        if (!$config_url) {
-            $config_url = "https://provider.orca.nrw";
+        if (!$configurl) {
+            $configurl = "https://provider.orca.nrw";
         }
 
-        $auth = base64_encode("{$config_username}:{$config_passwort}");
-        $context = stream_context_create([
-            "http" => [
-                "header" => "Authorization: Basic $auth"
-            ],
-            "ssl" => [
-                "verify_peer" => true,
-                "verify_peer_name" => true,
-            ],
-        ]);
+        $auth = base64_encode("{$configusername}:{$configpassword}");
+        $context["http"]=["header" => "Authorization: Basic $auth"];
+        $context["ssl"]=["verify_peer" => true,"verify_peer_name"=> true];
 
         return array(
-            "request_url" => $config_url,
+            "request_url" => $configurl,
             "request_context" => $context
         );
-        }
+    }
 
     /**
      * Get the Basic Auth Header.
      *
      * @return string
      */
-    private function get_basic_auth_header()
-    {
-        $config_username = get_config('orcalti', 'orcalti_username');
-        $config_passwort = get_config('orcalti', 'orcalti_password');
-        $auth = base64_encode("{$config_username}:{$config_passwort}");
+    private function get_basic_auth_header() {
+        $configusername = get_config('orcalti', 'orcalti_username');
+        $configpassword = get_config('orcalti', 'orcalti_password');
+        $auth = base64_encode("{$configusername}:{$configpassword}");
         return "Authorization: Basic $auth";
     }
 
@@ -103,18 +93,38 @@ class mod_orcalti_mod_form extends moodleform_mod
      *
      * @return array
      */
-    public function get_orcalti_translations()
-    {
-        $string_arr = array("modal_fullscreen_description", "modal_close", "orca_logo_alt", "website_url_orca", "orca_link_title", "categories", "contact", "email_address_orca", "send_support_request", "input_search_id", "input_search_placeholder", "searching_in_all_categories", "searching_in_category", "search_no_content_found", "no_search_no_content_found", "expand_description", "collapse_description", "button_select", "pagination_label", "pagination_next", "pagination_prev","error","open_category_menu");
+    public function get_orcalti_translations() {
+        $stringarr = array(
+            "modal_fullscreen_description",
+            "modal_close", "orca_logo_alt",
+            "website_url_orca", "orca_link_title",
+            "categories", "contact",
+            "email_address_orca",
+            "send_support_request",
+            "input_search_id",
+            "input_search_placeholder",
+            "searching_in_all_categories",
+            "searching_in_category",
+            "search_no_content_found",
+            "no_search_no_content_found",
+            "expand_description",
+            "collapse_description",
+            "button_select",
+            "pagination_label",
+            "pagination_next",
+            "pagination_prev",
+            "error",
+            "open_category_menu"
+        );
 
-        $en = get_strings($string_arr, 'orcalti');
-        $de = get_strings($string_arr, 'orcalti');
+        $en = get_strings($stringarr, 'orcalti');
+        $de = get_strings($stringarr, 'orcalti');
 
         $translations = array(
             "en" => $en,
             "de" => $de
         );
-        
+
         return json_encode($translations);
     }
 
@@ -123,13 +133,14 @@ class mod_orcalti_mod_form extends moodleform_mod
      *
      * @return array
      */
-    public function get_orcalti_options()
-    {
+    public function get_orcalti_options() {
+        global $CFG;
         $options = array(
             "root_id" => "mnrw-orca-lti-root",
             "selected_tool_url_field_name" => "toolurl",
             "selected_tool_id_field_name" => "toolid",
-            "selected_tool_toolname_field_name" => "TOOL_NAME"
+            "selected_tool_toolname_field_name" => "TOOL_NAME",
+            "asset_base" => $CFG->wwwroot
         );
 
         return $options;
@@ -140,45 +151,42 @@ class mod_orcalti_mod_form extends moodleform_mod
      *
      * @return string
      */
-    public function get_orcalti_spa_domstring($root_id)
-    {
-        $choose_activity_string = get_string('choose_activity', 'orcalti');
-        $required_string = get_string('required');
+    public function get_orcalti_spa_domstring($rootid) {
+        $chooseactivitystring = get_string('choose_activity', 'orcalti');
+        $requiredstring = get_string('required');
 
         $domstring = '
         <div id="fitem_toolchooser" class="form-group row fitem">
           <div class="col-md-3 col-form-label d-flex pb-0 pr-md-0">
-            <label class=" word-break d-inline " for="' . $root_id . '">' .
-            $choose_activity_string .
+            <label class=" word-break d-inline " for="' . $rootid . '">' .
+            $chooseactivitystring .
             '</label>
              <div class="ml-1 ml-md-auto d-flex align-items-center align-self-start">
-               <div class="text-danger" title="' . $required_string . '">
-                 <i class="icon fa fa-exclamation-circle text-danger fa-fw " title="' . $required_string . '" aria-label="' . $required_string . '"></i>
+               <div class="text-danger" title="' . $requiredstring . '">
+                 <i class="icon fa fa-exclamation-circle text-danger fa-fw " title="' . $requiredstring . '" aria-label="' . $requiredstring . '"></i>
                </div>
              </div>
            </div>
-         <div id="' . $root_id . '" class="col-md-9 form-inline align-items-start felement">Loading....</div>
+         <div id="' . $rootid . '" class="col-md-9 form-inline align-items-start felement">Loading....</div>
         </div>';
-
 
         return $domstring;
     }
 
-    private function get_content_by_url($subpath)
-    {
+    private function get_content_by_url($subpath) {
         global $CFG;
         require_once($CFG->libdir . '/filelib.php');
-        $request_config = $this->get_orcalti_request_options();
-        $request_url = $request_config["request_url"];
-        $request_context = $request_config["request_context"];
+        $requestconfig = $this->get_orcalti_request_options();
+        $requesturl = $requestconfig["request_url"];
+        $requestcontext = $requestconfig["request_context"];
 
         $curl = new \curl(array('proxy' => true));
         $curl->setopt(['CURLOPT_CONNECTTIMEOUT' => 10]);
         $curl->setopt(['CURLOPT_HEADER' => false]);
         $curl->setopt(['CURLOPT_NOBODY' => true]);
         $curl->setopt(['CURLOPT_RETURNTRANSFER' => true]);
-        $basic_auth_header = $this->get_basic_auth_header();
-        $curl->setHeader($basic_auth_header);
+        $basicauthheader = $this->get_basic_auth_header();
+        $curl->setHeader($basicauthheader);
 
         if (!empty($CFG->proxyhost)) {
             $curl->setopt(['CURLOPT_PROXY' => $CFG->proxyhost]);
@@ -193,15 +201,15 @@ class mod_orcalti_mod_form extends moodleform_mod
             }
         }
 
-        $result_json = $curl->get(rtrim(rtrim($request_url, " "), "/") . $subpath, $request_context);
-      
-        if(!empty($curl->info)&& !empty($curl->info['http_code']) && $curl->info['http_code'] != 200 ){
-            throw new Exception($curl->info['http_code']);
-        }else if(!empty($curl->error)){
-            throw new Exception($curl->error);  
-            }
+        $resultjson = $curl->get(rtrim(rtrim($requesturl, " "), "/") . $subpath, $requestcontext);
 
-        return $result_json;
+        if (!empty($curl->info) && !empty($curl->info['http_code']) && $curl->info['http_code'] != 200 ) {
+            throw new Exception($curl->info['http_code']);
+        } else if (!empty($curl->error)) {
+            throw new Exception($curl->error);
+        }
+
+        return $resultjson;
     }
 
     /**
@@ -209,84 +217,80 @@ class mod_orcalti_mod_form extends moodleform_mod
      *
      * @return array
      */
-    public function get_orcalti_tools()
-    {
-        $request_config = $this->get_orcalti_request_options();
-        $request_url = $request_config["request_url"];
+    public function get_orcalti_tools() {
+        $requestconfig = $this->get_orcalti_request_options();
+        $requesturl = $requestconfig["request_url"];
 
         // Get answer.
         $json = $this->get_content_by_url("/shared");
         // HTTP-Error-handling
         if ($json === false) {
             throw new Exception('http-error');
-        } elseif ($json == "") {
+        } else if ($json == "") {
             throw new Exception('no-tools-error');
         } else {
 
-            $tools_data = json_decode($json);
+            $toolsdata = json_decode($json);
             // Http Code 200 but empty or wrong json returned
-            if(empty($tools_data)){
+            if (empty($toolsdata)) {
                 throw new Exception("incorrectresponse");
             }
-            
-            $orcalti_tools = array();
-            foreach ((array) $tools_data as $tool_data) {
-                $orcalti_tool = array();
-                if (empty($tool_data->name)) {
-                    $orcalti_tool['name'] = $tool_data->fullname;
+
+            $orcaltitools = array();
+            foreach ((array) $toolsdata as $tooldata) {
+                $orcaltitool = array();
+                if (empty($tooldata->name)) {
+                    $orcaltitool['name'] = $tooldata->fullname;
                 } else {
-                    $orcalti_tool['name'] = $tool_data->name;
+                    $orcaltitool['name'] = $tooldata->name;
                 }
-                if ($tool_data->tool_url === NULL) {
-                    $orcalti_tool['url'] = rtrim(rtrim($request_url, " "), "/") . "/moodle/enrol/lti/tool.php?id=" . $tool_data->toolid;
+                if ($tooldata->tool_url === null) {
+                    $orcaltitool['url'] = rtrim(rtrim($requesturl, " "), "/") . "/moodle/enrol/lti/tool.php?id=" . $tooldata->toolid;
                 } else {
-                    $orcalti_tool['url'] = $tool_data->tool_url;
+                    $orcaltitool['url'] = $tooldata->tool_url;
                 }
-                $orcalti_tool['category'] = $tool_data->category;
-                $orcalti_tool['toolid'] = $tool_data->toolid;
-                $orcalti_tool['description'] = $tool_data->description;
-                $orcalti_tool['key'] = $tool_data->key;
-                $orcalti_tools[] = $orcalti_tool;
+                $orcaltitool['category'] = $tooldata->category;
+                $orcaltitool['toolid'] = $tooldata->toolid;
+                $orcaltitool['description'] = $tooldata->description;
+                $orcaltitool['key'] = $tooldata->key;
+                $orcaltitools[] = $orcaltitool;
             }
-            return json_encode($orcalti_tools);
+            return json_encode($orcaltitools);
         }
     }
 
-    public function get_orcalti_categories()
-    {
+    public function get_orcalti_categories() {
         $json = $this->get_content_by_url("/categories");
         return $json;
     }
 
-    public function get_orcalti_secrets($tool_id, $toolurl)
-    {
+    public function get_orcalti_secrets($toolid, $toolurl) {
         $secret = "";
 
         $json = $this->get_content_by_url("/shared");
-        if ($json && $tool_id) {
-            $tools_data = json_decode($json);
+        if ($json && $toolid) {
+            $toolsdata = json_decode($json);
 
-            $filteredItems = array_filter($tools_data, function($item, $k) use ($tool_id, $toolurl) {
-                return $item->toolid == $tool_id && $item->tool_url == $toolurl;
-              }, ARRAY_FILTER_USE_BOTH);
+            $filtereditems = array_filter($toolsdata, function($item, $k) use ($toolid, $toolurl) {
+                return $item->toolid == $toolid && $item->tool_url == $toolurl;
+            }, ARRAY_FILTER_USE_BOTH);
 
-            $item = ($filteredItems)? reset($filteredItems) : null;
-            $secret = ($item)? $item->secret : "";
+            $item = ($filtereditems) ? reset($filtereditems) : null;
+            $secret = ($item) ? $item->secret : "";
 
         }
 
         if ($secret == "") {
-            return 0;  //TODO: throw visible Error message  
+            return 0;  // TODO: throw visible Error message.
         }
         return $secret;
     }
 
-    public function definition()
-    {
+    public function definition() {
         global $PAGE, $OUTPUT, $COURSE;
-        $ltierror= "";
-        // Gets options for all orcalti related settings, also used for SPA
-        $orcalti_options = $this->get_orcalti_options();
+        $ltierror = "";
+        // Gets options for all orcalti related settings, also used for SPA.
+        $orcaltioptions = $this->get_orcalti_options();
 
         if ($type = optional_param('type', false, PARAM_ALPHA)) {
             component_callback("orcaltisource_$type", 'add_instance_hook');
@@ -340,31 +344,22 @@ class mod_orcalti_mod_form extends moodleform_mod
         $mform->setDefault('launchcontainer', ORCALTI_LAUNCH_CONTAINER_WINDOW);
         $mform->addHelpButton('launchcontainer', 'launchinpopup', 'orcalti');
         $mform->setAdvanced('launchcontainer');
-        // if (isset($ltierror)) {
-        //     $mform->addElement('html', '
-        //    <div id="fitem_toolchooser" class="form-group row  fitem">
-        //        <div class="box py-3 errorbox alert alert-danger"> ' .
-        //         get_string($ltierror, 'orcalti') . '
-        //        </div>
-        //    </div>   
-        //    ');
-        // } else {
-        $mform->addElement('html', $this->get_orcalti_spa_domstring($orcalti_options["root_id"]));
-     //   }
 
-        $tool_url_dom_name = $orcalti_options["selected_tool_url_field_name"];
-        $mform->addElement('hidden', $tool_url_dom_name);
-        $mform->setType($tool_url_dom_name, PARAM_TEXT);
+        $mform->addElement('html', $this->get_orcalti_spa_domstring($orcaltioptions["root_id"]));
 
-        $tool_id_dom_name = $orcalti_options["selected_tool_id_field_name"];
-        $mform->addElement('hidden', $tool_id_dom_name);
-        $mform->setType($tool_id_dom_name, PARAM_TEXT);
+        $toolurldomname = $orcaltioptions["selected_tool_url_field_name"];
+        $mform->addElement('hidden', $toolurldomname);
+        $mform->setType($toolurldomname, PARAM_TEXT);
+
+        $tooliddomname = $orcaltioptions["selected_tool_id_field_name"];
+        $mform->addElement('hidden', $tooliddomname);
+        $mform->setType($tooliddomname, PARAM_TEXT);
 
         $mform->addElement('hidden', 'resourcekey');
         $mform->setType('resourcekey', PARAM_TEXT);
 
-        $config_username = get_config('orcalti', 'orcalti_username');
-        $mform->setDefault('resourcekey', $config_username);
+        $configusername = get_config('orcalti', 'orcalti_username');
+        $mform->setDefault('resourcekey', $configusername);
 
         // Add privacy preferences fieldset where users choose whether to send their data.
         $mform->addElement('header', 'privacy', get_string('privacy', 'orcalti'));
@@ -430,26 +425,49 @@ class mod_orcalti_mod_form extends moodleform_mod
 
         if (!empty($typeid)) {
             $mform->setAdvanced('typeid');
-            $mform->setAdvanced($tool_url_dom_name);
+            $mform->setAdvanced($toolurldomname);
         }
 
         $PAGE->requires->js_init_call('M.mod_orcalti.editor.init', array(json_encode($jsinfo)), true, $module);
 
-        // Render SPA
-        //if (!isset($ltierror)) {
-            // Prepare SPA data
-            // TODO Implement proper error handling... Should probably done earlier in the pipe
-            try {   
-                $spa_translations = $this->get_orcalti_translations();
-                $spa_options = json_encode($orcalti_options);
+        // Render SPA.
+        $spacontent = null;
+        $spacategories = null;
+        $spatranslations = null;
+        $spaoptions = null;
+        $ltierror = null;
+        
+        try {
+            $spatranslations = $this->get_orcalti_translations();
+            $spaoptions = json_encode($orcaltioptions);
 
-                $spa_content= $this->get_orcalti_tools();
-                $spa_categories= $this->get_orcalti_categories();          
-            } catch (Exception $e) {
-                $ltierror = $e->getMessage();
-            }
-            $PAGE->requires->js_call_amd('mod_orcalti/orca_lti_selector-lazy', 'init', array($spa_content, $spa_categories, $spa_translations, $spa_options, $ltierror));
-       // }
+            $spacontent = $this->get_orcalti_tools();
+            $spacategories = $this->get_orcalti_categories();
+        } catch (Exception $e) {
+            $ltierror = $e->getMessage();
+        }
+
+        $mform->addElement('hidden', 'lti_selector_tools');
+        $mform->setType('lti_selector_tools', PARAM_TEXT);
+        $mform->setDefault('lti_selector_tools', $spacontent);
+
+        $mform->addElement('hidden', 'lti_selector_categories');
+        $mform->setType('lti_selector_categories', PARAM_TEXT);
+        $mform->setDefault('lti_selector_categories', $spacategories);
+
+        $mform->addElement('hidden', 'lti_selector_translations');
+        $mform->setType('lti_selector_translations', PARAM_TEXT);
+        $mform->setDefault('lti_selector_translations', $spatranslations);
+
+        $mform->addElement('hidden', 'lti_selector_options');
+        $mform->setType('lti_selector_options', PARAM_TEXT);
+        $mform->setDefault('lti_selector_options', $spaoptions);
+
+        $mform->addElement('hidden', 'lti_selector_error');
+        $mform->setType('lti_selector_error', PARAM_TEXT);
+        $mform->setDefault('lti_selector_error', $ltierror);
+
+        $PAGE->requires->js_call_amd('mod_orcalti/orca_lti_selector-lazy', 'init');
     }
 
     /**
@@ -471,14 +489,13 @@ class mod_orcalti_mod_form extends moodleform_mod
      * Allows modules to modify the data returned by form get_data().
      * @param stdClass $data passed by reference
      */
-    public function data_postprocessing($data)
-    {
+    public function data_postprocessing($data) {
         if ($data->toolurl) {
             $params = [];
             parse_str(parse_url($data->toolurl, PHP_URL_QUERY), $params);
             $toolid = $params["id"];
 
-            if(is_null($toolid)) {
+            if (is_null($toolid)) {
                 $toolid = $data->toolid;
             }
 
@@ -487,5 +504,14 @@ class mod_orcalti_mod_form extends moodleform_mod
                 $data->password = $secret;
             }
         }
+    }
+
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        if($data['toolurl'] === '') {
+            $errors['name'] = get_string('missing_orca_content', 'mod_orcalti');
+        }
+        return $errors;
     }
 }

@@ -46,7 +46,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
 
 /**
  * Define the complete assignment structure for backup, with file and id annotations
@@ -146,7 +145,7 @@ class backup_orcalti_activity_structure_step extends backup_activity_structure_s
             'state'
         ));
 
-        // Build the tree
+        // Build the tree.
         $lti->add_child($ltitype);
         $ltitype->add_child($ltitypesconfigs);
         $ltitypesconfigs->add_child($ltitypesconfig);
@@ -193,7 +192,7 @@ class backup_orcalti_activity_structure_step extends backup_activity_structure_s
             $ltisubmission->set_source_table('orcalti_submission', array('orcaltiid' => backup::VAR_ACTIVITYID));
         }
 
-        // Define id annotations
+        // Define id annotations.
         $ltitype->annotate_ids('user', 'createdby');
         $ltitype->annotate_ids('course', 'course');
         $ltisubmission->annotate_ids('user', 'userid');

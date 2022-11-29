@@ -45,7 +45,6 @@
 
 namespace moodle\mod\orcalti; // Using a namespace as the basicLTI module imports classes with the same names.
 
-defined('MOODLE_INTERNAL') || die;
 
 /**
  * A Trivial memory-based store - no support for tokens.
