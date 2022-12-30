@@ -493,9 +493,9 @@ class mod_orcalti_mod_form extends moodleform_mod {
         if ($data->toolurl) {
             $params = [];
             parse_str(parse_url($data->toolurl, PHP_URL_QUERY), $params);
-            $toolid = $params["id"];
-
-            if (is_null($toolid)) {
+            if(!empty($params["id"])){
+                $toolid = $params["id"];
+            }else{
                 $toolid = $data->toolid;
             }
 
