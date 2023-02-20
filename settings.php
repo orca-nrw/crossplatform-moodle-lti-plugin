@@ -23,4 +23,4 @@ defined('MOODLE_INTERNAL') || die;
                         get_string('orcalti_password_details', 'orcalti'), '', PARAM_TEXT));
 
     $settings->add(new admin_setting_configtext('orcalti/orcalti_url', get_string('orcalti_url', 'orcalti'),
-                        get_string('orcalti_url_details', 'orcalti'), 'https://provider.orca.nrw', PARAM_TEXT));
+                        get_string('orcalti_url_details', 'orcalti'), 'https://provider.orca.nrw/ltidir/', PARAM_TEXT));
