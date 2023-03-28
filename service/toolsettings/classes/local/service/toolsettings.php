@@ -89,6 +89,15 @@ class toolsettings extends \mod_orcalti\local\orcaltiservice\service_base {
     }
 
     /**
+     * Get the scope(s) defined this service.
+     *
+     * @return array
+     */
+    public function get_scopes() {
+        return [self::SCOPE_TOOL_SETTINGS];
+    }
+
+    /**
      * Get the distinct settings from each level by removing any duplicates from higher levels.
      *
      * @param array $systemsettings   System level settings
@@ -179,15 +188,15 @@ class toolsettings extends \mod_orcalti\local\orcaltiservice\service_base {
      * @param string $messagetype 'basic-lti-launch-request' or 'ContentItemSelectionRequest'.
      * @param string $courseid The course id.
      * @param string $user The user id.
-     * @param string $typeid The tool lti type id.
-     * @param string $modlti The id of the lti activity.
+     * @param string $typeid The tool orcalti type id.
+     * @param string $modorcalti The id of the orcalti activity.
      *
      * The type is passed to check the configuration
      * and not return parameters for services not used.
      *
      * @return array of key/value pairs to add as launch parameters.
      */
-    public function get_launch_parameters($messagetype, $courseid, $user, $typeid, $modlti = null) {
+    public function get_launch_parameters($messagetype, $courseid, $user, $typeid, $modorcalti = null) {
         global $COURSE;
 
         $launchparameters = array();

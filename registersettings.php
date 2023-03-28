@@ -53,7 +53,7 @@ if (!empty($returnto)) {
 }
 $PAGE->set_url($pageurl);
 
-admin_externalpage_setup('ltitoolproxies');
+admin_externalpage_setup('orcaltitoolproxies');
 
 $redirect = new moodle_url('/mod/orcalti/toolproxies.php', array('tab' => $tab));
 $redirect = $redirect->out();
@@ -73,6 +73,9 @@ if ($isupdate) {
     $data['isupdate'] = true;
 }
 
+$PAGE->set_primary_active_tab('siteadminnode');
+$PAGE->set_secondary_active_tab('modules');
+
 $form = new mod_orcalti_register_types_form($pageurl, (object)$data);
 
 if ($form->is_cancelled()) {
@@ -82,7 +85,7 @@ if ($form->is_cancelled()) {
     redirect($redirect);
 } else {
     $PAGE->set_title("{$SITE->shortname}: " . get_string('toolregistration', 'orcalti'));
-    $PAGE->navbar->add(get_string('lti_administration', 'orcalti'), $redirect);
+    $PAGE->navbar->add(get_string('orcalti_administration', 'orcalti'), $redirect);
 
     echo $OUTPUT->header();
     echo $OUTPUT->heading(get_string('toolregistration', 'orcalti'));

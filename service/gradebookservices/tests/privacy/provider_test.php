@@ -14,29 +14,30 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
- * Unit tests for orcaltiservice_gradebookservices privacy provider.
+ * Unit tests for orcaltisrv_gradebookservices privacy provider.
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2018 Mark Nelson <markn@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+namespace orcaltisrv_gradebookservices\privacy;
 
 defined('MOODLE_INTERNAL') || die();
 
-use \core_privacy\tests\provider_testcase;
+use core_privacy\tests\provider_testcase;
 
 /**
- * Unit tests for orcaltiservice_gradebookservices privacy provider.
+ * Unit tests for orcaltisrv_gradebookservices privacy provider.
  *
  * @copyright  2018 Mark Nelson <markn@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class orcaltiservice_gradebookservices_privacy_provider_testcase extends provider_testcase {
+class provider_test extends provider_testcase {
 
     /**
      * Basic setup for these tests.
      */
-    public function setUp() {
+    public function setUp(): void {
         $this->resetAfterTest(true);
     }
 
@@ -45,7 +46,7 @@ class orcaltiservice_gradebookservices_privacy_provider_testcase extends provide
      */
     public function test_get_contexts_for_userid() {
         $user = $this->getDataGenerator()->create_user();
-        $contextlist = \orcaltiservice_gradebookservices\privacy\provider::get_contexts_for_userid($user->id);
+        $contextlist = \orcaltisrv_gradebookservices\privacy\provider::get_contexts_for_userid($user->id);
         $this->assertEmpty($contextlist);
     }
 }

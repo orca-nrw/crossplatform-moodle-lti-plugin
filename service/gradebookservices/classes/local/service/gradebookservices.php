@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains a class definition for the LTI Gradebook Services
+ * This file contains a class definition for the ORCALTI Gradebook Services
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @author     Dirk Singels, Diego del Blanco, Claude Vervoort
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -31,13 +31,17 @@ use orcaltiservice_gradebookservices\local\resources\results;
 use orcaltiservice_gradebookservices\local\resources\scores;
 use mod_orcalti\local\orcaltiservice\resource_base;
 use mod_orcalti\local\orcaltiservice\service_base;
+use moodle_url;
 
 defined('MOODLE_INTERNAL') || die();
 
+global $CFG;
+require_once($CFG->dirroot . '/mod/orcalti/locallib.php');
+
 /**
- * A service implementing LTI Gradebook Services.
+ * A service implementing ORCALTI Gradebook Services.
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -113,6 +117,16 @@ class gradebookservices extends service_base {
     }
 
     /**
+     * Get the scopes defined by this service.
+     *
+     * @return array
+     */
+    public function get_scopes() {
+        return [self::SCOPE_GRADEBOOKSERVICES_LINEITEM_READ, self::SCOPE_GRADEBOOKSERVICES_RESULT_READ,
+            self::SCOPE_GRADEBOOKSERVICES_SCORE, self::SCOPE_GRADEBOOKSERVICES_LINEITEM];
+    }
+
+    /**
      * Adds form elements for gradebook sync add/edit page.
      *
      * @param \MoodleQuickForm $mform Moodle quickform object definition
@@ -134,20 +148,56 @@ class gradebookservices extends service_base {
     }
 
     /**
+     * For submission review, if there is a dedicated URL, use it as the target link.
+     *
+     * @param string $messagetype message type for this launch
+     * @param string $targetlinkuri current target link uri
+     * @param string|null $customstr concatenated list of custom parameters
+     * @param int $courseid
+     * @param null|object $orcalti ORCALTI Instance.
+     *
+     * @return array containing the target link URL and the custom params string to use.
+     */
+    public function override_endpoint(string $messagetype, string $targetlinkuri, ?string $customstr, int $courseid,
+            ?object $orcalti = null): array {
+        global $DB;
+        if ($messagetype == 'LtiSubmissionReviewRequest' && isset($orcalti->id)) {
+            $conditions = array('courseid' => $courseid, 'orcaltilinkid' => $orcalti->id);
+            $coupledlineitems = $DB->get_records('orcaltisrv_gradebookservices', $conditions);
+            if (count($coupledlineitems) == 1) {
+                $item = reset($coupledlineitems);
+                $url = $item->subreviewurl;
+                $subreviewparams = $item->subreviewparams;
+                if (!empty($url) && $url != 'DEFAULT') {
+                    $targetlinkuri = $url;
+                }
+                if (!empty($subreviewparams)) {
+                    if (!empty($customstr)) {
+                        $customstr .= "\n{$subreviewparams}";
+                    } else {
+                        $customstr = $subreviewparams;
+                    }
+                }
+            }
+        }
+        return [$targetlinkuri, $customstr];
+    }
+
+    /**
      * Return an array of key/values to add to the launch parameters.
      *
      * @param string $messagetype 'basic-lti-launch-request' or 'ContentItemSelectionRequest'.
      * @param string $courseid the course id.
      * @param object $user The user id.
-     * @param string $typeid The tool lti type id.
-     * @param string $modlti The id of the lti activity.
+     * @param string $typeid The tool orcalti type id.
+     * @param string $modorcalti The id of the orcalti activity.
      *
      * The type is passed to check the configuration
      * and not return parameters for services not used.
      *
      * @return array of key/value pairs to add as launch parameters.
      */
-    public function get_launch_parameters($messagetype, $courseid, $user, $typeid, $modlti = null) {
+    public function get_launch_parameters($messagetype, $courseid, $user, $typeid, $modorcalti = null) {
         global $DB;
         $launchparameters = array();
         $this->set_type(orcalti_get_type($typeid));
@@ -159,12 +209,12 @@ class gradebookservices extends service_base {
                 // Check for used in context is only needed because there is no explicit site tool - course relation.
                 if ($this->is_allowed_in_context($typeid, $courseid)) {
                     $id = null;
-                    if (!is_null($modlti)) {
+                    if (!is_null($modorcalti)) {
                         $conditions = array('courseid' => $courseid, 'itemtype' => 'mod',
-                                'itemmodule' => 'orcalti', 'iteminstance' => $modlti);
+                                'itemmodule' => 'orcalti', 'iteminstance' => $modorcalti);
 
                         $coupledlineitems = $DB->get_records('grade_items', $conditions);
-                        $conditionsgbs = array('courseid' => $courseid, 'ltilinkid' => $modlti);
+                        $conditionsgbs = array('courseid' => $courseid, 'orcaltilinkid' => $modorcalti);
                         $lineitemsgbs = $DB->get_records('orcaltisrv_gradebookservices', $conditionsgbs);
                         // If a link has more that one attached grade items, per spec we do not populate line item url.
                         if (count($lineitemsgbs) == 1) {
@@ -195,7 +245,7 @@ class gradebookservices extends service_base {
      *
      * @param string $courseid ID of course
      * @param string $resourceid Resource identifier used for filtering, may be null
-     * @param string $ltilinkid Resource Link identifier used for filtering, may be null
+     * @param string $orcaltilinkid Resource Link identifier used for filtering, may be null
      * @param string $tag
      * @param int $limitfrom Offset for the first line item to include in a paged set
      * @param int $limitnum Maximum number of line items to include in the paged set
@@ -204,10 +254,10 @@ class gradebookservices extends service_base {
      * @return array
      * @throws \Exception
      */
-    public function get_lineitems($courseid, $resourceid, $ltilinkid, $tag, $limitfrom, $limitnum, $typeid) {
+    public function get_lineitems($courseid, $resourceid, $orcaltilinkid, $tag, $limitfrom, $limitnum, $typeid) {
         global $DB;
 
-        // Select all lti potential linetiems in site.
+        // Select all orcalti potential linetiems in site.
         $params = array('courseid' => $courseid);
 
         $sql = "SELECT i.*
@@ -224,7 +274,7 @@ class gradebookservices extends service_base {
             foreach ($lineitems as $lineitem) {
                 $gbs = $this->find_orcaltiservice_gradebookservice_for_lineitem($lineitem->id);
                 if ($gbs && (!isset($tag) || (isset($tag) && $gbs->tag == $tag))
-                        && (!isset($ltilinkid) || (isset($ltilinkid) && $gbs->ltilinkid == $ltilinkid))
+                        && (!isset($orcaltilinkid) || (isset($orcaltilinkid) && $gbs->orcaltilinkid == $orcaltilinkid))
                         && (!isset($resourceid) || (isset($resourceid) && $gbs->resourceid == $resourceid))) {
                     if (is_null($typeid)) {
                         if ($this->get_tool_proxy()->id == $gbs->toolproxyid) {
@@ -237,17 +287,17 @@ class gradebookservices extends service_base {
                     }
                 } else if (($lineitem->itemtype == 'mod' && $lineitem->itemmodule == 'orcalti'
                         && !isset($resourceid) && !isset($tag)
-                        && (!isset($ltilinkid) || (isset($ltilinkid)
-                        && $lineitem->iteminstance == $ltilinkid)))) {
+                        && (!isset($orcaltilinkid) || (isset($orcaltilinkid)
+                        && $lineitem->iteminstance == $orcaltilinkid)))) {
                     // We will need to check if the activity related belongs to our tool proxy.
-                    $ltiactivity = $DB->get_record('orcalti', array('id' => $lineitem->iteminstance));
-                    if (($ltiactivity) && (isset($ltiactivity->typeid))) {
-                        if ($ltiactivity->typeid != 0) {
-                            $tool = $DB->get_record('orcalti_types', array('id' => $ltiactivity->typeid));
+                    $orcaltiactivity = $DB->get_record('orcalti', array('id' => $lineitem->iteminstance));
+                    if (($orcaltiactivity) && (isset($orcaltiactivity->typeid))) {
+                        if ($orcaltiactivity->typeid != 0) {
+                            $tool = $DB->get_record('lti_types', array('id' => $orcaltiactivity->typeid));
                         } else {
-                            $tool = orcalti_get_tool_by_url_match($ltiactivity->toolurl, $courseid);
+                            $tool = orcalti_get_tool_by_url_match($orcaltiactivity->toolurl, $courseid);
                             if (!$tool) {
-                                $tool = orcalti_get_tool_by_url_match($ltiactivity->securetoolurl, $courseid);
+                                $tool = orcalti_get_tool_by_url_match($orcaltiactivity->securetoolurl, $courseid);
                             }
                         }
                         if (is_null($typeid)) {
@@ -293,14 +343,14 @@ class gradebookservices extends service_base {
             $gbs = $this->find_orcaltiservice_gradebookservice_for_lineitem($itemid);
             if (!$gbs) {
                 // We will need to check if the activity related belongs to our tool proxy.
-                $ltiactivity = $DB->get_record('orcalti', array('id' => $lineitem->iteminstance));
-                if (($ltiactivity) && (isset($ltiactivity->typeid))) {
-                    if ($ltiactivity->typeid != 0) {
-                        $tool = $DB->get_record('orcalti_types', array('id' => $ltiactivity->typeid));
+                $orcaltiactivity = $DB->get_record('orcalti', array('id' => $lineitem->iteminstance));
+                if (($orcaltiactivity) && (isset($orcaltiactivity->typeid))) {
+                    if ($orcaltiactivity->typeid != 0) {
+                        $tool = $DB->get_record('lti_types', array('id' => $orcaltiactivity->typeid));
                     } else {
-                        $tool = orcalti_get_tool_by_url_match($ltiactivity->toolurl, $courseid);
+                        $tool = orcalti_get_tool_by_url_match($orcaltiactivity->toolurl, $courseid);
                         if (!$tool) {
-                            $tool = orcalti_get_tool_by_url_match($ltiactivity->securetoolurl, $courseid);
+                            $tool = orcalti_get_tool_by_url_match($orcaltiactivity->securetoolurl, $courseid);
                         }
                     }
                     if (is_null($typeid)) {
@@ -323,26 +373,26 @@ class gradebookservices extends service_base {
     /**
      * Adds a decoupled (standalone) line item.
      * Decoupled line items are not directly attached to
-     * an lti instance activity. They are recorded in
+     * an orcalti instance activity. They are recorded in
      * the gradebook as manual activities and the
      * gradebookservices is used to associate that manual column
-     * with the tool in addition to storing the LTI related
+     * with the tool in addition to storing the ORCALTI related
      * metadata (resource id, tag).
      *
      * @param string $courseid ID of course
      * @param string $label label of lineitem
      * @param float $maximumscore maximum score of lineitem
      * @param string $baseurl
-     * @param int|null $ltilinkid id of lti instance this line item is associated with
+     * @param int|null $orcaltilinkid id of orcalti instance this line item is associated with
      * @param string|null $resourceid resource id of lineitem
      * @param string|null $tag tag of lineitem
-     * @param int $typeid lti type to which this line item is associated with
-     * @param int|null $toolproxyid lti2 tool proxy to which this lineitem is associated to
+     * @param int $typeid orcalti type to which this line item is associated with
+     * @param int|null $toolproxyid orcalti2 tool proxy to which this lineitem is associated to
      *
      * @return int id of the created gradeitem
      */
     public function add_standalone_lineitem(string $courseid, string $label, float $maximumscore,
-            string $baseurl, ?int $ltilinkid, ?string $resourceid, ?string $tag, int $typeid,
+            string $baseurl, ?int $orcaltilinkid, ?string $resourceid, ?string $tag, int $typeid,
             int $toolproxyid = null) : int {
         global $DB;
         $params = array();
@@ -361,7 +411,7 @@ class gradebookservices extends service_base {
                 'toolproxyid' => $toolproxyid,
                 'typeid' => $typeid,
                 'baseurl' => $baseurl,
-                'ltilinkid' => $ltilinkid,
+                'orcaltilinkid' => $orcaltilinkid,
                 'resourceid' => $resourceid,
                 'tag' => $tag
         ));
@@ -385,7 +435,7 @@ class gradebookservices extends service_base {
     }
 
     /**
-     * Saves a score received from the LTI tool.
+     * Saves a score received from the ORCALTI tool.
      *
      * @param object $gradeitem Grade Item record
      * @param object $score Result object
@@ -475,15 +525,25 @@ class gradebookservices extends service_base {
         if ($gbs) {
             $lineitem->resourceId = (!empty($gbs->resourceid)) ? $gbs->resourceid : '';
             $lineitem->tag = (!empty($gbs->tag)) ? $gbs->tag : '';
-            if (isset($gbs->ltilinkid)) {
-                $lineitem->resourceLinkId = strval($gbs->ltilinkid);
-                $lineitem->ltiLinkId = strval($gbs->ltilinkid);
+            if (isset($gbs->orcaltilinkid)) {
+                $lineitem->resourceLinkId = strval($gbs->orcaltilinkid);
+                $lineitem->orcaltiLinkId = strval($gbs->orcaltilinkid);
+            }
+            if (!empty($gbs->subreviewurl)) {
+                $submissionreview = new \stdClass();
+                if ($gbs->subreviewurl != 'DEFAULT') {
+                    $submissionreview->url = $gbs->subreviewurl;
+                }
+                if (!empty($gbs->subreviewparams)) {
+                    $submissionreview->custom = orcalti_split_parameters($gbs->subreviewparams);
+                }
+                $lineitem->submissionReview = $submissionreview;
             }
         } else {
             $lineitem->tag = '';
             if (isset($item->iteminstance)) {
                 $lineitem->resourceLinkId = strval($item->iteminstance);
-                $lineitem->ltiLinkId = strval($item->iteminstance);
+                $lineitem->orcaltiLinkId = strval($item->iteminstance);
             }
         }
 
@@ -527,9 +587,9 @@ class gradebookservices extends service_base {
     }
 
     /**
-     * Check if an LTI id is valid.
+     * Check if an ORCALTI id is valid.
      *
-     * @param string $linkid             The lti id
+     * @param string $linkid             The orcalti id
      * @param string  $course            The course
      * @param string  $toolproxy         The tool proxy id
      *
@@ -537,15 +597,15 @@ class gradebookservices extends service_base {
      */
     public static function check_orcalti_id($linkid, $course, $toolproxy) {
         global $DB;
-        // Check if lti type is zero or not (comes from a backup).
+        // Check if orcalti type is zero or not (comes from a backup).
         $sqlparams1 = array();
         $sqlparams1['linkid'] = $linkid;
         $sqlparams1['course'] = $course;
-        $ltiactivity = $DB->get_record('orcalti', array('id' => $linkid, 'course' => $course));
-        if ($ltiactivity->typeid == 0) {
-            $tool = orcalti_get_tool_by_url_match($ltiactivity->toolurl, $course);
+        $orcaltiactivity = $DB->get_record('orcalti', array('id' => $linkid, 'course' => $course));
+        if ($orcaltiactivity->typeid == 0) {
+            $tool = orcalti_get_tool_by_url_match($orcaltiactivity->toolurl, $course);
             if (!$tool) {
-                $tool = orcalti_get_tool_by_url_match($ltiactivity->securetoolurl, $course);
+                $tool = orcalti_get_tool_by_url_match($orcaltiactivity->securetoolurl, $course);
             }
             return (($tool) && ($toolproxy == $tool->toolproxyid));
         } else {
@@ -553,37 +613,37 @@ class gradebookservices extends service_base {
             $sqlparams2['linkid'] = $linkid;
             $sqlparams2['course'] = $course;
             $sqlparams2['toolproxy'] = $toolproxy;
-            $sql = 'SELECT lti.*
-                      FROM {orcalti} lti
-                INNER JOIN {orcalti_types} typ ON lti.typeid = typ.id
-                     WHERE lti.id = ?
-                           AND lti.course = ?
+            $sql = 'SELECT orcalti.*
+                      FROM {orcalti} orcalti
+                INNER JOIN {lti_types} typ ON orcalti.typeid = typ.id
+                     WHERE orcalti.id = ?
+                           AND orcalti.course = ?
                            AND typ.toolproxyid = ?';
             return $DB->record_exists_sql($sql, $sqlparams2);
         }
     }
 
     /**
-     * Check if an LTI id is valid when we are in a LTI 1.x case
+     * Check if an ORCALTI id is valid when we are in a ORCALTI 1.x case
      *
-     * @param string $linkid             The lti id
+     * @param string $linkid             The orcalti id
      * @param string  $course            The course
-     * @param string  $typeid            The lti type id
+     * @param string  $typeid            The orcalti type id
      *
      * @return boolean
      */
     public static function check_orcalti_1x_id($linkid, $course, $typeid) {
         global $DB;
-        // Check if lti type is zero or not (comes from a backup).
+        // Check if orcalti type is zero or not (comes from a backup).
         $sqlparams1 = array();
         $sqlparams1['linkid'] = $linkid;
         $sqlparams1['course'] = $course;
-        $ltiactivity = $DB->get_record('orcalti', array('id' => $linkid, 'course' => $course));
-        if ($ltiactivity) {
-            if ($ltiactivity->typeid == 0) {
-                $tool = orcalti_get_tool_by_url_match($ltiactivity->toolurl, $course);
+        $orcaltiactivity = $DB->get_record('orcalti', array('id' => $linkid, 'course' => $course));
+        if ($orcaltiactivity) {
+            if ($orcaltiactivity->typeid == 0) {
+                $tool = orcalti_get_tool_by_url_match($orcaltiactivity->toolurl, $course);
                 if (!$tool) {
-                    $tool = orcalti_get_tool_by_url_match($ltiactivity->securetoolurl, $course);
+                    $tool = orcalti_get_tool_by_url_match($orcaltiactivity->securetoolurl, $course);
                 }
                 return (($tool) && ($typeid == $tool->id));
             } else {
@@ -591,11 +651,11 @@ class gradebookservices extends service_base {
                 $sqlparams2['linkid'] = $linkid;
                 $sqlparams2['course'] = $course;
                 $sqlparams2['typeid'] = $typeid;
-                $sql = 'SELECT lti.*
-                          FROM {orcalti} lti
-                    INNER JOIN {orcalti_types} typ ON lti.typeid = typ.id
-                         WHERE lti.id = ?
-                               AND lti.course = ?
+                $sql = 'SELECT orcalti.*
+                          FROM {orcalti} orcalti
+                    INNER JOIN {lti_types} typ ON orcalti.typeid = typ.id
+                         WHERE orcalti.id = ?
+                               AND orcalti.course = ?
                                AND typ.id = ?';
                 return $DB->record_exists_sql($sql, $sqlparams2);
             }
@@ -605,36 +665,44 @@ class gradebookservices extends service_base {
     }
 
     /**
-     * Updates the tag and resourceid values for a grade item coupled to an lti link instance.
+     * Updates the tag, resourceid and submission review values for a grade item coupled to an orcalti link instance.
      *
-     * @param object $ltiinstance The lti instance to which the grade item is coupled to
+     * @param object $orcaltiinstance The orcalti instance to which the grade item is coupled to
      * @param string|null $resourceid The resourceid to apply to the lineitem. If empty string which will be stored as null.
      * @param string|null $tag The tag to apply to the lineitem. If empty string which will be stored as null.
+     * @param moodle_url|null $subreviewurl The submission review target link URL
+     * @param string|null $subreviewparams The submission review custom parameters.
      *
      */
-    public static function update_coupled_gradebookservices(object $ltiinstance, ?string $resourceid, ?string $tag) : void {
+    public static function update_coupled_gradebookservices(object $orcaltiinstance,
+            ?string $resourceid, ?string $tag, ?\moodle_url $subreviewurl, ?string $subreviewparams) : void {
         global $DB;
 
-        if ($ltiinstance && $ltiinstance->typeid) {
-            $gradeitem = $DB->get_record('grade_items', array('itemmodule' => 'orcalti', 'iteminstance' => $ltiinstance->id));
+        if ($orcaltiinstance && $orcaltiinstance->typeid) {
+            $gradeitem = $DB->get_record('grade_items', array('itemmodule' => 'orcalti', 'iteminstance' => $orcaltiinstance->id));
             if ($gradeitem) {
                 $resourceid = (isset($resourceid) && empty(trim($resourceid))) ? null : $resourceid;
+                $subreviewurlstr = $subreviewurl ? $subreviewurl->out(false) : null;
                 $tag = (isset($tag) && empty(trim($tag))) ? null : $tag;
                 $gbs = self::find_orcaltiservice_gradebookservice_for_lineitem($gradeitem->id);
                 if ($gbs) {
                     $gbs->resourceid = $resourceid;
                     $gbs->tag = $tag;
+                    $gbs->subreviewurl = $subreviewurlstr;
+                    $gbs->subreviewparams = $subreviewparams;
                     $DB->update_record('orcaltisrv_gradebookservices', $gbs);
                 } else {
-                    $baseurl = orcalti_get_type_type_config($ltiinstance->typeid)->lti_toolurl;
+                    $baseurl = orcalti_get_type_type_config($orcaltiinstance->typeid)->lti_toolurl;
                     $DB->insert_record('orcaltisrv_gradebookservices', (object)array(
                         'gradeitemid' => $gradeitem->id,
                         'courseid' => $gradeitem->courseid,
-                        'typeid' => $ltiinstance->typeid,
+                        'typeid' => $orcaltiinstance->typeid,
                         'baseurl' => $baseurl,
-                        'ltilinkid' => $ltiinstance->id,
+                        'orcaltilinkid' => $orcaltiinstance->id,
                         'resourceid' => $resourceid,
-                        'tag' => $tag
+                        'tag' => $tag,
+                        'subreviewurl' => $subreviewurlstr,
+                        'subreviewparams' => $subreviewparams
                     ));
                 }
             }
@@ -642,49 +710,57 @@ class gradebookservices extends service_base {
     }
 
     /**
-     * Called when a new LTI Instance is added.
+     * Called when a new ORCALTI Instance is added.
      *
-     * @param object $lti LTI Instance.
+     * @param object $orcalti ORCALTI Instance.
      */
-    public function instance_added(object $lti): void {
-        self::update_coupled_gradebookservices($lti, $lti->lineitemresourceid ?? null, $lti->lineitemtag ?? null);
+    public function instance_added(object $orcalti): void {
+        self::update_coupled_gradebookservices($orcalti, $orcalti->lineitemresourceid ?? null, $orcalti->lineitemtag ?? null,
+            isset($orcalti->lineitemsubreviewurl) ? new moodle_url($orcalti->lineitemsubreviewurl) : null,
+            $orcalti->lineitemsubreviewparams ?? null);
     }
 
     /**
-     * Called when a new LTI Instance is updated.
+     * Called when a new ORCALTI Instance is updated.
      *
-     * @param object $lti LTI Instance.
+     * @param object $orcalti ORCALTI Instance.
      */
-    public function instance_updated(object $lti): void {
-        self::update_coupled_gradebookservices($lti, $lti->lineitemresourceid ?? null, $lti->lineitemtag ?? null);
+    public function instance_updated(object $orcalti): void {
+        self::update_coupled_gradebookservices($orcalti, $orcalti->lineitemresourceid ?? null, $orcalti->lineitemtag ?? null,
+            isset($orcalti->lineitemsubreviewurl) ? new moodle_url($orcalti->lineitemsubreviewurl) : null,
+            $orcalti->lineitemsubreviewparams ?? null);
     }
 
     /**
-     * Set the form data when displaying the LTI Instance form.
+     * Set the form data when displaying the ORCALTI Instance form.
      *
      * @param object $defaultvalues Default form values.
      */
     public function set_instance_form_values(object $defaultvalues): void {
         $defaultvalues->lineitemresourceid = '';
         $defaultvalues->lineitemtag = '';
+        $defaultvalues->subreviewurl = '';
+        $defaultvalues->subreviewparams = '';
         if (is_object($defaultvalues) && $defaultvalues->instance) {
-            $gbs = self::find_orcaltiservice_gradebookservice_for_lti($defaultvalues->instance);
+            $gbs = self::find_orcaltiservice_gradebookservice_for_orcalti($defaultvalues->instance);
             if ($gbs) {
                 $defaultvalues->lineitemresourceid = $gbs->resourceid;
                 $defaultvalues->lineitemtag = $gbs->tag;
+                $defaultvalues->lineitemsubreviewurl = $gbs->subreviewurl;
+                $defaultvalues->lineitemsubreviewparams = $gbs->subreviewparams;
             }
         }
     }
 
     /**
-     * Deletes orphaned rows from the 'orcaltiservice_gradebookservices' table.
+     * Deletes orphaned rows from the 'orcaltisrv_gradebookservices' table.
      *
      * Sometimes, if a gradebook entry is deleted and it was a lineitem
-     * the row in the table orcaltiservice_gradebookservices can become an orphan
+     * the row in the table orcaltisrv_gradebookservices can become an orphan
      * This method will clean these orphans. It will happens based on a task
      * because it is not urgent and we don't want to slow the service
      */
-    public static function delete_orphans_orcaltiservice_gradebookservices_rows() {
+    public static function delete_orphans_orcaltisrv_gradebookservices_rows() {
         global $DB;
 
         $sql = "DELETE
@@ -711,7 +787,7 @@ class gradebookservices extends service_base {
             $gradebookroles = explode(',', $CFG->gradebookroles);
             foreach ($roles as $role) {
                 foreach ($gradebookroles as $gradebookrole) {
-                    if ($role->roleid = $gradebookrole) {
+                    if ($role->roleid === $gradebookrole) {
                         $gradableuser = true;
                     }
                 }
@@ -722,12 +798,12 @@ class gradebookservices extends service_base {
     }
 
     /**
-     * Find the right element in the orcaltiservice_gradebookservice table for an lti instance
+     * Find the right element in the orcaltiservice_gradebookservice table for an orcalti instance
      *
-     * @param string $instanceid The LTI module instance id
+     * @param string $instanceid The ORCALTI module instance id
      * @return object gradebookservice for this line item
      */
-    public static function find_orcaltiservice_gradebookservice_for_lti($instanceid) {
+    public static function find_orcaltiservice_gradebookservice_for_orcalti($instanceid) {
         global $DB;
 
         if ($instanceid) {

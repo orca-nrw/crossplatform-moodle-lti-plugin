@@ -32,6 +32,7 @@ use core_privacy\local\request\transform;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Privacy Subsystem implementation for mod_orcalti.
@@ -52,7 +53,7 @@ class provider implements
      */
     public static function get_metadata(collection $items) : collection {
         $items->add_external_location_link(
-            'lti_provider',
+            'orcalti_provider',
             [
                 'userid' => 'privacy:metadata:userid',
                 'username' => 'privacy:metadata:username',
@@ -94,7 +95,7 @@ class provider implements
         );
 
         $items->add_database_table(
-            'orcalti_types',
+            'lti_types',
             [
                 'name' => 'privacy:metadata:orcalti_types:name',
                 'createdby' => 'privacy:metadata:createdby',
@@ -114,7 +115,7 @@ class provider implements
      * @return contextlist the list of contexts containing user info for the user.
      */
     public static function get_contexts_for_userid(int $userid) : contextlist {
-        // Fetch all LTI submissions.
+        // Fetch all ORCALTI submissions.
         $sql = "SELECT c.id
                   FROM {context} c
             INNER JOIN {course_modules} cm
@@ -123,11 +124,11 @@ class provider implements
             INNER JOIN {modules} m
                     ON m.id = cm.module
                    AND m.name = :modname
-            INNER JOIN {orcalti} lti
-                    ON lti.id = cm.instance
-            INNER JOIN {orcalti_submission} ltisub
-                    ON ltisub.orcaltiid = lti.id
-                 WHERE ltisub.userid = :userid";
+            INNER JOIN {orcalti} orcalti
+                    ON orcalti.id = cm.instance
+            INNER JOIN {orcalti_submission} orcaltisub
+                    ON orcaltisub.orcaltiid = orcalti.id
+                 WHERE orcaltisub.userid = :userid";
 
         $params = [
             'modname' => 'orcalti',
@@ -137,15 +138,15 @@ class provider implements
         $contextlist = new contextlist();
         $contextlist->add_from_sql($sql, $params);
 
-        // Fetch all LTI types.
+        // Fetch all ORCALTI types.
         $sql = "SELECT c.id
                  FROM {context} c
                  JOIN {course} course
                    ON c.contextlevel = :contextlevel
                   AND c.instanceid = course.id
-                 JOIN {orcalti_types} ltit
-                   ON ltit.course = course.id
-                WHERE ltit.createdby = :userid";
+                 JOIN {lti_types} orcaltit
+                   ON orcaltit.course = course.id
+                WHERE orcaltit.createdby = :userid";
 
         $params = [
             'contextlevel' => CONTEXT_COURSE,
@@ -153,7 +154,7 @@ class provider implements
         ];
         $contextlist->add_from_sql($sql, $params);
 
-        // The LTI tool proxies sit in the system context.
+        // The ORCALTI tool proxies sit in the system context.
         $contextlist->add_system_context();
 
         return $contextlist;
@@ -171,8 +172,8 @@ class provider implements
             return;
         }
 
-        // Fetch all LTI submissions.
-        $sql = "SELECT ltisub.userid
+        // Fetch all ORCALTI submissions.
+        $sql = "SELECT orcaltisub.userid
                   FROM {context} c
             INNER JOIN {course_modules} cm
                     ON cm.id = c.instanceid
@@ -180,10 +181,10 @@ class provider implements
             INNER JOIN {modules} m
                     ON m.id = cm.module
                    AND m.name = :modname
-            INNER JOIN {orcalti} lti
-                    ON lti.id = cm.instance
-            INNER JOIN {orcalti_submission} ltisub
-                    ON ltisub.orcaltiid = lti.id
+            INNER JOIN {orcalti} orcalti
+                    ON orcalti.id = cm.instance
+            INNER JOIN {orcalti_submission} orcaltisub
+                    ON orcaltisub.orcaltiid = orcalti.id
                  WHERE c.id = :contextid";
 
         $params = [
@@ -194,14 +195,14 @@ class provider implements
 
         $userlist->add_from_sql('userid', $sql, $params);
 
-        // Fetch all LTI types.
-        $sql = "SELECT ltit.createdby AS userid
+        // Fetch all ORCALTI types.
+        $sql = "SELECT orcaltit.createdby AS userid
                  FROM {context} c
                  JOIN {course} course
                    ON c.contextlevel = :contextlevel
                   AND c.instanceid = course.id
-                 JOIN {orcalti_types} ltit
-                   ON ltit.course = course.id
+                 JOIN {lti_types} orcaltit
+                   ON orcaltit.course = course.id
                 WHERE c.id = :contextid";
 
         $params = [
@@ -264,7 +265,7 @@ class provider implements
     }
 
     /**
-     * Delete multiple users within a single context.
+     * Delete muorcaltiple users within a single context.
      *
      * @param   approved_userlist       $userlist The approved context and user information to delete information for.
      */
@@ -285,7 +286,7 @@ class provider implements
     }
 
     /**
-     * Export personal data for the given approved_contextlist related to LTI submissions.
+     * Export personal data for the given approved_contextlist related to ORCALTI submissions.
      *
      * @param approved_contextlist $contextlist a list of contexts approved for export.
      */
@@ -306,14 +307,13 @@ class provider implements
 
         $user = $contextlist->get_user();
 
-        // Get all the LTI activities associated with the above course modules.
+        // Get all the ORCALTI activities associated with the above course modules.
         $orcaltiidstocmids = self::get_orcalti_ids_to_cmids_from_cmids($cmids);
         $orcaltiids = array_keys($orcaltiidstocmids);
 
         list($insql, $inparams) = $DB->get_in_or_equal($orcaltiids, SQL_PARAMS_NAMED);
         $params = array_merge($inparams, ['userid' => $user->id]);
-        $recordset = $DB->get_recordset_select('orcalti_submission',
-        "orcaltiid $insql AND userid = :userid", $params, 'dateupdated, id');
+        $recordset = $DB->get_recordset_select('orcalti_submission', "orcaltiid $insql AND userid = :userid", $params, 'dateupdated, id');
         self::recordset_loop_and_export($recordset, 'orcaltiid', [], function($carry, $record) use ($user, $orcaltiidstocmids) {
             $carry[] = [
                 'gradepercent' => $record->gradepercent,
@@ -332,7 +332,7 @@ class provider implements
     }
 
     /**
-     * Export personal data for the given approved_contextlist related to LTI types.
+     * Export personal data for the given approved_contextlist related to ORCALTI types.
      *
      * @param approved_contextlist $contextlist a list of contexts approved for export.
      */
@@ -355,8 +355,8 @@ class provider implements
 
         list($insql, $inparams) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
         $params = array_merge($inparams, ['userid' => $user->id]);
-        $ltitypes = $DB->get_recordset_select('orcalti_types', "course $insql AND createdby = :userid", $params, 'timecreated ASC');
-        self::recordset_loop_and_export($ltitypes, 'course', [], function($carry, $record) {
+        $orcaltitypes = $DB->get_recordset_select('lti_types', "course $insql AND createdby = :userid", $params, 'timecreated ASC');
+        self::recordset_loop_and_export($orcaltitypes, 'course', [], function($carry, $record) {
             $context = \context_course::instance($record->course);
             $options = ['context' => $context];
             $carry[] = [
@@ -368,13 +368,13 @@ class provider implements
             return $carry;
         }, function($courseid, $data) {
             $context = \context_course::instance($courseid);
-            $finaldata = (object) ['orcalti_types' => $data];
+            $finaldata = (object) ['lti_types' => $data];
             writer::with_context($context)->export_data([], $finaldata);
         });
     }
 
     /**
-     * Export personal data for the given approved_contextlist related to LTI tool proxies.
+     * Export personal data for the given approved_contextlist related to ORCALTI tool proxies.
      *
      * @param approved_contextlist $contextlist a list of contexts approved for export.
      */
@@ -395,23 +395,23 @@ class provider implements
         $systemcontext = \context_system::instance();
 
         $data = [];
-        $ltiproxies = $DB->get_recordset('orcalti_tool_proxies', ['createdby' => $user->id], 'timecreated ASC');
-        foreach ($ltiproxies as $ltiproxy) {
+        $orcaltiproxies = $DB->get_recordset('orcalti_tool_proxies', ['createdby' => $user->id], 'timecreated ASC');
+        foreach ($orcaltiproxies as $orcaltiproxy) {
             $data[] = [
-                'name' => format_string($ltiproxy->name, true, $systemcontext),
-                'createdby' => transform::user($ltiproxy->createdby),
-                'timecreated' => transform::datetime($ltiproxy->timecreated),
-                'timemodified' => transform::datetime($ltiproxy->timemodified)
+                'name' => format_string($orcaltiproxy->name, true, $systemcontext),
+                'createdby' => transform::user($orcaltiproxy->createdby),
+                'timecreated' => transform::datetime($orcaltiproxy->timecreated),
+                'timemodified' => transform::datetime($orcaltiproxy->timemodified)
             ];
         }
-        $ltiproxies->close();
+        $orcaltiproxies->close();
 
         $finaldata = (object) ['orcalti_tool_proxies' => $data];
         writer::with_context($systemcontext)->export_data([], $finaldata);
     }
 
     /**
-     * Return a dict of LTI IDs mapped to their course module ID.
+     * Return a dict of ORCALTI IDs mapped to their course module ID.
      *
      * @param array $cmids The course module IDs.
      * @return array In the form of [$orcaltiid => $cmid].
@@ -420,12 +420,12 @@ class provider implements
         global $DB;
 
         list($insql, $inparams) = $DB->get_in_or_equal($cmids, SQL_PARAMS_NAMED);
-        $sql = "SELECT lti.id, cm.id AS cmid
-                 FROM {orcalti} lti
+        $sql = "SELECT orcalti.id, cm.id AS cmid
+                 FROM {orcalti} orcalti
                  JOIN {modules} m
-                   ON m.name = :lti
+                   ON m.name = :orcalti
                  JOIN {course_modules} cm
-                   ON cm.instance = lti.id
+                   ON cm.instance = orcalti.id
                   AND cm.module = m.id
                 WHERE cm.id $insql";
         $params = array_merge($inparams, ['orcalti' => 'orcalti']);

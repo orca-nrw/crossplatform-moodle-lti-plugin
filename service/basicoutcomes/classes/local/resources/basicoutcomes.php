@@ -44,7 +44,7 @@ class basicoutcomes extends \mod_orcalti\local\orcaltiservice\resource_base {
     public function __construct($service) {
 
         parent::__construct($service);
-        $this->id = 'Outcomes.LTI1';
+        $this->id = 'Outcomes.ORCALTI1';
         $this->template = '';
         $this->formats[] = 'application/vnd.ims.lti.v1.outcome+xml';
         $this->methods[] = 'POST';
@@ -69,7 +69,7 @@ class basicoutcomes extends \mod_orcalti\local\orcaltiservice\resource_base {
      * @param \mod_orcalti\local\orcaltiservice\response $response  Response object for this request.
      */
     public function execute($response) {
-        // Should never be called as the endpoint sends requests to the LTI 1 service endpoint.
+        // Should never be called as the endpoint sends requests to the ORCALTI 1 service endpoint.
     }
 
 }

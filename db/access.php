@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the capabilities used by the lti module
+ * This file contains the capabilities used by the orcalti module
  *
  * @package    mod_orcalti
  * @copyright  2009 Marc Alier, Jordi Piguillem, Nikolas Galanis, marc.alier@upc.edu

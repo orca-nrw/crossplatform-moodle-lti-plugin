@@ -17,22 +17,22 @@
 /**
  * A scheduled task for gradebookservices.
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @author     Dirk Singels, Diego del Blanco, Claude Vervoort
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-namespace orcaltiservice_gradebookservices\task;
+namespace orcaltisrv_gradebookservices\task;
 
 use core\task\scheduled_task;
-use orcaltiservice_gradebookservices\local\service\gradebookservices;
+use orcaltisrv_gradebookservices\local\service\gradebookservices;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
  * Class containing the scheduled task for gradebookservices.
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @author     Dirk Singels, Diego del Blanco, Claude Vervoort
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -45,14 +45,14 @@ class cleanup_task extends scheduled_task {
      * @return string
      */
     public function get_name() {
-        return get_string('taskcleanup', 'orcaltiservice_gradebookservices');
+        return get_string('taskcleanup', 'orcaltisrv_gradebookservices');
     }
 
     /**
      * Run forum cron.
      */
     public function execute() {
-        gradebookservices::delete_orphans_orcaltiservice_gradebookservices_rows();
+        gradebookservices::delete_orphans_orcaltisrv_gradebookservices_rows();
     }
 
 }

@@ -101,6 +101,24 @@ $functions = array(
         'ajax'          => true
     ),
 
+    'mod_orcalti_get_tool_types_and_proxies' => [
+        'classname'     => 'mod_orcalti\external\get_tool_types_and_proxies',
+        'methodname'    => 'execute',
+        'description'   => 'Get a list of the tool types and tool proxies',
+        'type'          => 'read',
+        'capabilities'  => 'moodle/site:config',
+        'ajax'          => true
+    ],
+
+    'mod_orcalti_get_tool_types_and_proxies_count' => [
+        'classname'     => 'mod_orcalti\external\get_tool_types_and_proxies_count',
+        'methodname'    => 'execute',
+        'description'   => 'Get total number of the tool types and tool proxies',
+        'type'          => 'read',
+        'capabilities'  => 'moodle/site:config',
+        'ajax'          => true
+    ],
+
     'mod_orcalti_create_tool_type' => array(
         'classname'     => 'mod_orcalti_external',
         'methodname'    => 'create_tool_type',

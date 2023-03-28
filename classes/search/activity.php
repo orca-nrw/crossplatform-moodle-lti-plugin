@@ -24,6 +24,8 @@
 
 namespace mod_orcalti\search;
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Search area for mod_orcalti activities.
  *

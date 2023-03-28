@@ -78,7 +78,7 @@ class scores extends resource_base {
             $contenttype = $response->get_content_type();
         }
         $container = empty($contenttype) || ($contenttype === $this->formats[0]);
-        // We will receive typeid when working with LTI 1.x, if not the we are in LTI 2.
+        // We will receive typeid when working with ORCALTI 1.x, if not the we are in ORCALTI 2.
         $typeid = optional_param('type_id', null, PARAM_ALPHANUM);
 
         $scope = gradebookservices::SCOPE_GRADEBOOKSERVICES_SCORE;
@@ -106,25 +106,25 @@ class scores extends resource_base {
                 throw new \Exception('Line item does not exist', 404);
             }
             $gbs = gradebookservices::find_orcaltiservice_gradebookservice_for_lineitem($itemid);
-            $ltilinkid = null;
+            $orcaltilinkid = null;
             if (isset($item->iteminstance)) {
-                $ltilinkid = $item->iteminstance;
-            } else if ($gbs && isset($gbs->ltilinkid)) {
-                $ltilinkid = $gbs->ltilinkid;
+                $orcaltilinkid = $item->iteminstance;
+            } else if ($gbs && isset($gbs->orcaltilinkid)) {
+                $orcaltilinkid = $gbs->orcaltilinkid;
             }
-            if ($ltilinkid != null) {
+            if ($orcaltilinkid != null) {
                 if (is_null($typeid)) {
-                    if (isset($item->iteminstance) && (!gradebookservices::check_orcalti_id($ltilinkid, $item->courseid,
+                    if (isset($item->iteminstance) && (!gradebookservices::check_orcalti_id($orcaltilinkid, $item->courseid,
                             $this->get_service()->get_tool_proxy()->id))) {
                         $response->set_code(403);
-                        $response->set_reason("Invalid LTI id supplied.");
+                        $response->set_reason("Invalid ORCALTI id supplied.");
                         return;
                     }
                 } else {
-                    if (isset($item->iteminstance) && (!gradebookservices::check_orcalti_1x_id($ltilinkid, $item->courseid,
+                    if (isset($item->iteminstance) && (!gradebookservices::check_orcalti_1x_id($orcaltilinkid, $item->courseid,
                             $typeid))) {
                         $response->set_code(403);
-                        $response->set_reason("Invalid LTI id supplied.");
+                        $response->set_reason("Invalid ORCALTI id supplied.");
                         return;
                     }
                 }

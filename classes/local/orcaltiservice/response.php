@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains an abstract definition of an LTI service
+ * This file contains an abstract definition of an ORCALTI service
  *
  * @package    mod_orcalti
  * @copyright  2014 Vital Source Technologies http://vitalsource.com
@@ -26,6 +26,7 @@
 
 namespace mod_orcalti\local\orcaltiservice;
 
+defined('MOODLE_INTERNAL') || die;
 
 /**
  * The mod_orcalti\local\orcaltiservice\response class.
@@ -72,7 +73,7 @@ class response {
             200 => 'OK',
             201 => 'Created',
             202 => 'Accepted',
-            300 => 'Multiple Choices',
+            300 => 'Muorcaltiple Choices',
             400 => 'Bad Request',
             401 => 'Unauthorized',
             402 => 'Payment Required',
@@ -197,6 +198,15 @@ class response {
      */
     public function set_request_data($data) {
         $this->data = $data;
+    }
+
+    /**
+     * Get the response body.
+     *
+     * @return string
+     */
+    public function get_body() {
+        return $this->body;
     }
 
     /**

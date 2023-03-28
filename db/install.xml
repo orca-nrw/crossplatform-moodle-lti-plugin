@@ -4,16 +4,16 @@
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="orcalti" COMMENT="This table contains Basic LTI activities instances">
+    <TABLE NAME="orcalti" COMMENT="This table contains Basic ORCALTI activities instances">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Course basiclti activity belongs to"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Course basicorcalti activity belongs to"/>
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="name field for moodle instances"/>
-        <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="General introduction of the basiclti activity"/>
+        <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="General introduction of the basicorcalti activity"/>
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Format of the intro field (MOODLE, HTML, MARKDOWN...)"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="typeid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Basic LTI type"/>
+        <FIELD NAME="typeid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Basic ORCALTI type"/>
         <FIELD NAME="toolurl" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Remote tool url"/>
         <FIELD NAME="securetoolurl" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="instructorchoicesendname" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false" COMMENT="Send user's name"/>
@@ -40,7 +40,7 @@
         <INDEX NAME="course" UNIQUE="false" FIELDS="course"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="orcalti_tool_proxies" COMMENT="LTI tool proxy registrations">
+    <TABLE NAME="orcalti_tool_proxies" COMMENT="ORCALTI tool proxy registrations">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="Tool Provider" SEQUENCE="false" COMMENT="Tool Provider name"/>
@@ -63,26 +63,26 @@
         <INDEX NAME="guid" UNIQUE="true" FIELDS="guid"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="orcalti_types" COMMENT="Basic LTI pre-configured activities">
+    <TABLE NAME="orcalti_types" COMMENT="Basic ORCALTI pre-configured activities">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="basiclti Activity" SEQUENCE="false" COMMENT="Activity name"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="basicorcalti Activity" SEQUENCE="false" COMMENT="Activity name"/>
         <FIELD NAME="baseurl" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="tooldomain" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="state" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="2" SEQUENCE="false" COMMENT="Active = 1, Pending = 2, Rejected = 3"/>
         <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="coursevisible" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="ltiversion" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="orcaltiversion" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="clientid" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="toolproxyid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Primary key of related tool proxy (null for LTI 1 tools)"/>
-        <FIELD NAME="enabledcapability" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Enabled capabilities, one per line (null for LTI 1 tools)"/>
-        <FIELD NAME="parameter" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Launch parameters, one per line (null for LTI 1 tools)"/>
+        <FIELD NAME="toolproxyid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Primary key of related tool proxy (null for ORCALTI 1 tools)"/>
+        <FIELD NAME="enabledcapability" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Enabled capabilities, one per line (null for ORCALTI 1 tools)"/>
+        <FIELD NAME="parameter" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Launch parameters, one per line (null for ORCALTI 1 tools)"/>
         <FIELD NAME="icon" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="URL to icon file"/>
         <FIELD NAME="secureicon" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Secure URL to icon file"/>
         <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="A description of what this LTI module is."/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="A description of what this ORCALTI module is."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -93,11 +93,11 @@
         <INDEX NAME="clientid" UNIQUE="true" FIELDS="clientid"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="orcalti_types_config" COMMENT="Basic LTI types configuration">
+    <TABLE NAME="orcalti_types_config" COMMENT="Basic ORCALTI types configuration">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="typeid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Basic LTI type id"/>
-        <FIELD NAME="name" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Basic LTI param"/>
+        <FIELD NAME="typeid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Basic ORCALTI type id"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Basic ORCALTI param"/>
         <FIELD NAME="value" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Param value"/>
       </FIELDS>
       <KEYS>
@@ -107,7 +107,7 @@
         <INDEX NAME="typeid" UNIQUE="false" FIELDS="typeid"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="orcalti_tool_settings" COMMENT="LTI tool setting values">
+    <TABLE NAME="orcalti_tool_settings" COMMENT="ORCALTI tool setting values">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="toolproxyid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Primary key of related tool proxy"/>
@@ -126,10 +126,10 @@
         <KEY NAME="coursemodule" TYPE="foreign" FIELDS="coursemoduleid" REFTABLE="orcalti" REFFIELDS="id" COMMENT="The module instance to which the setting relates"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="orcalti_submission" COMMENT="Keeps track of individual submissions for LTI activities.">
+    <TABLE NAME="orcalti_submission" COMMENT="Keeps track of individual submissions for ORCALTI activities.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="orcaltiid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID of the LTI tool instance"/>
+        <FIELD NAME="orcaltiid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID of the ORCALTI tool instance"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="datesubmitted" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="dateupdated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
@@ -145,10 +145,10 @@
         <INDEX NAME="orcaltiid" UNIQUE="false" FIELDS="orcaltiid"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="orcalti_access_tokens" COMMENT="Security tokens for accessing of LTI services">
+    <TABLE NAME="orcalti_access_tokens" COMMENT="Security tokens for accessing of ORCALTI services">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="typeid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Basic LTI type id"/>
+        <FIELD NAME="typeid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Basic ORCALTI type id"/>
         <FIELD NAME="scope" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Scope values as JSON array"/>
         <FIELD NAME="token" TYPE="char" LENGTH="128" NOTNULL="true" SEQUENCE="false" COMMENT="security token, aka private access key"/>
         <FIELD NAME="validuntil" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="timestamp - valid until data"/>

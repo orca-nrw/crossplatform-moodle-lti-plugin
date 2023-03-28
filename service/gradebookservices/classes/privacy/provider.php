@@ -15,14 +15,14 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Privacy Subsystem implementation for orcaltiservice_gradebookservices.
+ * Privacy Subsystem implementation for orcaltisrv_gradebookservices.
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2018 Mark Nelson <markn@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace orcaltiservice_gradebookservices\privacy;
+namespace orcaltisrv_gradebookservices\privacy;
 
 use \core_privacy\local\metadata\collection;
 use \core_privacy\local\request\contextlist;
@@ -33,7 +33,7 @@ use \core_privacy\local\request\approved_userlist;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Privacy Subsystem for orcaltiservice_gradebookservices.
+ * Privacy Subsystem for orcaltisrv_gradebookservices.
  *
  * @copyright  2018 Mark Nelson <markn@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -50,7 +50,7 @@ class provider implements
      * @return collection A listing of user data stored through this system.
      */
     public static function get_metadata(collection $collection) : collection {
-        $collection->link_external_location('External LTI provider.', [
+        $collection->link_external_location('External ORCALTI provider.', [
             'userid' => 'privacy:metadata:userid',
             'grade' => 'privacy:metadata:grade',
             'maxgrade' => 'privacy:metadata:maxgrade',
@@ -96,7 +96,7 @@ class provider implements
     }
 
     /**
-     * Delete multiple users within a single context.
+     * Delete muorcaltiple users within a single context.
      *
      * @param approved_userlist $userlist The approved context and user information to delete information for.
      */

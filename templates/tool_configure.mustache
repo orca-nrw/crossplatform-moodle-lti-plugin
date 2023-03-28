@@ -18,7 +18,7 @@
     @template mod_orcalti/tool_configure
 
     This template provides the layout for the external tool configuration page in the
-    LTI module.
+    ORCALTI module.
 
     Classes required for JS:
     * none
@@ -29,6 +29,13 @@
     Context variables required for this template:
     *
 
+    Example context (json):
+    {
+        "configuremanualurl":"https://some.tool.example/mod/orcalti/typessettings.php?sesskey=OKl37bHflL&amp;returnto=toolconfigure",
+        "managetoolsurl":"https://some.tool.example/admin/settings.php?section=modsettingorcalti",
+        "managetoolproxiesurl":"https://some.tool.example/mod/orcalti/toolproxies.php"
+    }
+
 }}
 <h2>{{#str}} manage_external_tools, mod_orcalti {{/str}}</h2>
 <div id="main-content-container">
@@ -37,7 +44,7 @@
         <div id="registration-choice-container" class="centered-menu">
             <div class="card card-block">
                 <p class="lead">{{#str}} autoaddtype, mod_orcalti {{/str}}</p>
-                <form class="form-inline" id="add-tool-form">
+                <form class="form-inline justify-content-center" id="add-tool-form">
                     <div class="control-group">
                         <input name="url"
                             class="form-control"
@@ -46,10 +53,16 @@
                             placeholder="{{#str}} toolurlplaceholder, mod_orcalti {{/str}}"
                             required>
                         <button id="tool-create-button" type="submit" class="btn btn-success">
-                            <span class="btn-text">{{#str}} add {{/str}}</span>
-                            <div class="btn-loader">
+                            <span class="btn-text">{{#str}} add_orcaltiadv, mod_orcalti {{/str}}</span>
+                            <span class="btn-loader">
                                 {{> mod_orcalti/loader }}
-                            </div>
+                            </span>
+                        </button>
+                        <button id="tool-createorcaltilegacy-button" type="button" class="btn btn-warning">
+                            <span class="btn-text">{{#str}} add_orcaltilegacy, mod_orcalti {{/str}}</span>
+                            <span class="btn-loader">
+                                {{> mod_orcalti/loader }}
+                            </span>
                         </button>
                     </div>
                 </form>
@@ -66,6 +79,10 @@
     </div>
 
     <div id="tool-list-container" class="loading">
+        <h3>{{#str}} tooltypes, mod_orcalti {{/str}}</h3>
+        <div id="tool-list-loader-container">
+            {{> mod_orcalti/loader }}
+        </div>
         {{> mod_orcalti/tool_list }}
     </div>
 </div>

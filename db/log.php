@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * LTI web service endpoints
+ * ORCALTI web service endpoints
  *
  * @package    mod_orcalti
  * @category   log

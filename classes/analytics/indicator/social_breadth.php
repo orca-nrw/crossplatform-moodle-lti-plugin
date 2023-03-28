@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Social breadth indicator - lti.
+ * Social breadth indicator - orcalti.
  *
  * @package   mod_orcalti
  * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}
@@ -24,9 +24,10 @@
 
 namespace mod_orcalti\analytics\indicator;
 
+defined('MOODLE_INTERNAL') || die();
 
 /**
- * Social breadth indicator - lti.
+ * Social breadth indicator - orcalti.
  *
  * @package   mod_orcalti
  * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}

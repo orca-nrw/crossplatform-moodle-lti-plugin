@@ -23,15 +23,13 @@
  * See template: mod_orcalti/external_registration
  *
  * @module     mod_orcalti/external_registration
- * @class      external_registration
- * @package    mod_orcalti
  * @copyright  2015 Ryan Wyllie <ryan@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      3.1
  */
 define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcalti/events',
         'mod_orcalti/tool_proxy', 'mod_orcalti/tool_type', 'mod_orcalti/keys', 'core/str'],
-        function($, ajax, notification, templates, ltiEvents, toolProxy, toolType, KEYS, str) {
+        function($, ajax, notification, templates, orcaltiEvents, toolProxy, toolType, KEYS, str) {
 
     var SELECTORS = {
         EXTERNAL_REGISTRATION_CONTAINER: '#external-registration-page-container',
@@ -326,7 +324,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
                     message: s,
                     error: true
                 };
-                $(document).trigger(ltiEvents.REGISTRATION_FEEDBACK, feedback);
+                $(document).trigger(orcaltiEvents.REGISTRATION_FEEDBACK, feedback);
             }).fail(notification.exception);
         });
 
@@ -400,7 +398,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
 
             // The user agrees to allow the tool to use the groups of data so we can go
             // ahead and activate it for them so that it can be used straight away.
-            choiceContainer.on(ltiEvents.CAPABILITIES_AGREE, function() {
+            choiceContainer.on(orcaltiEvents.CAPABILITIES_AGREE, function() {
                 startLoadingCapabilitiesContainer();
                 setTypeStatusActive(typeData).always(function() {
                     stopLoadingCapabilitiesContainer();
@@ -412,7 +410,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
             // The user declines to let the tool use the data. In this case we leave
             // the tool as pending and they can delete it using the main screen if they
             // wish.
-            choiceContainer.on(ltiEvents.CAPABILITIES_DECLINE, function() {
+            choiceContainer.on(orcaltiEvents.CAPABILITIES_DECLINE, function() {
                 container.empty();
                 promise.resolve();
             });
@@ -464,7 +462,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
                             message: exception.message,
                             error: true
                         };
-                        $(document).trigger(ltiEvents.REGISTRATION_FEEDBACK, feedback);
+                        $(document).trigger(orcaltiEvents.REGISTRATION_FEEDBACK, feedback);
                         promise.reject(exception);
                     });
         }
@@ -517,7 +515,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
         var container = getExternalRegistrationTemplateContainer();
         container.empty();
 
-        $(document).trigger(ltiEvents.STOP_EXTERNAL_REGISTRATION);
+        $(document).trigger(orcaltiEvents.STOP_EXTERNAL_REGISTRATION);
     };
 
     /**
@@ -528,7 +526,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
      */
     var registerEventListeners = function() {
 
-        $(document).on(ltiEvents.START_EXTERNAL_REGISTRATION, function(event, data) {
+        $(document).on(orcaltiEvents.START_EXTERNAL_REGISTRATION, function(event, data) {
                 if (!data) {
                     return;
                 }
@@ -577,8 +575,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
                 // Trigger appropriate events when we've completed the necessary requests.
                 promise.done(function() {
                     finishExternalRegistration();
-                    $(document).trigger(ltiEvents.REGISTRATION_FEEDBACK, feedback);
-                    $(document).trigger(ltiEvents.NEW_TOOL_TYPE);
+                    $(document).trigger(orcaltiEvents.REGISTRATION_FEEDBACK, feedback);
+                    $(document).trigger(orcaltiEvents.NEW_TOOL_TYPE);
                 }).fail(notification.exception);
 
                 // We should have created a tool proxy by this point.
@@ -618,7 +616,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
                 // created.
                 promise.done(function() {
                     cancelRegistration().always(function() {
-                        $(document).trigger(ltiEvents.REGISTRATION_FEEDBACK, feedback);
+                        $(document).trigger(orcaltiEvents.REGISTRATION_FEEDBACK, feedback);
                     });
                 }).fail(notification.exception);
 
@@ -629,7 +627,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
         };
     };
 
-    return /** @alias module:mod_orcalti/external_registration */ {
+    return {
 
         /**
          * Initialise this module.

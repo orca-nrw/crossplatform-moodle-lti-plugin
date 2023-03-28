@@ -14,26 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 //
-// This file is part of BasicLTI4Moodle
+// This file is part of BasicORCALTI4Moodle
 //
-// BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)
-// consumer for Moodle 1.9 and Moodle 2.0. BasicLTI is a IMS Standard that allows web
-// based learning tools to be easily integrated in LMS as native ones. The IMS BasicLTI
+// BasicORCALTI4Moodle is an IMS BasicORCALTI (Basic Learning Tools for Interoperability)
+// consumer for Moodle 1.9 and Moodle 2.0. BasicORCALTI is a IMS Standard that allows web
+// based learning tools to be easily integrated in LMS as native ones. The IMS BasicORCALTI
 // specification is part of the IMS standard Common Cartridge 1.1 Sakai and other main LMS
-// are already supporting or going to support BasicLTI. This project Implements the consumer
+// are already supporting or going to support BasicORCALTI. This project Implements the consumer
 // for Moodle. Moodle is a Free Open source Learning Management System by Martin Dougiamas.
-// BasicLTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
+// BasicORCALTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
 // at the GESSI research group at UPC.
-// SimpleLTI consumer for Moodle is an implementation of the early specification of LTI
+// SimpleORCALTI consumer for Moodle is an implementation of the early specification of ORCALTI
 // by Charles Severance (Dr Chuck) htp://dr-chuck.com , developed by Jordi Piguillem in a
 // Google Summer of Code 2008 project co-mentored by Charles Severance and Marc Alier.
 //
-// BasicLTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
+// BasicORCALTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
 // of the Universitat Politecnica de Catalunya http://www.upc.edu
 // Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
 
 /**
- * This file contains en_utf8 translation of the Basic LTI module
+ * This file contains en_utf8 translation of the Basic ORCALTI module
  *
  * @package mod_orcalti
  * @copyright  2009 Marc Alier, Jordi Piguillem, Nikolas Galanis
@@ -66,6 +66,8 @@ $string['activate'] = 'Activate';
 $string['activatetoadddescription'] = 'You will need to activate this tool before you can add a description.';
 $string['active'] = 'Active';
 $string['activity'] = 'Activity';
+$string['add_orcaltiadv'] = 'Add ORCALTI Advantage';
+$string['add_orcaltilegacy'] = 'Add Legacy ORCALTI';
 $string['addnewapp'] = 'Enable external application';
 $string['addserver'] = 'Add new trusted server';
 $string['addtype'] = 'Add preconfigured tool';
@@ -75,17 +77,17 @@ $string['always'] = 'Always';
 $string['automatic'] = 'Automatic, based on tool URL';
 $string['autoaddtype'] = 'Add tool';
 $string['baseurl'] = 'Base URL/tool registration name';
-$string['basiclti'] = 'LTI';
-$string['basiclti_base_string'] = 'LTI OAuth base string';
-$string['basiclti_endpoint'] = 'LTI launch endpoint';
-$string['basiclti_in_new_window'] = 'Your activity has opened in a new window';
-$string['basiclti_in_new_window_open'] = 'Open in new window';
-$string['basiclti_parameters'] = 'LTI launch parameters';
-$string['basicltiactivities'] = 'LTI activities';
-$string['basicltifieldset'] = 'Custom example fieldset';
-$string['basicltiintro'] = 'Activity description';
-$string['basicltiname'] = 'Activity name';
-$string['basicltisettings'] = 'Basic Learning Tool Interoperability (LTI) settings';
+$string['basicorcalti'] = 'ORCALTI';
+$string['basicorcalti_base_string'] = 'ORCALTI OAuth base string';
+$string['basicorcalti_endpoint'] = 'ORCALTI launch endpoint';
+$string['basicorcalti_in_new_window'] = 'Your activity has opened in a new window';
+$string['basicorcalti_in_new_window_open'] = 'Open in new window';
+$string['basicorcalti_parameters'] = 'ORCALTI launch parameters';
+$string['basicorcaltiactivities'] = 'ORCALTI activities';
+$string['basicorcaltifieldset'] = 'Custom example fieldset';
+$string['basicorcaltiintro'] = 'Activity description';
+$string['basicorcaltiname'] = 'Activity name';
+$string['basicorcaltisettings'] = 'Basic Learning Tool Interoperability (ORCALTI) settings';
 $string['cachedef_keyset'] = 'Caches the keyset information of tools';
 $string['cancel'] = 'Cancel';
 $string['cancelled'] = 'Cancelled';
@@ -97,7 +99,7 @@ $string['capabilities_help'] = 'Select those capabilities which you wish to offe
 $string['cleanaccesstokens'] = 'External tool removal of expired access tokens';
 $string['click_to_continue'] = '<a href="{$a->link}" target="_top">Click to continue</a>';
 $string['clientidadmin'] = 'Client ID';
-$string['clientidadmin_help'] = 'The client ID is a unique value used to identify a tool. It is created automatically for each tool which uses the JWT security profile introduced in LTI 1.3 and should be part of the details passed to the tool provider so that they can configure the connection at their end.';
+$string['clientidadmin_help'] = 'The client ID is a unique value used to identify a tool. It is created automatically for each tool which uses the JWT security profile introduced in ORCALTI 1.3 and should be part of the details passed to the tool provider so that they can configure the connection at their end.';
 $string['comment'] = 'Comment';
 $string['configpassword'] = 'Default remote tool password';
 $string['configpreferheight'] = 'Default preferred height';
@@ -105,11 +107,13 @@ $string['configpreferwidget'] = 'Set widget as default launch';
 $string['configpreferwidth'] = 'Default preferred width';
 $string['configresourceurl'] = 'Default resource URL';
 $string['configtoolurl'] = 'Default remote tool URL';
-$string['configtypes'] = 'Enable LTI applications';
+$string['configtypes'] = 'Enable ORCALTI applications';
 $string['configured'] = 'Configured';
 $string['confirmtoolactivation'] = 'Are you sure you would like to activate this tool?';
-$string['contentitem'] = 'Content-Item Message';
-$string['contentitem_help'] = 'If ticked, the option \'Select content\' will be available when adding an external tool.';
+$string['contentitem_deeplinking'] = 'Supports Deep Linking (Content-Item Message)';
+$string['contentitem_deeplinking_help'] = 'If ticked, the option \'Select content\' will be available when adding an external tool.';
+$string['contentitem_muorcaltiple_description'] = 'The following items will be added to your course:';
+$string['contentitem_muorcaltiple_graded'] = 'Graded activity (Maximum grade: {$a})';
 $string['course_tool_types'] = 'Course tools';
 $string['courseactivitiesorresources'] = 'Course activities or resources';
 $string['courseid'] = 'Course ID number';
@@ -141,6 +145,7 @@ real estate to the tool, and others provide a more integrated feel with the Mood
         Depending on the browser, it will open in a new tab or a popup window.
         It is possible that browsers will prevent the new window from opening.';
 $string['delegate'] = 'Delegate to teacher';
+$string['delegate_tool'] = 'As specified in Deep Linking definition or Delegate to teacher';
 $string['delete'] = 'Delete';
 $string['delete_confirmation'] = 'Are you sure you want to delete this preconfigured tool?';
 $string['deletetype'] = 'Delete preconfigured tool';
@@ -161,6 +166,15 @@ $string['domain_mismatch'] = 'Tool URL\'s domain does not match tool configurati
 $string['donot'] = 'Do not send';
 $string['donotaccept'] = 'Do not accept';
 $string['donotallow'] = 'Do not allow';
+$string['dynreg_update_text'] = 'There are existing tools attached to the registration\'s domain. Do you want to update an already installed
+external tool or create a new external tool?';
+$string['dynreg_update_warn_dupdomain'] = 'It is not recommended to have muorcaltiple external tools under the same domain.';
+$string['dynreg_update_name'] = 'Tool name';
+$string['dynreg_update_url'] = 'Base URL';
+$string['dynreg_update_version'] = 'ORCALTI version';
+$string['dynreg_update_notools'] = 'No tools in context.';
+$string['dynreg_update_btn_update'] = 'Update';
+$string['dynreg_update_btn_new'] = 'Register as a new external tool';
 $string['duplicateregurl'] = 'This registration URL is already in use';
 $string['editdescription'] = 'Click here to give this tool a description';
 $string['edittype'] = 'Edit preconfigured tool';
@@ -176,9 +190,9 @@ $string['errorinvaliddata'] = 'Invalid data: {$a}';
 $string['errorinvalidmediatype'] = 'Invalid media type: {$a}';
 $string['errorinvalidresponseformat'] = 'Invalid Content-Item response format.';
 $string['errormisconfig'] = 'Misconfigured tool. Please ask your Moodle administrator to fix the configuration of the tool.';
-$string['errortooltypenotfound'] = 'LTI tool type not found.';
+$string['errortooltypenotfound'] = 'ORCALTI tool type not found.';
 $string['existing_window'] = 'Existing window';
-$string['extensions'] = 'LTI extension services';
+$string['extensions'] = 'ORCALTI extension services';
 $string['external_tool_type'] = 'Preconfigured tool';
 $string['external_tool_type_help'] = '* **Automatic, based on tool URL** - The best tool configuration is selected automatically. If the tool URL is not recognised, the tool configuration details may need to be entered manually.
 * **A specific preconfigured tool** - The tool configuration for the specified tool will be used when communicating with the external tool provider. If the tool URL does not appear to belong to the tool provider, a warning will be shown. It is not always necessary to enter a tool URL.
@@ -195,10 +209,10 @@ $string['external_tool_types'] = 'Preconfigured tools';
 $string['failedtoconnect'] = 'Moodle was unable to communicate with the "{$a}" system';
 $string['failedtocreatetooltype'] = 'Failed to create new tool. Please check the URL and try again.';
 $string['failedtodeletetoolproxy'] = 'Failed to delete tool registration. You may need to visit "Manage external tool registrations" and delete it manually.';
-$string['filter_basiclti_configlink'] = 'Configure your preferred sites and their passwords';
-$string['filter_basiclti_password'] = 'Password is mandatory';
-$string['filterconfig'] = 'LTI administration';
-$string['filtername'] = 'LTI';
+$string['filter_basicorcalti_configlink'] = 'Configure your preferred sites and their passwords';
+$string['filter_basicorcalti_password'] = 'Password is mandatory';
+$string['filterconfig'] = 'ORCALTI administration';
+$string['filtername'] = 'ORCALTI';
 $string['fixexistingconf'] = 'Use an existing configuration for the misconfigured instance';
 $string['fixnew'] = 'New configuration';
 $string['fixnewconf'] = 'Define a new configuration for the misconfigured instance';
@@ -215,22 +229,22 @@ $string['global_tool_types'] = 'Preconfigured tools';
 $string['grading'] = 'Grade routing';
 $string['icon_url'] = 'Icon URL';
 $string['icon_url_help'] = 'The icon URL allows the icon that shows up in the course listing for this activity to be modified. Instead of using the default
-LTI icon, an icon which conveys the type of activity may be specified.';
+ORCALTI icon, an icon which conveys the type of activity may be specified.';
 $string['id'] = 'ID';
-$string['indicator:cognitivedepth'] = 'LTI cognitive';
-$string['indicator:cognitivedepth_help'] = 'This indicator is based on the cognitive depth reached by the student in an LTI activity.';
-$string['indicator:cognitivedepthdef'] = 'LTI cognitive';
-$string['indicator:cognitivedepthdef_help'] = 'The participant has reached this percentage of the cognitive engagement offered by the LTI activities during this analysis interval (Levels = No view, View, Submit, View feedback)';
+$string['indicator:cognitivedepth'] = 'ORCALTI cognitive';
+$string['indicator:cognitivedepth_help'] = 'This indicator is based on the cognitive depth reached by the student in an ORCALTI activity.';
+$string['indicator:cognitivedepthdef'] = 'ORCALTI cognitive';
+$string['indicator:cognitivedepthdef_help'] = 'The participant has reached this percentage of the cognitive engagement offered by the ORCALTI activities during this analysis interval (Levels = No view, View, Submit, View feedback)';
 $string['indicator:cognitivedepthdef_link'] = 'Learning_analytics_indicators#Cognitive_depth';
-$string['indicator:socialbreadth'] = 'LTI social';
-$string['indicator:socialbreadth_help'] = 'This indicator is based on the social breadth reached by the student in an LTI activity.';
-$string['indicator:socialbreadthdef'] = 'LTI social';
-$string['indicator:socialbreadthdef_help'] = 'The participant has reached this percentage of the social engagement offered by the LTI activities during this analysis interval (Levels = No participation, Participant alone, Participant with others)';
+$string['indicator:socialbreadth'] = 'ORCALTI social';
+$string['indicator:socialbreadth_help'] = 'This indicator is based on the social breadth reached by the student in an ORCALTI activity.';
+$string['indicator:socialbreadthdef'] = 'ORCALTI social';
+$string['indicator:socialbreadthdef_help'] = 'The participant has reached this percentage of the social engagement offered by the ORCALTI activities during this analysis interval (Levels = No participation, Participant alone, Participant with others)';
 $string['indicator:socialbreadthdef_link'] = 'Learning_analytics_indicators#Social_breadth';
 $string['initiatelogin'] = 'Initiate login URL';
 $string['initiatelogin_help'] = 'The tool URL to which requests for initiating a login are to be sent.  This URL is required before a message can be successfully sent to the tool.';
-$string['invalidid'] = 'LTI ID was incorrect';
-$string['jwtsecurity'] = 'LTI 1.3';
+$string['invalidid'] = 'ORCALTI ID was incorrect';
+$string['jwtsecurity'] = 'ORCALTI 1.3';
 $string['keytype'] = 'Public key type';
 $string['keytype_help'] = 'The authentication method used to validate the tool.';
 $string['keytype_keyset'] = 'Keyset URL';
@@ -258,32 +272,31 @@ real estate to the tool, and others provide a more integrated feel with the Mood
         It is possible that browsers will prevent the new window from opening.';
 $string['launchoptions'] = 'Launch options';
 $string['leaveblank'] = 'Leave blank if you do not need them';
-$string['orcalti'] = 'LTI';
-$string['lti:addinstance'] = 'Add a new external tool';
-$string['lti:addcoursetool'] = 'Add course-specific tool configurations';
-$string['lti:addmanualinstance'] = 'Add a manually-configured tool';
-$string['lti:addinstance'] = 'Add a new external tool';
-$string['lti:addpreconfiguredinstance'] = 'Add a preconfigured tool';
-$string['lti:grade'] = 'View grades returned by the external tool';
-$string['lti:manage'] = 'Be an Instructor when the tool is launched';
-$string['lti:admin'] = 'Be an administrator when the tool is launched';
-$string['lti:requesttooladd'] = 'Request a tool is configured site-wide';
-$string['lti:view'] = 'Launch external tool activities';
-$string['ltisettings'] = 'LTI settings';
-$string['lti_administration'] = 'Edit preconfigured tool';
-$string['lti_errormsg'] = 'The tool returned the following error message: "{$a}"';
-$string['lti_launch_error'] = 'An error occurred when launching the external tool:';
-$string['lti_launch_error_tool_request'] = '<p>
+$string['orcalti'] = 'ORCALTI';
+$string['orcalti:addcoursetool'] = 'Add course-specific tool configurations';
+$string['orcalti:addmanualinstance'] = 'Add a manually-configured tool';
+$string['orcalti:addinstance'] = 'Add a new external tool';
+$string['orcalti:addpreconfiguredinstance'] = 'Add a preconfigured tool';
+$string['orcalti:grade'] = 'View grades returned by the external tool';
+$string['orcalti:manage'] = 'Be an Instructor when the tool is launched';
+$string['orcalti:admin'] = 'Be an administrator when the tool is launched';
+$string['orcalti:requesttooladd'] = 'Request a tool is configured site-wide';
+$string['orcalti:view'] = 'Launch external tool activities';
+$string['orcaltisettings'] = 'ORCALTI settings';
+$string['orcalti_administration'] = 'Edit preconfigured tool';
+$string['orcalti_errormsg'] = 'The tool returned the following error message: "{$a}"';
+$string['orcalti_launch_error'] = 'An error occurred when launching the external tool:';
+$string['orcalti_launch_error_tool_request'] = '<p>
 To submit a request for an administrator to complete the tool configuration, click <a href="{$a->admin_request_url}" target="_top">here</a>.
 </p>';
-$string['lti_launch_error_unsigned_help'] = '<p>This error may be a result of a missing consumer key and shared secret for the tool provider.</p>
+$string['orcalti_launch_error_unsigned_help'] = '<p>This error may be a result of a missing consumer key and shared secret for the tool provider.</p>
 <p>If you have a consumer key and shared secret, you may enter it when editing the external tool instance (make sure advanced options are visible).</p>
 <p>Alternatively, you may <a href="{$a->course_tool_editor}">create a course level tool provider configuration</a>.</p>';
-$string['lti_tool_request_added'] = 'Tool configuration request successfully submitted. You may need to contact an administrator to complete the tool configuration.';
-$string['lti_tool_request_existing'] = 'A tool configuration for the tool domain has already been submitted.';
-$string['ltiunknownserviceapicall'] = 'LTI unknown service API call.';
-$string['ltiversion'] = 'LTI version';
-$string['ltiversion_help'] = 'The version of LTI being used for signing messages and service requests: LTI 1.0/1.1 and LTI 2.0 use the OAuth 1.0A security profile; LTI 1.3.0 uses JWTs.';
+$string['orcalti_tool_request_added'] = 'Tool configuration request successfully submitted. You may need to contact an administrator to complete the tool configuration.';
+$string['orcalti_tool_request_existing'] = 'A tool configuration for the tool domain has already been submitted.';
+$string['orcaltiunknownserviceapicall'] = 'ORCALTI unknown service API call.';
+$string['orcaltiversion'] = 'ORCALTI version';
+$string['orcaltiversion_help'] = 'The version of ORCALTI being used for signing messages and service requests: ORCALTI 1.0/1.1 and ORCALTI 2.0 use the OAuth 1.0A security profile; ORCALTI 1.3.0 uses JWTs.';
 $string['main_admin'] = 'General help';
 $string['main_admin_help'] = 'External tools allow Moodle users to interact with learning resources hosted remotely. Through a special launch protocol, the remote tool has access to general information about the launching user. For example, the institution name, course ID, user ID, and other information such as the user\'s name or email address.
 
@@ -313,42 +326,38 @@ External tool activities differ from URL resources in a few ways:
 $string['modulename_link'] = 'mod/orcalti/view';
 $string['modulename_shortcut_link'] = 'mod/orcalti/view/custom';
 $string['modulenameplural'] = 'External tools';
-$string['modulenamepluralformatted'] = 'LTI Instances';
+$string['modulenamepluralformatted'] = 'ORCALTI Instances';
 $string['name'] = 'Name';
 $string['never'] = 'Never';
 $string['new_window'] = 'New window';
-$string['no_lti_configured'] = 'There are no active external tools configured.';
-$string['no_lti_pending'] = 'There are no pending external tools.';
-$string['no_lti_rejected'] = 'There are no rejected external tools.';
-$string['no_lti_tools'] = 'There are no external tools configured.';
+$string['no_orcalti_configured'] = 'There are no active external tools configured.';
+$string['no_orcalti_pending'] = 'There are no pending external tools.';
+$string['no_orcalti_rejected'] = 'There are no rejected external tools.';
+$string['no_orcalti_tools'] = 'There are no external tools configured.';
 $string['no_tp_accepted'] = 'There are no accepted external tool registrations.';
 $string['no_tp_cancelled'] = 'There are no cancelled external tool registrations.';
 $string['no_tp_configured'] = 'There are no unregistered external tool registrations configured.';
 $string['no_tp_pending'] = 'There are no pending external tool registrations.';
 $string['no_tp_rejected'] = 'There are no rejected external tool registrations.';
 $string['noattempts'] = 'No attempts have been made on this tool instance';
-$string['noltis'] = 'There are no external tool instances';
+$string['noorcaltis'] = 'There are no external tool instances';
 $string['noprofileservice'] = 'Profile service not found';
 $string['noservers'] = 'No servers found';
-$string['notypes'] = 'There are currently no LTI tools set up in Moodle. Click the Install link above to add some.';
+$string['notypes'] = 'There are currently no ORCALTI tools set up in Moodle. Click the Install link above to add some.';
 $string['noviewusers'] = 'No users were found with permissions to use this tool';
 $string['oauthsecurity'] = 'LTI 1.0/1.1';
 $string['optionalsettings'] = 'Optional settings';
-$string['organization'] = 'Organization details';
-$string['organizationdescr'] = 'Organization description';
-$string['organizationid'] = 'Organization ID';
-$string['organizationid_help'] = 'A unique identifier for this Moodle instance. Typically, the DNS name of the organization is used.
-
-If this field is left blank, the host name of this Moodle site will be used as the default value.';
-
-$string['organizationid_default'] = 'Default Organization ID';
+$string['organization'] = 'Organisation details';
+$string['organizationdescr'] = 'Organisation description';
+$string['organizationid_default'] = 'Default organisation ID';
 $string['siteid'] = 'Site ID';
 $string['sitehost'] = 'Site hostname';
-$string['organizationidguid'] = 'Organization ID';
+$string['organizationid_default_help'] = 'The default value to use for Organisation ID. Site ID identifies this installation of Moodle.';
+$string['organizationidguid'] = 'Organisation ID';
 $string['organizationidguid_help'] = 'A unique identifier for this Moodle instance passed to the tool as the Platform Instance GUID.
 
 If this field is left blank, the default value will be used.';
-$string['organizationurl'] = 'Organization URL';
+$string['organizationurl'] = 'Organisation URL';
 $string['organizationurl_help'] = 'The base URL of this Moodle instance.
 
 If this field is left blank, a default value will be used based on the site configuration.';
@@ -381,38 +390,38 @@ $string['preferwidget'] = 'Prefer widget launch';
 $string['preferwidth'] = 'Preferred width';
 $string['press_to_submit'] = 'Press to launch this activity';
 $string['privacy'] = 'Privacy';
-$string['privacy:metadata:courseid'] = 'The ID of the course the user is accessing the LTI Consumer from';
-$string['privacy:metadata:courseidnumber'] = 'The ID number of the course the user is accessing the LTI Consumer from';
-$string['privacy:metadata:coursefullname'] = 'The fullname of the course the user is accessing the LTI Consumer from';
-$string['privacy:metadata:courseshortname'] = 'The shortname of the course the user is accessing the LTI Consumer from';
+$string['privacy:metadata:courseid'] = 'The ID of the course the user is accessing the ORCALTI Consumer from';
+$string['privacy:metadata:courseidnumber'] = 'The ID number of the course the user is accessing the ORCALTI Consumer from';
+$string['privacy:metadata:coursefullname'] = 'The fullname of the course the user is accessing the ORCALTI Consumer from';
+$string['privacy:metadata:courseshortname'] = 'The shortname of the course the user is accessing the ORCALTI Consumer from';
 $string['privacy:metadata:createdby'] = 'The user who created the record';
-$string['privacy:metadata:email'] = 'The email address of the user accessing the LTI Consumer';
-$string['privacy:metadata:externalpurpose'] = 'The LTI Consumer provides user information and context to the LTI Tool Provider.';
-$string['privacy:metadata:firstname'] = 'The firstname of the user accessing the LTI Consumer';
-$string['privacy:metadata:fullname'] = 'The fullname of the user accessing the LTI Consumer';
-$string['privacy:metadata:lastname'] = 'The lastname of the user accessing the LTI Consumer';
-$string['privacy:metadata:orcalti_submission'] = 'LTI submission';
+$string['privacy:metadata:email'] = 'The email address of the user accessing the ORCALTI Consumer';
+$string['privacy:metadata:externalpurpose'] = 'The ORCALTI Consumer provides user information and context to the ORCALTI Tool Provider.';
+$string['privacy:metadata:firstname'] = 'The firstname of the user accessing the ORCALTI Consumer';
+$string['privacy:metadata:fullname'] = 'The fullname of the user accessing the ORCALTI Consumer';
+$string['privacy:metadata:lastname'] = 'The lastname of the user accessing the ORCALTI Consumer';
+$string['privacy:metadata:orcalti_submission'] = 'ORCALTI submission';
 $string['privacy:metadata:orcalti_submission:datesubmitted'] = 'The timestamp indicating when the submission was made';
 $string['privacy:metadata:orcalti_submission:dateupdated'] = 'The timestamp indicating when the submission was modified';
 $string['privacy:metadata:orcalti_submission:gradepercent'] = 'The grade for the user as a percentage';
 $string['privacy:metadata:orcalti_submission:originalgrade'] = 'The original grade for the user';
-$string['privacy:metadata:orcalti_submission:userid'] = 'The ID of the user who submitted for the LTI activity';
-$string['privacy:metadata:orcalti_tool_proxies'] = 'LTI proxies';
-$string['privacy:metadata:orcalti_tool_proxies:name'] = 'LTI proxy name';
-$string['privacy:metadata:orcalti_types'] = 'LTI types';
-$string['privacy:metadata:orcalti_types:name'] = 'LTI type name';
-$string['privacy:metadata:role'] = 'The role in the course for the user accessing the LTI Consumer';
+$string['privacy:metadata:orcalti_submission:userid'] = 'The ID of the user who submitted for the ORCALTI activity';
+$string['privacy:metadata:orcalti_tool_proxies'] = 'ORCALTI proxies';
+$string['privacy:metadata:orcalti_tool_proxies:name'] = 'ORCALTI proxy name';
+$string['privacy:metadata:orcalti_types'] = 'ORCALTI types';
+$string['privacy:metadata:orcalti_types:name'] = 'ORCALTI type name';
+$string['privacy:metadata:role'] = 'The role in the course for the user accessing the ORCALTI Consumer';
 $string['privacy:metadata:timecreated'] = 'The time when the record was created';
 $string['privacy:metadata:timemodified'] = 'The time when the record was modified';
-$string['privacy:metadata:userid'] = 'The ID of the user accessing the LTI Consumer';
-$string['privacy:metadata:useridnumber'] = 'The ID number of the user accessing the LTI Consumer';
-$string['privacy:metadata:username'] = 'The username of the user accessing the LTI Consumer';
+$string['privacy:metadata:userid'] = 'The ID of the user accessing the ORCALTI Consumer';
+$string['privacy:metadata:useridnumber'] = 'The ID number of the user accessing the ORCALTI Consumer';
+$string['privacy:metadata:username'] = 'The username of the user accessing the ORCALTI Consumer';
 $string['publickey'] = 'Public key';
 $string['publickeyset'] = 'Public keyset';
 $string['publickeyset_help'] = 'Public keyset from where this site will retrieve the tool\'s public key to allow signatures of incoming messages and service requests to be verified.';
 $string['publickey_help'] = 'The public key (in PEM format) provided by the tool to allow signatures of incoming messages and service requests to be verified.';
 $string['quickgrade'] = 'Allow quick grading';
-$string['quickgrade_help'] = 'If enabled, multiple tools can be graded on one page. Add grades and comments then click the "Save all my feedback" button to save all changes for that page.';
+$string['quickgrade_help'] = 'If enabled, muorcaltiple tools can be graded on one page. Add grades and comments then click the "Save all my feedback" button to save all changes for that page.';
 $string['redirect'] = 'You will be redirected in few seconds. If you are not, press the button.';
 $string['redirectionuris'] = 'Redirection URI(s)';
 $string['redirectionuris_help'] = 'A list of URIs (one per line) which the tool uses when making authorisation requests.  At least one must be registered before a message can be successfully sent to the tool.';
@@ -492,25 +501,25 @@ $string['share_roster_help'] = 'Specify whether the tool can access the list of 
 
 Note that this setting may be overridden in the tool configuration.';
 $string['show_in_course_activity_chooser'] = 'Show in activity chooser and as a preconfigured tool';
-$string['show_in_course_lti1'] = 'Tool configuration usage';
-$string['show_in_course_lti1_help'] = 'This tool may be shown in the activity chooser for a teacher to select to add to a course. Alternatively, it may be shown in the preconfigured tool drop-down menu when adding an external tool to a course. A further option is for the tool configuration to only be used if the exact tool URL is entered when adding an external tool to a course.';
-$string['show_in_course_lti2'] = 'Tool configuration usage';
-$string['show_in_course_lti2_help'] = 'This tool can be shown in the activity chooser for a teacher to select to add to a course or in the preconfigured tool drop-down menu when adding an external tool to a course.';
+$string['show_in_course_orcalti1'] = 'Tool configuration usage';
+$string['show_in_course_orcalti1_help'] = 'This tool may be shown in the activity chooser for a teacher to select to add to a course. Alternatively, it may be shown in the preconfigured tool drop-down menu when adding an external tool to a course. A further option is for the tool configuration to only be used if the exact tool URL is entered when adding an external tool to a course.';
+$string['show_in_course_orcalti2'] = 'Tool configuration usage';
+$string['show_in_course_orcalti2_help'] = 'This tool can be shown in the activity chooser for a teacher to select to add to a course or in the preconfigured tool drop-down menu when adding an external tool to a course.';
 $string['show_in_course_no'] = 'Do not show; use only when a matching tool URL is entered';
 $string['show_in_course_preconfigured'] = 'Show as preconfigured tool when adding an external tool';
 $string['size'] = 'Size parameters';
-$string['opensslconfiginvalid'] = 'LTI 1.3 requires a valid openssl.cnf to be configured and available to your web server. Please contact the site administrator to configure and enable openssl for this site.';
+$string['opensslconfiginvalid'] = 'ORCALTI 1.3 requires a valid openssl.cnf to be configured and available to your web server. Please contact the site administrator to configure and enable openssl for this site.';
 $string['submission'] = 'Submission';
 $string['submissions'] = 'Submissions';
 $string['submissionsfor'] = 'Submissions for {$a}';
 $string['successfullycreatedtooltype'] = 'Successfully created new tool!';
 $string['successfullyfetchedtoolconfigurationfromcontent'] = 'Successfully fetched tool configuration from the selected content.';
-$string['subplugintype_ltiresource'] = 'LTI service resource';
-$string['subplugintype_ltiresource_plural'] = 'LTI service resources';
-$string['subplugintype_orcaltiservice'] = 'LTI service';
-$string['subplugintype_orcaltiservice_plural'] = 'LTI services';
-$string['subplugintype_ltisource'] = 'LTI source';
-$string['subplugintype_ltisource_plural'] = 'LTI sources';
+$string['subplugintype_orcaltiresource'] = 'ORCALTI service resource';
+$string['subplugintype_orcaltiresource_plural'] = 'ORCALTI service resources';
+$string['subplugintype_orcaltiservice'] = 'ORCALTI service';
+$string['subplugintype_orcaltiservice_plural'] = 'ORCALTI services';
+$string['subplugintype_orcaltisource'] = 'ORCALTI source';
+$string['subplugintype_orcaltisource_plural'] = 'ORCALTI sources';
 $string['toggle_debug_data'] = 'Toggle debug data';
 $string['tool_config_not_found'] = 'Tool configuration not found for this URL.';
 $string['tool_settings'] = 'Tool settings';
@@ -522,16 +531,16 @@ $string['tooldetailsaccesstokenurl'] = 'Access token URL';
 $string['tooldetailsauthrequesturl'] = 'Authentication request URL';
 $string['tooldetailsclientid'] = 'Client ID';
 $string['tooldetailsdeploymentid'] = 'Deployment ID';
-$string['tooldetailsmailtosubject'] = 'LTI tool configuration';
+$string['tooldetailsmailtosubject'] = 'ORCALTI tool configuration';
 $string['tooldetailsmodalemail'] = 'Email';
 $string['tooldetailsmodallink'] = 'View configuration details';
-$string['tooldetailsmodaltitle'] = 'Tool configuration details';
+$string['tooldetailsmodaorcaltitle'] = 'Tool configuration details';
 $string['tooldetailsplatformid'] = 'Platform ID';
 $string['tooldetailspublickeyseturl'] = 'Public keyset URL';
 $string['toolisbeingused'] = 'This tool is being used {$a} times';
 $string['toolisnotbeingused'] = 'This tool has not yet been used';
 $string['toolproxy'] = 'External tool registrations';
-$string['toolproxy_help'] = 'External tool registrations allow Moodle site administrators to configure external tools from a tool proxy obtained from a tool provider supporting LTI 2.0. A registration URL provided by the tool provider is all that is required to initiate the process. The capabilities and services offered to the tool provider are selected when configuring a new registration.
+$string['toolproxy_help'] = 'External tool registrations allow Moodle site administrators to configure external tools from a tool proxy obtained from a tool provider supporting ORCALTI 2.0. A registration URL provided by the tool provider is all that is required to initiate the process. The capabilities and services offered to the tool provider are selected when configuring a new registration.
 
 Tool registrations listed on this page are separated into four categories:
 
@@ -593,11 +602,9 @@ $string['using_tool_configuration'] = 'Using tool configuration: ';
 $string['validurl'] = 'A valid URL must start with http(s)://';
 $string['viewsubmissions'] = 'View submissions and grading screen';
 
-// Deprecated since Moodle 3.9.
-$string['organizationid'] = 'Organisation ID';
-$string['organizationid_help'] = 'A unique identifier for this Moodle instance. Typically, the DNS name of the organisation is used.
-
-If this field is left blank, the host name of this Moodle site will be used as the default value.';
+// Deprecated since Moodle 3.10.
+$string['contentitem'] = 'Content-Item Message';
+$string['contentitem_help'] = 'If ticked, the option \'Select content\' will be available when adding an external tool.';
 
 // Custom.
 $string['choose_activity'] = 'Choose an ORCA-activity';
@@ -637,3 +644,4 @@ $string['orcalti_password_details'] = 'Password for accessing ORCA content. This
 $string['orcalti_url'] = 'ORCA-LTI-Provider-URL';
 $string['orcalti_url_details'] = 'URL of the ORCA server. If empty the default values will be used.';
 $string["missing_orca_content"] = "Please select ORCA-content";
+$string['pluginnameconfiguration'] = 'ORCA-LTI Configuration LTI 1.3';

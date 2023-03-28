@@ -23,6 +23,7 @@
  * @author     Darko Miletic
  */
 
+defined('MOODLE_INTERNAL') || die();
 
 class moodle1_mod_orcalti_handler extends moodle1_mod_handler {
 
@@ -39,7 +40,7 @@ class moodle1_mod_orcalti_handler extends moodle1_mod_handler {
      * For each path returned, the corresponding conversion method must be
      * defined.
      *
-     * Note that the path /MOODLE_BACKUP/COURSE/MODULES/MOD/LTI does not
+     * Note that the path /MOODLE_BACKUP/COURSE/MODULES/MOD/ORCALTI does not
      * actually exist in the file. The last element with the module name was
      * appended by the moodle1_converter class.
      *
@@ -49,14 +50,14 @@ class moodle1_mod_orcalti_handler extends moodle1_mod_handler {
 
         return array(
             new convert_path(
-                'basiclti', '/MOODLE_BACKUP/COURSE/MODULES/MOD/LTI'
+                'basicorcalti', '/MOODLE_BACKUP/COURSE/MODULES/MOD/ORCALTI'
             )
         );
 
     }
 
     /**
-     * This is executed every time we have one /MOODLE_BACKUP/COURSE/MODULES/MOD/LTI
+     * This is executed every time we have one /MOODLE_BACKUP/COURSE/MODULES/MOD/ORCALTI
      * data available
      */
     public function process_basicorcalti($data) {
@@ -77,16 +78,16 @@ class moodle1_mod_orcalti_handler extends moodle1_mod_handler {
         $data['intro'] = moodle1_converter::migrate_referenced_files($data['intro'], $this->fileman);
 
         // Start writing assignment.xml.
-        $this->open_xml_writer("activities/lti_{$this->moduleid}/lti.xml");
+        $this->open_xml_writer("activities/orcalti_{$this->moduleid}/orcalti.xml");
         $this->xmlwriter->begin_tag('activity', array('id' => $instanceid, 'moduleid' => $this->moduleid,
                 'modulename' => 'orcalti', 'contextid' => $contextid));
         $this->xmlwriter->begin_tag('orcalti', array('id' => $instanceid));
 
         $ignorefields = array('id', 'modtype');
-        if (!$DB->record_exists('orcalti_types', array('id' => $data['typeid']))) {
+        if (!$DB->record_exists('lti_types', array('id' => $data['typeid']))) {
             $ntypeid = false;
             $toolurls = $DB->get_records_select(
-                    'orcalti_types_config',
+                    'lti_types_config',
                     "name = 'toolurl' AND " . $DB->sql_compare_text('value', 256) . ' = ' .  $DB->sql_compare_text('?', 256),
                     [$data['toolurl']],
                     '',
@@ -99,10 +100,10 @@ class moodle1_mod_orcalti_handler extends moodle1_mod_handler {
                 }
             }
             if ($ntypeid === false) {
-                $ntypeid = $DB->get_field('orcalti_types_config',
+                $ntypeid = $DB->get_field('lti_types_config',
                                           'typeid',
                                           array(),
-                                          IGNORE_MULTIPLE);
+                                          IGNORE_MUORCALTIPLE);
 
             }
             if ($ntypeid === false) {
@@ -126,13 +127,13 @@ class moodle1_mod_orcalti_handler extends moodle1_mod_handler {
      * This is executed when we reach the closing </MOD> tag of our 'orcalti' path
      */
     public function on_basicorcalti_end() {
-        // Finish writing basiclti.xml.
+        // Finish writing basicorcalti.xml.
         $this->xmlwriter->end_tag('orcalti');
         $this->xmlwriter->end_tag('activity');
         $this->close_xml_writer();
 
         // Write inforef.xml.
-        $this->open_xml_writer("activities/lti_{$this->moduleid}/inforef.xml");
+        $this->open_xml_writer("activities/orcalti_{$this->moduleid}/inforef.xml");
         $this->xmlwriter->begin_tag('inforef');
         $this->xmlwriter->begin_tag('fileref');
         foreach ($this->fileman->get_fileids() as $fileid) {

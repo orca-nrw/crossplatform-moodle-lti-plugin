@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A scheduled task for lti module.
+ * A scheduled task for orcalti module.
  *
  * @package    mod_orcalti
  * @copyright  2019 Stephen Vickers
@@ -25,8 +25,10 @@ namespace mod_orcalti\task;
 
 use core\task\scheduled_task;
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
- * Class containing the scheduled task for lti module.
+ * Class containing the scheduled task for orcalti module.
  *
  * @package    mod_orcalti
  * @copyright  2018 Stephen Vickers
@@ -44,7 +46,7 @@ class clean_access_tokens extends scheduled_task {
     }
 
     /**
-     * Run lti cron.
+     * Run orcalti cron.
      */
     public function execute() {
         global $DB;

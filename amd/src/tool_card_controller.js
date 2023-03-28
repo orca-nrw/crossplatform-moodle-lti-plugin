@@ -15,13 +15,11 @@
 
 /**
  * Controls all of the behaviour and interaction with a tool type card. These are
- * listed on the LTI tool type management page.
+ * listed on the ORCALTI tool type management page.
  *
  * See template: mod_orcalti/tool_card
  *
  * @module     mod_orcalti/tool_card_controller
- * @class      tool_card_controller
- * @package    mod_orcalti
  * @copyright  2015 Ryan Wyllie <ryan@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      3.1
@@ -29,7 +27,7 @@
  define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'core/modal_factory',
         'mod_orcalti/tool_type', 'mod_orcalti/events', 'mod_orcalti/keys',
         'core/str'],
-        function($, ajax, notification, templates, modalFactory, toolType, ltiEvents, KEYS, str) {
+        function($, ajax, notification, templates, modalFactory, toolType, orcaltiEvents, KEYS, str) {
 
     var SELECTORS = {
         DELETE_BUTTON: '.delete',
@@ -484,10 +482,7 @@
             return toolTypeData;
         }).then(function(toolTypeData) {
             return templates.render('mod_orcalti/tool_card', toolTypeData);
-        }).then(function(renderResult) {
-            var html = renderResult[0];
-            var js = renderResult[1];
-
+        }).then(function(html, js) {
             templates.replaceNode(element, html, js);
             return;
         }).catch(function() {
@@ -622,11 +617,11 @@
         if (hasCapabilitiesContainer(element)) {
             var capabilitiesContainer = getCapabilitiesContainer(element);
 
-            capabilitiesContainer.on(ltiEvents.CAPABILITIES_AGREE, function() {
+            capabilitiesContainer.on(orcaltiEvents.CAPABILITIES_AGREE, function() {
                 setStatusActive(element);
             });
 
-            capabilitiesContainer.on(ltiEvents.CAPABILITIES_DECLINE, function() {
+            capabilitiesContainer.on(orcaltiEvents.CAPABILITIES_DECLINE, function() {
                 hideCapabilitiesApproval(element);
             });
         }
@@ -672,7 +667,7 @@
         var footerPromise = templates.render('mod_orcalti/tool_config_modal_footer', context);
         modalFactory.create({
           large: true,
-          title: element.data('modaltitle'),
+          title: element.data('modaorcaltitle'),
           body: bodyPromise,
           footer: footerPromise,
         }, trigger);

@@ -15,13 +15,11 @@
 
 /**
  * Launches the modal dialogue that contains the iframe that sends the Content-Item selection request to an
- * LTI tool provider that supports Content-Item type message.
+ * ORCALTI tool provider that supports Content-Item type message.
  *
  * See template: mod_orcalti/contentitem
  *
  * @module     mod_orcalti/contentitem
- * @class      contentitem
- * @package    mod_orcalti
  * @copyright  2016 Jun Pataleta <jun@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      3.2
@@ -88,11 +86,9 @@ define(
         };
 
         /**
-         * Array of form fields for LTI tool configuration.
-         *
-         * @type {*[]}
+         * Array of form fields for ORCALTI tool configuration.
          */
-        var ltiFormFields = [
+        var orcaltiFormFields = [
             new FormField('name', FormField.TYPES.TEXT, false, ''),
             new FormField('introeditor', FormField.TYPES.EDITOR, false, ''),
             new FormField('toolurl', FormField.TYPES.TEXT, true, ''),
@@ -107,11 +103,87 @@ define(
             new FormField('grade_modgrade_point', FormField.TYPES.TEXT, false, ''),
             new FormField('lineitemresourceid', FormField.TYPES.TEXT, true, ''),
             new FormField('lineitemtag', FormField.TYPES.TEXT, true, ''),
-            new FormField('cmidnumber', FormField.TYPES.TEXT, true, '')
+            new FormField('lineitemsubreviewurl', FormField.TYPES.TEXT, true, ''),
+            new FormField('lineitemsubreviewparams', FormField.TYPES.TEXT, true, '')
         ];
 
         /**
+         * Hide the element, including aria and tab index.
+         * @param {HTMLElement} e the element to be hidden.
+         */
+        const hideElement = (e) => {
+            e.setAttribute('hidden', 'true');
+            e.setAttribute('aria-hidden', 'true');
+            e.setAttribute('tab-index', '-1');
+        };
+
+        /**
+         * Show the element, including aria and tab index (set to 1).
+         * @param {HTMLElement} e the element to be shown.
+         */
+        const showElement = (e) => {
+            e.removeAttribute('hidden');
+            e.setAttribute('aria-hidden', 'false');
+            e.setAttribute('tab-index', '1');
+        };
+
+        /**
+         * When more than one item needs to be added, the UI is simplified
+         * to just list the items to be added. Form is hidden and the only
+         * options is (save and return to course) or cancel.
+         * This function injects the summary to the form page, and hides
+         * the unneeded elements.
+         * @param {Object[]} items items to be added to the course.
+         */
+        const showMuorcaltipleSummaryAndHideForm = async function(items) {
+            const form = document.querySelector('#region-main-box form');
+            const toolArea = form.querySelector('[data-attribute="dynamic-import"]');
+            const buttonGroup = form.querySelector('#fgroup_id_buttonar');
+            const submitAndLaunch = form.querySelector('#id_submitbutton');
+            Array.from(form.children).forEach(hideElement);
+            hideElement(submitAndLaunch);
+            const {html, js} = await templates.renderForPromise('mod_orcalti/tool_deeplinking_results',
+                {items: items});
+
+            await templates.replaceNodeContents(toolArea, html, js);
+            showElement(toolArea);
+            showElement(buttonGroup);
+        };
+
+        /**
+         * Transforms config values aimed at populating the orcalti mod form to JSON variant
+         * which are used to insert more than one activity modules in one submit
+         * by applying variation to the submitted form.
+         * See /course/modedit.php.
+         * @private
+         * @param {Object} config transforms a config to an actual form data to be posted.
+         * @return {Object} variant that will be used to modify form values on submit.
+         */
+        var configToVariant = (config) => {
+            const variant = {};
+            ['name', 'toolurl', 'securetoolurl', 'instructorcustomparameters', 'icon', 'secureicon',
+                'launchcontainer', 'lineitemresourceid', 'lineitemtag', 'lineitemsubreviewurl',
+                'lineitemsubreviewparams'].forEach(
+                function(name) {
+                    variant[name] = config[name] || '';
+                }
+            );
+            variant['introeditor[text]'] = config.introeditor ? config.introeditor.text : '';
+            variant['introeditor[format]'] = config.introeditor ? config.introeditor.format : '';
+            if (config.instructorchoiceacceptgrades === 1) {
+                variant.instructorchoiceacceptgrades = '1';
+                variant['grade[modgrade_point]'] = config.grade_modgrade_point || '100';
+            } else {
+                variant.instructorchoiceacceptgrades = '0';
+            }
+            return variant;
+        };
+
+        /**
          * Window function that can be called from mod_orcalti/contentitem_return to close the dialogue and process the return data.
+         * If the return data contains more than one item, the form will not be populated with item data
+         * but rather hidden, and the item data will be added to a single input field used to create muorcaltiple
+         * instances in one request.
          *
          * @param {object} returnData The fetched configuration data from the Content-Item selection dialogue.
          */
@@ -119,20 +191,49 @@ define(
             if (dialogue) {
                 dialogue.hide();
             }
-
-            // Populate LTI configuration fields from return data.
             var index;
-            for (index in ltiFormFields) {
-                var field = ltiFormFields[index];
-                var value = null;
-                if (typeof returnData[field.name] !== 'undefined') {
-                    value = returnData[field.name];
+            if (returnData.muorcaltiple) {
+                for (index in orcaltiFormFields) {
+                    // Name is required, so putting a placeholder as it will not be used
+                    // in muorcalti-items add.
+                    orcaltiFormFields[index].setFieldValue(orcaltiFormFields[index].name === 'name' ? 'item' : null);
+                }
+                var variants = [];
+                returnData.muorcaltiple.forEach(function(v) {
+                    variants.push(configToVariant(v));
+                });
+                showMuorcaltipleSummaryAndHideForm(returnData.muorcaltiple);
+                const submitAndCourse = document.querySelector('#id_submitbutton2');
+                submitAndCourse.onclick = (e) => {
+                    e.preventDefault();
+                    submitAndCourse.disabled = true;
+                    const fd = new FormData(document.querySelector('#region-main-box form'));
+                    const postVariant = (promise, variant) => {
+                        Object.entries(variant).forEach((entry) => fd.set(entry[0], entry[1]));
+                        const body = new URLSearchParams(fd);
+                        const doPost = () => fetch(document.location.pathname, {method: 'post', body});
+                        return promise.then(doPost).catch(doPost);
+                    };
+                    const backToCourse = () => {
+                        document.querySelector("#id_cancel").click();
+                    };
+                    variants.reduce(postVariant, Promise.resolve()).then(backToCourse).catch(backToCourse);
+                };
+            } else {
+                // Populate ORCALTI configuration fields from return data.
+                for (index in orcaltiFormFields) {
+                    var field = orcaltiFormFields[index];
+                    var value = null;
+                    if (typeof returnData[field.name] !== 'undefined') {
+                        value = returnData[field.name];
+                    }
+                    field.setFieldValue(value);
                 }
                 field.setFieldValue(value);
             }
 
             if (doneCallback) {
-                doneCallback();
+                doneCallback(returnData);
             }
         };
 

@@ -18,7 +18,7 @@
  * Render a page containing a simple form which reposts to self via JS.
  *
  * The purpose of this form is to resend a cross-site request to self, which allows the browsers to include the Moodle
- * session cookie alongside the original POST data, allowing LTI flows to function despite browsers blocking
+ * session cookie alongside the original POST data, allowing ORCALTI flows to function despite browsers blocking
  * cross-site cookies.
  *
  * @copyright  2021 Cengage
@@ -40,7 +40,7 @@ use stdClass;
  * Render a page containing a simple form which reposts to self via JS.
  *
  * The purpose of this form is to resend a cross-site request to self, which allows the browsers to include the Moodle
- * session cookie alongside the original POST data, allowing LTI flows to function despite browsers blocking
+ * session cookie alongside the original POST data, allowing ORCALTI flows to function despite browsers blocking
  * cross-site cookies.
  *
  * @copyright  2021 Cengage
@@ -56,7 +56,7 @@ class repost_crosssite_page implements renderable, templatable {
      */
     public function __construct(string $url, array $post) {
         $this->params = array_map(function($k) use ($post) {
-            return ["key" => $k, "value" => str_replace("\"", "&quot;", $post[$k])];
+            return ["key" => $k, "value" => $post[$k]];
         }, array_keys($post));
         $this->url = $url;
     }

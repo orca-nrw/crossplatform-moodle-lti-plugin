@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for the orcaltiservice_gradebookservices service.
+ * Version information for the orcaltisrv_gradebookservices service.
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @author     Dirk Singels, Diego del Blanco, Claude Vervoort
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -25,6 +25,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2020061500;
-$plugin->requires  = 2020060900;
+$plugin->version   = 2022112800;
+$plugin->requires  = 2022111800;
 $plugin->component = 'orcaltiservice_gradebookservices';

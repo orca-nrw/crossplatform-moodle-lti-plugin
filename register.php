@@ -63,7 +63,7 @@ if (empty($profileservice)) {
 $url = new moodle_url('/mod/orcalti/register.php', array('id' => $id));
 $PAGE->set_url($url);
 
-admin_externalpage_setup('ltitoolproxies');
+admin_externalpage_setup('orcaltitoolproxies');
 
 
 $PAGE->set_heading(get_string('toolproxyregistration', 'orcalti'));

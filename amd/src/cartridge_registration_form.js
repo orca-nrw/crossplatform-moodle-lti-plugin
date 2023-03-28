@@ -20,14 +20,12 @@
  * See template: mod_orcalti/cartridge_registration_form
  *
  * @module     mod_orcalti/cartridge_registration_form
- * @class      cartridge_registration_form
- * @package    mod_orcalti
  * @copyright  2015 Ryan Wyllie <ryan@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      3.1
  */
 define(['jquery', 'core/ajax', 'core/notification', 'mod_orcalti/tool_type', 'mod_orcalti/events', 'mod_orcalti/keys', 'core/str'],
-        function($, ajax, notification, toolType, ltiEvents, KEYS, str) {
+        function($, ajax, notification, toolType, orcaltiEvents, KEYS, str) {
 
     var SELECTORS = {
         CARTRIDGE_URL: '#cartridge-url',
@@ -154,17 +152,17 @@ define(['jquery', 'core/ajax', 'core/notification', 'mod_orcalti/tool_type', 'mo
 
         promise.done(function() {
             str.get_string('successfullycreatedtooltype', 'mod_orcalti').done(function(s) {
-                $(document).trigger(ltiEvents.NEW_TOOL_TYPE);
-                $(document).trigger(ltiEvents.STOP_CARTRIDGE_REGISTRATION);
-                $(document).trigger(ltiEvents.REGISTRATION_FEEDBACK, {
+                $(document).trigger(orcaltiEvents.NEW_TOOL_TYPE);
+                $(document).trigger(orcaltiEvents.STOP_CARTRIDGE_REGISTRATION);
+                $(document).trigger(orcaltiEvents.REGISTRATION_FEEDBACK, {
                     message: s
                 });
             }).fail(notification.exception);
         }).fail(function() {
             str.get_string('failedtocreatetooltype', 'mod_orcalti').done(function(s) {
-                $(document).trigger(ltiEvents.NEW_TOOL_TYPE);
-                $(document).trigger(ltiEvents.STOP_CARTRIDGE_REGISTRATION);
-                $(document).trigger(ltiEvents.REGISTRATION_FEEDBACK, {
+                $(document).trigger(orcaltiEvents.NEW_TOOL_TYPE);
+                $(document).trigger(orcaltiEvents.STOP_CARTRIDGE_REGISTRATION);
+                $(document).trigger(orcaltiEvents.REGISTRATION_FEEDBACK, {
                     message: s,
                     error: true
                 });
@@ -192,7 +190,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'mod_orcalti/tool_type', 'mo
         var cancelButton = getCancelButton();
         cancelButton.click(function(e) {
             e.preventDefault();
-            $(document).trigger(ltiEvents.STOP_CARTRIDGE_REGISTRATION);
+            $(document).trigger(orcaltiEvents.STOP_CARTRIDGE_REGISTRATION);
         });
         cancelButton.keypress(function(e) {
             if (!e.metaKey && !e.shiftKey && !e.altKey && !e.ctrlKey) {

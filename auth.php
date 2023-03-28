@@ -43,7 +43,7 @@ $responsetype = optional_param('response_type', '', PARAM_TEXT);
 $clientid = optional_param('client_id', '', PARAM_TEXT);
 $redirecturi = optional_param('redirect_uri', '', PARAM_URL);
 $loginhint = optional_param('login_hint', '', PARAM_TEXT);
-$ltimessagehint = optional_param('lti_message_hint', 0, PARAM_INT);
+$orcaltimessagehintenc = optional_param('lti_message_hint', '', PARAM_TEXT);
 $state = optional_param('state', '', PARAM_TEXT);
 $responsemode = optional_param('response_mode', '', PARAM_TEXT);
 $nonce = optional_param('nonce', '', PARAM_TEXT);
@@ -51,10 +51,16 @@ $prompt = optional_param('prompt', '', PARAM_TEXT);
 
 $ok = !empty($scope) && !empty($responsetype) && !empty($clientid) &&
       !empty($redirecturi) && !empty($loginhint) &&
-      !empty($nonce) && !empty($SESSION->lti_message_hint);
+      !empty($nonce);
 
 if (!$ok) {
     $error = 'invalid_request';
+}
+$orcaltimessagehint = json_decode($orcaltimessagehintenc);
+$ok = $ok && isset($orcaltimessagehint->launchid);
+if (!$ok) {
+    $error = 'invalid_request';
+    $desc = 'No launch id in ORCALTI hint';
 }
 if ($ok && ($scope !== 'openid')) {
     $ok = false;
@@ -64,17 +70,15 @@ if ($ok && ($responsetype !== 'id_token')) {
     $ok = false;
     $error = 'unsupported_response_type';
 }
+
 if ($ok) {
-    list($courseid, $typeid, $id, $titleb64, $textb64) = explode(',', $SESSION->lti_message_hint, 5);
-    $ok = ($id !== $ltimessagehint);
+    $launchid = $orcaltimessagehint->launchid;
+    list($courseid, $typeid, $id, $messagetype, $foruserid, $titleb64, $textb64) = explode(',', $SESSION->$launchid, 7);
+    unset($SESSION->$launchid);
+    $config = orcalti_get_type_type_config($typeid);
+    $ok = ($clientid === $config->lti_clientid);
     if (!$ok) {
-        $error = 'invalid_request';
-    } else {
-        $config = orcalti_get_type_type_config($typeid);
-        $ok = ($clientid === $config->lti_clientid);
-        if (!$ok) {
-            $error = 'unauthorized_client';
-        }
+        $error = 'unauthorized_client';
     }
 }
 if ($ok && ($loginhint !== $USER->id)) {
@@ -117,8 +121,9 @@ if ($ok) {
         $context = context_module::instance($cm->id);
         require_login($course, true, $cm);
         require_capability('mod/orcalti:view', $context);
-        $lti = $DB->get_record('orcalti', array('id' => $cm->instance), '*', MUST_EXIST);
-        list($endpoint, $params) = orcalti_get_launch_data($lti, $nonce);
+        $orcalti = $DB->get_record('orcalti', array('id' => $cm->instance), '*', MUST_EXIST);
+        $orcalti->cmid = $cm->id;
+        list($endpoint, $params) = orcalti_get_launch_data($orcalti, $nonce, $messagetype, $foruserid);
     } else {
         require_login($course);
         $context = context_course::instance($courseid);
@@ -135,7 +140,7 @@ if ($ok) {
         $title = base64_decode($titleb64);
         $text = base64_decode($textb64);
         $request = orcalti_build_content_item_selection_request($typeid, $course, $returnurl, $title, $text,
-                                                            [], [], false, false, false, false, false, $nonce);
+                                                            [], [], false, true, false, false, false, $nonce);
         $endpoint = $request->url;
         $params = $request->params;
     }
@@ -149,19 +154,19 @@ if (isset($state)) {
     $params['state'] = $state;
 }
 unset($SESSION->lti_message_hint);
-$r = '<form action="' . $redirecturi . "\" name=\"ltiAuthForm\" id=\"ltiAuthForm\" " .
+$r = '<form action="' . $redirecturi . "\" name=\"orcaltiAuthForm\" id=\"orcaltiAuthForm\" " .
      "method=\"post\" enctype=\"application/x-www-form-urlencoded\">\n";
 if (!empty($params)) {
     foreach ($params as $key => $value) {
-        $key = htmlspecialchars($key);
-        $value = htmlspecialchars($value);
+        $key = htmlspecialchars($key, ENT_COMPAT);
+        $value = htmlspecialchars($value, ENT_COMPAT);
         $r .= "  <input type=\"hidden\" name=\"{$key}\" value=\"{$value}\"/>\n";
     }
 }
 $r .= "</form>\n";
 $r .= "<script type=\"text/javascript\">\n" .
     "//<![CDATA[\n" .
-    "document.ltiAuthForm.submit();\n" .
+    "document.orcaltiAuthForm.submit();\n" .
     "//]]>\n" .
     "</script>\n";
 echo $r;

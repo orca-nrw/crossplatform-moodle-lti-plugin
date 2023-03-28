@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains a controller for receiving LTI service requests
+ * This file contains a controller for receiving ORCALTI service requests
  *
  * @package    mod_orcalti
  * @copyright  2014 Vital Source Technologies http://vitalsource.com

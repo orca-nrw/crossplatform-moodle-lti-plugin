@@ -1,4 +1,4 @@
-.path-mod-orcalti .ltiframe {
+.path-mod-orcalti .orcaltiframe {
     position: relative;
     width: 100%;
     height: 100%;
@@ -39,10 +39,6 @@
 
 .path-mod-orcalti .late {
     color: red;
-}
-
-.path-mod-orcalti .message {
-    text-align: center;
 }
 
 /* Styles for admin */
@@ -402,7 +398,7 @@
     vertical-align: middle;
 }
 
-/* Styling for LTI view */
+/* Styling for ORCALTI view */
 #contentframe {
     border: 1px solid #ddd;
     border-radius: 4px;

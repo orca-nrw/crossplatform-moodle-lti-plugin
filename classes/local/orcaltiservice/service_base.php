@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains an abstract definition of an LTI service
+ * This file contains an abstract definition of an ORCALTI service
  *
  * @package    mod_orcalti
  * @copyright  2014 Vital Source Technologies http://vitalsource.com
@@ -33,7 +33,7 @@ require_once($CFG->dirroot . '/mod/orcalti/locallib.php');
 require_once($CFG->dirroot . '/mod/orcalti/OAuthBody.php');
 
 // TODO: Switch to core oauthlib once implemented - MDL-30149.
-use moodle\mod\orcalti as lti;
+use moodle\mod\orcalti as orcalti;
 use stdClass;
 
 
@@ -47,7 +47,7 @@ use stdClass;
  */
 abstract class service_base {
 
-    /** Label representing an LTI 2 message type */
+    /** Label representing an ORCALTI 2 message type */
     const ORCALTI_VERSION2P0 = 'LTI-2p0';
     /** Service enabled */
     const SERVICE_ENABLED = 1;
@@ -60,9 +60,9 @@ abstract class service_base {
     protected $unsigned;
     /** @var stdClass Tool proxy object for the current service request. */
     private $toolproxy;
-    /** @var stdClass LTI type object for the current service request. */
+    /** @var stdClass ORCALTI type object for the current service request. */
     private $type;
-    /** @var array LTI type config array for the current service request. */
+    /** @var array ORCALTI type config array for the current service request. */
     private $typeconfig;
     /** @var array Instances of the resources associated with this service. */
     protected $resources;
@@ -163,9 +163,9 @@ abstract class service_base {
     }
 
     /**
-     * Set the LTI type object.
+     * Set the ORCALTI type object.
      *
-     * @param object $type The LTI type for this service request
+     * @param object $type The ORCALTI type for this service request
      *
      * @var stdClass
      */
@@ -187,9 +187,9 @@ abstract class service_base {
     }
 
     /**
-     * Set the LTI type config object.
+     * Set the ORCALTI type config object.
      *
-     * @param array $typeconfig The LTI type config for this service request
+     * @param array $typeconfig The ORCALTI type config for this service request
      *
      * @var array
      */
@@ -207,13 +207,24 @@ abstract class service_base {
     abstract public function get_resources();
 
     /**
-     * Get the scope(s) permitted for this service.
+     * Get the scope(s) permitted for this service in the context of a particular tool type.
      *
      * A null value indicates that no scopes are required to access the service.
      *
      * @return array|null
      */
     public function get_permitted_scopes() {
+        return null;
+    }
+
+    /**
+     * Get the scope(s) permitted for this service.
+     *
+     * A null value indicates that no scopes are required to access the service.
+     *
+     * @return array|null
+     */
+    public function get_scopes() {
         return null;
     }
 
@@ -227,34 +238,51 @@ abstract class service_base {
     }
 
     /**
-     * Called when a new LTI Instance is added.
+     * Called when a new ORCALTI Instance is added.
      *
-     * @param object $lti LTI Instance.
+     * @param object $orcalti ORCALTI Instance.
      */
-    public function instance_added(object $lti): void {
+    public function instance_added(object $orcalti): void {
 
     }
 
     /**
-     * Called when a new LTI Instance is updated.
+     * Called when a new ORCALTI Instance is updated.
      *
-     * @param object $lti LTI Instance.
+     * @param object $orcalti ORCALTI Instance.
      */
-    public function instance_updated(object $lti): void {
+    public function instance_updated(object $orcalti): void {
 
     }
 
     /**
-     * Called when a new LTI Instance is deleted.
+     * Called when the launch data is created, offering a possibility to alter the
+     * target link URI.
      *
-     * @param int $id LTI Instance.
+     * @param string $messagetype message type for this launch
+     * @param string $targetlinkuri current target link uri
+     * @param null|string $customstr concatenated list of custom parameters
+     * @param int $courseid
+     * @param null|object $orcalti ORCALTI Instance.
+     *
+     * @return array containing the target link URL and the custom params string to use.
+     */
+    public function override_endpoint(string $messagetype, string $targetlinkuri,
+            ?string $customstr, int $courseid, ?object $orcalti = null): array {
+        return [$targetlinkuri, $customstr];
+    }
+
+    /**
+     * Called when a new ORCALTI Instance is deleted.
+     *
+     * @param int $id ORCALTI Instance.
      */
     public function instance_deleted(int $id): void {
 
     }
 
     /**
-     * Set the form data when displaying the LTI Instance form.
+     * Set the form data when displaying the ORCALTI Instance form.
      *
      * @param object $defaultvalues Default form values.
      */
@@ -281,7 +309,7 @@ abstract class service_base {
      * Ideally a Site Tool should be explicitly engaged with a course, the check on the presence of a link is a proxy
      * to infer a Site Tool engagement until an explicit Site Tool - Course relationship exists.
      *
-     * @param int $typeid The tool lti type id.
+     * @param int $typeid The tool orcalti type id.
      * @param int $courseid The course id.
      * @return bool returns True if tool is used in context, false otherwise.
      */
@@ -289,13 +317,13 @@ abstract class service_base {
         global $DB;
 
         $ok = $DB->record_exists('orcalti', array('course' => $courseid, 'typeid' => $typeid));
-        return $ok || $DB->record_exists('orcalti_types', array('course' => $courseid, 'id' => $typeid));
+        return $ok || $DB->record_exists('lti_types', array('course' => $courseid, 'id' => $typeid));
     }
 
     /**
      * Checks if there is a site tool or a course tool for this site.
      *
-     * @param int $typeid The tool lti type id.
+     * @param int $typeid The tool orcalti type id.
      * @param int $courseid The course id.
      * @return bool returns True if tool is allowed in context, false otherwise.
      */
@@ -303,7 +331,7 @@ abstract class service_base {
         global $DB;
 
         // Check if it is a Course tool for this course or a Site tool.
-        $type = $DB->get_record('orcalti_types', array('id' => $typeid));
+        $type = $DB->get_record('lti_types', array('id' => $typeid));
 
         return $type && ($type->course == $courseid || $type->course == SITEID);
     }
@@ -314,14 +342,14 @@ abstract class service_base {
      * @param string $messagetype  'basic-lti-launch-request' or 'ContentItemSelectionRequest'.
      * @param string $courseid     The course id.
      * @param string $userid       The user id.
-     * @param string $typeid       The tool lti type id.
-     * @param string $modlti       The id of the lti activity.
+     * @param string $typeid       The tool orcalti type id.
+     * @param string $modorcalti       The id of the orcalti activity.
      *
      * The type is passed to check the configuration and not return parameters for services not used.
      *
      * @return array Key/value pairs to add as launch parameters.
      */
-    public function get_launch_parameters($messagetype, $courseid, $userid, $typeid, $modlti = null) {
+    public function get_launch_parameters($messagetype, $courseid, $userid, $typeid, $modorcalti = null) {
         return array();
     }
 
@@ -363,7 +391,7 @@ abstract class service_base {
     /**
      * Check that the request has been properly signed and is permitted.
      *
-     * @param string $typeid    LTI type ID
+     * @param string $typeid    ORCALTI type ID
      * @param string $body      Request body (null if none)
      * @param string[] $scopes  Array of required scope(s) for incoming request
      *
@@ -373,7 +401,7 @@ abstract class service_base {
 
         $ok = true;
         $toolproxy = null;
-        $consumerkey = lti\get_oauth_key_from_headers($typeid, $scopes);
+        $consumerkey = orcalti\get_oauth_key_from_headers($typeid, $scopes);
         if ($consumerkey === false) {
             $ok = $this->is_unsigned();
         } else {
@@ -425,11 +453,11 @@ abstract class service_base {
      */
     public function check_tool_proxy($toolproxyguid, $body = null) {
 
-        debugging('check_tool_proxy() is deprecated to allow LTI 1 connections to support services. ' .
+        debugging('check_tool_proxy() is deprecated to allow ORCALTI 1 connections to support services. ' .
                   'Please use service_base::check_tool() instead.', DEBUG_DEVELOPER);
         $ok = false;
         $toolproxy = null;
-        $consumerkey = lti\get_oauth_key_from_headers();
+        $consumerkey = orcalti\get_oauth_key_from_headers();
         if (empty($toolproxyguid)) {
             $toolproxyguid = $consumerkey;
         }
@@ -464,18 +492,18 @@ abstract class service_base {
      * @see service_base::check_tool()
      */
     public function check_type($typeid, $courseid, $body = null) {
-        debugging('check_type() is deprecated to allow LTI 1 connections to support services. ' .
+        debugging('check_type() is deprecated to allow ORCALTI 1 connections to support services. ' .
                   'Please use service_base::check_tool() instead.', DEBUG_DEVELOPER);
         $ok = false;
         $tool = null;
-        $consumerkey = lti\get_oauth_key_from_headers();
+        $consumerkey = orcalti\get_oauth_key_from_headers();
         if (empty($typeid)) {
             return $ok;
         } else if ($this->is_allowed_in_context($typeid, $courseid)) {
             $tool = orcalti_get_type_type_config($typeid);
             if ($tool !== false) {
-                if (!$this->is_unsigned() && ($tool->lti_resourcekey == $consumerkey)) {
-                    $ok = $this->check_signature($tool->lti_resourcekey, $tool->lti_password, $body);
+                if (!$this->is_unsigned() && ($tool->orcalti_resourcekey == $consumerkey)) {
+                    $ok = $this->check_signature($tool->orcalti_resourcekey, $tool->orcalti_password, $body);
                 } else {
                     $ok = $this->is_unsigned();
                 }
@@ -498,7 +526,7 @@ abstract class service_base {
         $ok = true;
         try {
             // TODO: Switch to core oauthlib once implemented - MDL-30149.
-            lti\handle_oauth_body_post($consumerkey, $secret, $body);
+            orcalti\handle_oauth_body_post($consumerkey, $secret, $body);
         } catch (\Exception $e) {
             debugging($e->getMessage() . "\n");
             $ok = false;

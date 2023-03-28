@@ -69,7 +69,7 @@ switch ($action) {
                 // Look up privacy settings.
                 $query = '
                     SELECT name, value
-                    FROM {orcalti_types_config}
+                    FROM {lti_types_config}
                     WHERE
                         typeid = :typeid
                     AND name IN (\'sendname\', \'sendemailaddr\', \'acceptgrades\')

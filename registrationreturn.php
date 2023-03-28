@@ -27,8 +27,8 @@ require_once('../../config.php');
 require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 
 $top = optional_param('top', 0, PARAM_INT);
-$msg = optional_param('lti_msg', '', PARAM_TEXT);
-$err = optional_param('lti_errormsg', '', PARAM_TEXT);
+$msg = optional_param('orcalti_msg', '', PARAM_TEXT);
+$err = optional_param('orcalti_errormsg', '', PARAM_TEXT);
 $id = optional_param('id', 0, PARAM_INT);
 
 // No guest autologin.
@@ -44,10 +44,10 @@ if (empty($top)) {
     $params['sesskey'] = sesskey();
     $params['top'] = '1';
     if (!empty($msg)) {
-        $params['lti_msg'] = $msg;
+        $params['orcalti_msg'] = $msg;
     }
     if (!empty($err)) {
-        $params['lti_errormsg'] = $err;
+        $params['orcalti_errormsg'] = $err;
     }
     if (!empty($id)) {
         $params['id'] = $id;
@@ -84,7 +84,7 @@ EOD;
     $params['sesskey'] = sesskey();
     $params['top'] = '1';
     if (!empty($err)) {
-        $params['lti_errormsg'] = $err;
+        $params['orcalti_errormsg'] = $err;
     }
     if (!empty($id)) {
         $params['id'] = $id;

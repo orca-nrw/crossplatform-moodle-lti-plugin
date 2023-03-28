@@ -16,11 +16,17 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-    $settings->add(new admin_setting_configtext('orcalti/orcalti_username', get_string('orcalti_username', 'orcalti'),
-                        get_string('orcalti_username_details', 'orcalti'), '', PARAM_TEXT));
+    $ADMIN->add('modsettings', new admin_externalpage('orcaltitoolconfigure', 'ORCA-LTI 1.3 Configuration', new moodle_url('/mod/orcalti/toolconfigure.php')));
 
-    $settings->add(new admin_setting_configpasswordunmask('orcalti/orcalti_password', get_string('orcalti_password', 'orcalti'),
-                        get_string('orcalti_password_details', 'orcalti'), '', PARAM_TEXT));
+    if ($ADMIN->fulltree) {
 
-    $settings->add(new admin_setting_configtext('orcalti/orcalti_url', get_string('orcalti_url', 'orcalti'),
-                        get_string('orcalti_url_details', 'orcalti'), 'https://provider.orca.nrw/ltidir/', PARAM_TEXT));
+        $settings->add(new admin_setting_configtext('orcalti/orcalti_username', get_string('orcalti_username', 'orcalti'),
+                            get_string('orcalti_username_details', 'orcalti'), '', PARAM_TEXT));
+
+        $settings->add(new admin_setting_configpasswordunmask('orcalti/orcalti_password', get_string('orcalti_password', 'orcalti'),
+                            get_string('orcalti_password_details', 'orcalti'), '', PARAM_TEXT));
+
+        $settings->add(new admin_setting_configtext('orcalti/orcalti_url', get_string('orcalti_url', 'orcalti'),
+                            get_string('orcalti_url_details', 'orcalti'), 'https://provider.orca.nrw/ltidir/', PARAM_TEXT));
+
+    }

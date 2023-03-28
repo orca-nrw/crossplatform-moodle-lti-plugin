@@ -154,7 +154,7 @@ EOD;
             $profile = <<< EOD
 {
   "@context":[
-    "http://purl.imsglobal.org/ctx/lti/v2/ToolConsumerProfile",
+    "http://purl.imsglobal.org/ctx/orcalti/v2/ToolConsumerProfile",
     {
       "tcp":"{$id}#"
     }

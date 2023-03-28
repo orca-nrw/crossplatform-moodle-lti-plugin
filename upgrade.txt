@@ -1,4 +1,16 @@
-This files describes API changes in the lti code.
+This files describes API changes in the orcalti code.
+
+=== 4.1 ===
+
+* The callback get_shortcuts() is now removed. Please use get_course_content_items and get_all_content_items instead.
+* Services can now implement the override_endpoint function to replace the launch url and/or the custom parameters.
+
+=== 3.10 ===
+
+* Select Content supports muorcaltiple, allowing a tool to return more than one link at a time.
+  Parameter muorcaltiple in function orcalti_build_content_item_selection_request() is now set to true.
+* Deprecated unused function after external function, 'get_tool_proxies()', was refactored:
+    - orcalti_serialise_tool_proxy()
 
 === 3.8 ===
 
@@ -7,7 +19,7 @@ This files describes API changes in the lti code.
 
 === 3.7 ===
 
-* Deprecated functions to add support for LTI 1 tools to access services:
+* Deprecated functions to add support for ORCALTI 1 tools to access services:
     - mod_orcalti\local\orcaltiservice\service_base->check_tool_proxy()
     - mod_orcalti\local\orcaltiservice\service_base->check_type()
     - mod_orcalti\local\orcaltiservice\resource_base->check_tool_proxy()
@@ -16,19 +28,19 @@ This files describes API changes in the lti code.
   replaced by:
     - mod_orcalti\local\orcaltiservice\service_base->check_tool()
     - mod_orcalti\local\orcaltiservice\resource_base->check_tool()
-    - mod_orcalti_edit_types_form->get_lti_services()
+    - mod_orcalti_edit_types_form->get_orcalti_services()
 * Deprecated unused function:
     - mod_orcalti\local\orcaltiservice\service_base->get_configuration_parameter_names()
-* Deprecated functions to simplify implementation of LTI scopes for accessing services:
+* Deprecated functions to simplify implementation of ORCALTI scopes for accessing services:
     - mod_orcalti\local\orcaltiservice\resource_base->get_permissions()
-    - orcaltiservice_gradebookservices\local\resources\lineitem\get_permissions()
-    - orcaltiservice_gradebookservices\local\resources\lineitems\get_permissions()
-    - orcaltiservice_gradebookservices\local\resources\results\get_permissions()
-    - orcaltiservice_gradebookservices\local\resources\scores\get_permissions()
+    - orcaltisrv_gradebookservices\local\resources\lineitem\get_permissions()
+    - orcaltisrv_gradebookservices\local\resources\lineitems\get_permissions()
+    - orcaltisrv_gradebookservices\local\resources\results\get_permissions()
+    - orcaltisrv_gradebookservices\local\resources\scores\get_permissions()
     - orcaltiservice_memberships\local\resources\contextmemberships\get_permissions()
     replaced by:
     - mod_orcalti\local\orcaltiservice\service_base->get_permitted_scopes()
-    - orcaltiservice_gradebookservices\local\service\gradebookservices->get_permitted_scopes()
+    - orcaltisrv_gradebookservices\local\service\gradebookservices->get_permitted_scopes()
     - orcaltiservice_memberships\local\service\memberships\->get_permitted_scopes()
 * Deprecated function to remove definition as static:
     - orcaltiservice_memberships\local\service\memberships\get_users_json()
@@ -43,8 +55,8 @@ This files describes API changes in the lti code.
 
 === 3.2 ===
 
-* Support for LTI ContentItem message type.
-* New function orcalti_build_content_item_selection_request() for building an LTI ContentItemSelectionRequest.
+* Support for ORCALTI ContentItem message type.
+* New function orcalti_build_content_item_selection_request() for building an ORCALTI ContentItemSelectionRequest.
 * New Select content button in External tool configuration page that lets the user configure an external tool by fetching tool
   configuration content from the preconfigured tool's content selection interface.
 
@@ -62,7 +74,7 @@ This files describes API changes in the lti code.
 
 === 2.8 ===
 
-* Support for LTI 2 added, including extensible services implemented as orcaltiservice plugins.
+* Support for ORCALTI 2 added, including extensible services implemented as orcaltiservice plugins.
 * Function sendOAuthBodyPOST removed from OAuthBody.php because it was not being used.
 * The field 'grade' in the table {orcalti} is now an integer rather than a numeric to bring it
   in line with the 'grade' field in other activities.

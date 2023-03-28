@@ -14,28 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 //
-// This file is part of BasicLTI4Moodle
+// This file is part of BasicORCALTI4Moodle
 //
-// BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)
-// consumer for Moodle 1.9 and Moodle 2.0. BasicLTI is a IMS Standard that allows web
-// based learning tools to be easily integrated in LMS as native ones. The IMS BasicLTI
+// BasicORCALTI4Moodle is an IMS BasicORCALTI (Basic Learning Tools for Interoperability)
+// consumer for Moodle 1.9 and Moodle 2.0. BasicORCALTI is a IMS Standard that allows web
+// based learning tools to be easily integrated in LMS as native ones. The IMS BasicORCALTI
 // specification is part of the IMS standard Common Cartridge 1.1 Sakai and other main LMS
-// are already supporting or going to support BasicLTI. This project Implements the consumer
+// are already supporting or going to support BasicORCALTI. This project Implements the consumer
 // for Moodle. Moodle is a Free Open source Learning Management System by Martin Dougiamas.
-// BasicLTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
+// BasicORCALTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
 // at the GESSI research group at UPC.
-// SimpleLTI consumer for Moodle is an implementation of the early specification of LTI
+// SimpleORCALTI consumer for Moodle is an implementation of the early specification of ORCALTI
 // by Charles Severance (Dr Chuck) htp://dr-chuck.com , developed by Jordi Piguillem in a
 // Google Summer of Code 2008 project co-mentored by Charles Severance and Marc Alier.
 //
-// BasicLTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
+// BasicORCALTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
 // of the Universitat Politecnica de Catalunya http://www.upc.edu
 // Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
 
 /**
  * This file contains the script used to clone Moodle admin setting page.
  *
- * It is used to create a new form used to pre-configure lti activities
+ * It is used to create a new form used to pre-configure orcalti activities
  *
  * @package mod_orcalti
  * @copyright  2009 Marc Alier, Jordi Piguillem, Nikolas Galanis
@@ -99,7 +99,7 @@ $PAGE->set_url($pageurl);
 
 admin_externalpage_setup('managemodules'); // Hacky solution for printing the admin page.
 
-$redirect = "$CFG->wwwroot/$CFG->admin/settings.php?section=modsettinglti&tab={$tab}";
+$redirect = "$CFG->wwwroot/$CFG->admin/settings.php?section=modsettingorcalti&tab={$tab}";
 if (!empty($returnurl)) {
     $redirect = $returnurl;
 }
@@ -144,7 +144,10 @@ if ($data = $form->get_data()) {
 }
 
 $PAGE->set_title("$SITE->shortname: " . get_string('toolsetup', 'orcalti'));
-$PAGE->navbar->add(get_string('lti_administration', 'orcalti'), $CFG->wwwroot.'/'.$CFG->admin.'/settings.php?section=modsettinglti');
+$PAGE->set_primary_active_tab('siteadminnode');
+$PAGE->set_secondary_active_tab('orcaltitoolconfigure');
+$PAGE->navbar->add(get_string('manage_external_tools', 'orcalti'), new moodle_url('/mod/orcalti/toolconfigure.php'));
+$PAGE->navbar->add(get_string('toolsetup', 'orcalti'), $PAGE->url);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('toolsetup', 'orcalti'));

@@ -71,7 +71,7 @@ $PAGE->set_url($pageurl);
 
 admin_externalpage_setup('managemodules'); // Hacky solution for printing the admin page.
 
-$redirect = "$CFG->wwwroot/$CFG->admin/settings.php?section=modsettinglti&tab={$tab}";
+$redirect = "$CFG->wwwroot/$CFG->admin/settings.php?section=modsettingorcalti&tab={$tab}";
 if (!empty($returnurl)) {
     $redirect = $returnurl;
 }
@@ -84,10 +84,10 @@ if ($action == 'accept') {
     redirect($redirect);
 }
 
-if (orcalti_request_is_using_ssl() && !empty($type->lti_secureicon)) {
-    $type->oldicon = $type->lti_secureicon;
+if (orcalti_request_is_using_ssl() && !empty($type->orcalti_secureicon)) {
+    $type->oldicon = $type->orcalti_secureicon;
 } else {
-    $type->oldicon = $type->lti_icon;
+    $type->oldicon = $type->orcalti_icon;
 }
 
 $form = new mod_orcalti_edit_types_form($pageurl, (object)array('isadmin' => true, 'istool' => true));
@@ -107,7 +107,7 @@ if ($data = $form->get_data()) {
 }
 
 $PAGE->set_title(format_string($SITE->shortname) . ': ' . get_string('toolsetup', 'orcalti'));
-$PAGE->navbar->add(get_string('lti_administration', 'orcalti'), $CFG->wwwroot.'/'.$CFG->admin.'/settings.php?section=modsettinglti');
+$PAGE->navbar->add(get_string('orcalti_administration', 'orcalti'), $CFG->wwwroot.'/'.$CFG->admin.'/settings.php?section=modsettingorcalti');
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('toolsetup', 'orcalti'));

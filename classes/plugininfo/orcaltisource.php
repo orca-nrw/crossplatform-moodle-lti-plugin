@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * LTI source plugin info.
+ * ORCALTI source plugin info.
  *
  * @package   mod_orcalti
  * @copyright 2013 Damyon Wiese
@@ -24,6 +24,8 @@
 namespace mod_orcalti\plugininfo;
 
 use core\plugininfo\base;
+
+defined('MOODLE_INTERNAL') || die();
 
 
 class orcaltisource extends base {
@@ -54,7 +56,7 @@ class orcaltisource extends base {
         if (!$this->is_installed_and_upgraded()) {
             return;
         }
-        if (!$hassiteconfig || !file_exists($this->full_path('settings.php'))) {
+        if (!$hassiteconfig or !file_exists($this->full_path('settings.php'))) {
             return;
         }
         $section  = $this->get_settings_section_name();

@@ -14,26 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 //
-// This file is part of BasicLTI4Moodle
+// This file is part of BasicORCALTI4Moodle
 //
-// BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)
-// consumer for Moodle 1.9 and Moodle 2.0. BasicLTI is a IMS Standard that allows web
-// based learning tools to be easily integrated in LMS as native ones. The IMS BasicLTI
+// BasicORCALTI4Moodle is an IMS BasicORCALTI (Basic Learning Tools for Interoperability)
+// consumer for Moodle 1.9 and Moodle 2.0. BasicORCALTI is a IMS Standard that allows web
+// based learning tools to be easily integrated in LMS as native ones. The IMS BasicORCALTI
 // specification is part of the IMS standard Common Cartridge 1.1 Sakai and other main LMS
-// are already supporting or going to support BasicLTI. This project Implements the consumer
+// are already supporting or going to support BasicORCALTI. This project Implements the consumer
 // for Moodle. Moodle is a Free Open source Learning Management System by Martin Dougiamas.
-// BasicLTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
+// BasicORCALTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
 // at the GESSI research group at UPC.
-// SimpleLTI consumer for Moodle is an implementation of the early specification of LTI
+// SimpleORCALTI consumer for Moodle is an implementation of the early specification of ORCALTI
 // by Charles Severance (Dr Chuck) htp://dr-chuck.com , developed by Jordi Piguillem in a
 // Google Summer of Code 2008 project co-mentored by Charles Severance and Marc Alier.
 //
-// BasicLTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
+// BasicORCALTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
 // of the Universitat Politecnica de Catalunya http://www.upc.edu
 // Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
 
 /**
- * This file contains a library of functions and constants for the lti module
+ * This file contains a library of functions and constants for the orcalti module
  *
  * @package mod_orcalti
  * @copyright  2009 Marc Alier, Jordi Piguillem, Nikolas Galanis
@@ -46,11 +46,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die;
 
 /**
  * List of features supported in URL module
  * @param string $feature FEATURE_xx constant for requested feature
- * @return mixed True if module supports feature, false if not, null if doesn't know
+ * @return mixed True if module supports feature, false if not, null if doesn't know or string for the module purpose.
  */
 function orcalti_supports($feature) {
     switch ($feature) {
@@ -64,6 +65,8 @@ function orcalti_supports($feature) {
         case FEATURE_BACKUP_MOODLE2:
         case FEATURE_SHOW_DESCRIPTION:
             return true;
+        case FEATURE_MOD_PURPOSE:
+            return MOD_PURPOSE_CONTENT;
 
         default:
             return null;
@@ -77,55 +80,55 @@ function orcalti_supports($feature) {
  * of the new instance.
  *
  * @param object $instance An object from the form in mod.html
- * @return int The id of the newly inserted basiclti record
+ * @return int The id of the newly inserted basicorcalti record
  **/
-function orcalti_add_instance($lti, $mform) {
+function orcalti_add_instance($orcalti, $mform) {
     global $DB, $CFG;
     require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 
-    if (!isset($lti->toolurl)) {
-        $lti->toolurl = '';
+    if (!isset($orcalti->toolurl)) {
+        $orcalti->toolurl = '';
     }
 
-    orcalti_load_tool_if_cartridge($lti);
+    orcalti_load_tool_if_cartridge($orcalti);
 
-    $lti->timecreated = time();
-    $lti->timemodified = $lti->timecreated;
-    $lti->servicesalt = uniqid('', true);
-    if (!isset($lti->typeid)) {
-        $lti->typeid = null;
+    $orcalti->timecreated = time();
+    $orcalti->timemodified = $orcalti->timecreated;
+    $orcalti->servicesalt = uniqid('', true);
+    if (!isset($orcalti->typeid)) {
+        $orcalti->typeid = null;
     }
 
-    orcalti_force_type_config_settings($lti, orcalti_get_type_config_by_instance($lti));
+    orcalti_force_type_config_settings($orcalti, orcalti_get_type_config_by_instance($orcalti));
 
-    if (empty($lti->typeid) && isset($lti->urlmatchedtypeid)) {
-        $lti->typeid = $lti->urlmatchedtypeid;
+    if (empty($orcalti->typeid) && isset($orcalti->urlmatchedtypeid)) {
+        $orcalti->typeid = $orcalti->urlmatchedtypeid;
     }
 
-    if (!isset($lti->instructorchoiceacceptgrades) || $lti->instructorchoiceacceptgrades != ORCALTI_SETTING_ALWAYS) {
+    if (!isset($orcalti->instructorchoiceacceptgrades) || $orcalti->instructorchoiceacceptgrades != ORCALTI_SETTING_ALWAYS) {
         // The instance does not accept grades back from the provider, so set to "No grade" value 0.
-        $lti->grade = 0;
+        $orcalti->grade = 0;
     }
 
-    $lti->id = $DB->insert_record('orcalti', $lti);
+    $orcalti->id = $DB->insert_record('orcalti', $orcalti);
 
-    if (isset($lti->instructorchoiceacceptgrades) && $lti->instructorchoiceacceptgrades == ORCALTI_SETTING_ALWAYS) {
-        if (!isset($lti->cmidnumber)) {
-            $lti->cmidnumber = '';
+    if (isset($orcalti->instructorchoiceacceptgrades) && $orcalti->instructorchoiceacceptgrades == ORCALTI_SETTING_ALWAYS) {
+        if (!isset($orcalti->cmidnumber)) {
+            $orcalti->cmidnumber = '';
         }
 
-        orcalti_grade_item_update($lti);
+        orcalti_grade_item_update($orcalti);
     }
 
     $services = orcalti_get_services();
     foreach ($services as $service) {
-        $service->instance_added( $lti );
+        $service->instance_added( $orcalti );
     }
 
-    $completiontimeexpected = !empty($lti->completionexpected) ? $lti->completionexpected : null;
-    \core_completion\api::update_completion_date_event($lti->coursemodule, 'orcalti', $lti->id, $completiontimeexpected);
+    $completiontimeexpected = !empty($orcalti->completionexpected) ? $orcalti->completionexpected : null;
+    \core_completion\api::update_completion_date_event($orcalti->coursemodule, 'orcalti', $orcalti->id, $completiontimeexpected);
 
-    return $lti->id;
+    return $orcalti->id;
 }
 
 /**
@@ -136,44 +139,52 @@ function orcalti_add_instance($lti, $mform) {
  * @param object $instance An object from the form in mod.html
  * @return boolean Success/Fail
  **/
-function orcalti_update_instance($lti, $mform) {
+function orcalti_update_instance($orcalti, $mform) {
     global $DB, $CFG;
     require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 
-    orcalti_load_tool_if_cartridge($lti);
+    orcalti_load_tool_if_cartridge($orcalti);
 
-    $lti->timemodified = time();
-    $lti->id = $lti->instance;
+    $orcalti->timemodified = time();
+    $orcalti->id = $orcalti->instance;
 
-    if (!isset($lti->showtitlelaunch)) {
-        $lti->showtitlelaunch = 0;
+    if (!isset($orcalti->showtitlelaunch)) {
+        $orcalti->showtitlelaunch = 0;
     }
 
-    if (!isset($lti->showdescriptionlaunch)) {
-        $lti->showdescriptionlaunch = 0;
+    if (!isset($orcalti->showdescriptionlaunch)) {
+        $orcalti->showdescriptionlaunch = 0;
     }
 
-    orcalti_force_type_config_settings($lti, orcalti_get_type_config_by_instance($lti));
+    orcalti_force_type_config_settings($orcalti, orcalti_get_type_config_by_instance($orcalti));
 
-    if (isset($lti->instructorchoiceacceptgrades) && $lti->instructorchoiceacceptgrades == ORCALTI_SETTING_ALWAYS) {
-        orcalti_grade_item_update($lti);
+    if (isset($orcalti->instructorchoiceacceptgrades) && $orcalti->instructorchoiceacceptgrades == ORCALTI_SETTING_ALWAYS) {
+        orcalti_grade_item_update($orcalti);
     } else {
         // Instance is no longer accepting grades from Provider, set grade to "No grade" value 0.
-        $lti->grade = 0;
-        $lti->instructorchoiceacceptgrades = 0;
+        $orcalti->grade = 0;
+        $orcalti->instructorchoiceacceptgrades = 0;
 
-        orcalti_grade_item_delete($lti);
+        orcalti_grade_item_delete($orcalti);
+    }
+
+    if (!isset($orcalti->typeid)) {
+        $orcalti->typeid = null;
+    }
+    
+    if ($orcalti->typeid == 0 && isset($orcalti->urlmatchedtypeid)) {
+        $orcalti->typeid = $orcalti->urlmatchedtypeid;
     }
 
     $services = orcalti_get_services();
     foreach ($services as $service) {
-        $service->instance_updated( $lti );
+        $service->instance_updated( $orcalti );
     }
 
-    $completiontimeexpected = !empty($lti->completionexpected) ? $lti->completionexpected : null;
-    \core_completion\api::update_completion_date_event($lti->coursemodule, 'orcalti', $lti->id, $completiontimeexpected);
+    $completiontimeexpected = !empty($orcalti->completionexpected) ? $orcalti->completionexpected : null;
+    \core_completion\api::update_completion_date_event($orcalti->coursemodule, 'orcalti', $orcalti->id, $completiontimeexpected);
 
-    return $DB->update_record('orcalti', $lti);
+    return $DB->update_record('orcalti', $orcalti);
 }
 
 /**
@@ -188,26 +199,26 @@ function orcalti_delete_instance($id) {
     global $DB, $CFG;
     require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 
-    if (! $basiclti = $DB->get_record("orcalti", array("id" => $id))) {
+    if (! $basicorcalti = $DB->get_record("orcalti", array("id" => $id))) {
         return false;
     }
 
     $result = true;
 
     // Delete any dependent records here.
-    orcalti_grade_item_delete($basiclti);
+    orcalti_grade_item_delete($basicorcalti);
 
-    $ltitype = $DB->get_record('orcalti_types', array('id' => $basiclti->typeid));
-    if ($ltitype) {
+    $orcaltitype = $DB->get_record('lti_types', array('id' => $basicorcalti->typeid));
+    if ($orcaltitype) {
         $DB->delete_records('orcalti_tool_settings',
-            array('toolproxyid' => $ltitype->toolproxyid, 'course' => $basiclti->course, 'coursemoduleid' => $id));
+            array('toolproxyid' => $orcaltitype->toolproxyid, 'course' => $basicorcalti->course, 'coursemoduleid' => $id));
     }
 
     $cm = get_coursemodule_from_instance('orcalti', $id);
     \core_completion\api::update_completion_date_event($cm->id, 'orcalti', $id, null);
 
     // We must delete the module record after we delete the grade item.
-    if ($DB->delete_records("orcalti", array("id" => $basiclti->id)) ) {
+    if ($DB->delete_records("orcalti", array("id" => $basicorcalti->id)) ) {
         $services = orcalti_get_services();
         foreach ($services as $service) {
             $service->instance_deleted( $id );
@@ -219,42 +230,9 @@ function orcalti_delete_instance($id) {
 }
 
 /**
- * Return aliases of this activity. LTI should have an alias for each configured tool type
- * This is so you can add an external tool types directly to the activity chooser
- *
- * @deprecated since 3.9
- * @todo MDL-68011 This is to be moved from here to deprecatedlib.php in Moodle 4.3
- * @param stdClass $defaultitem default item that would be added to the activity chooser if this callback was not present.
- *     It has properties: archetype, name, title, help, icon, link
- * @return array An array of aliases for this activity. Each element is an object with same list of properties as $defaultitem,
- *     plus an additional property, helplink.
- *     Properties title and link are required
- **/
-function orcalti_get_shortcuts($defaultitem) {
-    global $CFG, $COURSE;
-    require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
-
-    $types = orcalti_get_configured_types($COURSE->id, $defaultitem->link->param('sr'));
-    if (has_capability('mod/orcalti:addmanualinstance', context_course::instance($COURSE->id))) {
-        $types[] = $defaultitem;
-    }
-
-    // Add items defined in ltisource plugins.
-    foreach (core_component::get_plugin_list('orcaltisource') as $pluginname => $dir) {
-        // LTISOURCE plugins can also implement callback get_shortcuts() to add items to the activity chooser.
-        // The return values are the same as of the 'mod' callbacks except that $defaultitem is only passed for reference and
-        // should not be added to the return value.
-        if ($moretypes = component_callback("orcaltisource_$pluginname", 'get_shortcuts', array($defaultitem))) {
-            $types = array_merge($types, $moretypes);
-        }
-    }
-    return $types;
-}
-
-/**
  * Return the preconfigured tools which are configured for inclusion in the activity picker.
  *
- * @param \core_course\local\entity\content_item $defaultmodulecontentitem reference to the content item for the LTI module.
+ * @param \core_course\local\entity\content_item $defaultmodulecontentitem reference to the content item for the ORCALTI module.
  * @param \stdClass $user the user object, to use for cap checks if desired.
  * @param stdClass $course the course to scope items to.
  * @return array the array of content items.
@@ -304,7 +282,8 @@ function orcalti_get_course_content_items(\core_course\local\entity\content_item
             $preconfiguredtool->icon,
             $preconfiguredtool->help,
             $defaultmodulecontentitem->get_archetype(),
-            $defaultmodulecontentitem->get_component_name()
+            $defaultmodulecontentitem->get_component_name(),
+            $defaultmodulecontentitem->get_purpose()
         );
     }
     return $types;
@@ -329,32 +308,33 @@ function mod_orcalti_get_all_content_items(\core_course\local\entity\content_ite
         $defaultmodulecontentitem->get_icon(),
         $defaultmodulecontentitem->get_help(),
         $defaultmodulecontentitem->get_archetype(),
-        $defaultmodulecontentitem->get_component_name()
+        $defaultmodulecontentitem->get_component_name(),
+        $defaultmodulecontentitem->get_purpose()
     )];
 
-    foreach (orcalti_get_orcalti_types() as $ltitype) {
-        if ($ltitype->coursevisible != ORCALTI_COURSEVISIBLE_ACTIVITYCHOOSER) {
+    foreach (orcalti_get_orcalti_types() as $orcaltitype) {
+        if ($orcaltitype->coursevisible != ORCALTI_COURSEVISIBLE_ACTIVITYCHOOSER) {
             continue;
         }
         $type           = new stdClass();
-        $type->id       = $ltitype->id;
+        $type->id       = $orcaltitype->id;
         $type->modclass = MOD_CLASS_ACTIVITY;
-        $type->name     = 'lti_type_' . $ltitype->id;
+        $type->name     = 'orcalti_type_' . $orcaltitype->id;
         // Clean the name. We don't want tags here.
-        $type->title    = clean_param($ltitype->name, PARAM_NOTAGS);
-        $trimmeddescription = trim($ltitype->description);
+        $type->title    = clean_param($orcaltitype->name, PARAM_NOTAGS);
+        $trimmeddescription = trim($orcaltitype->description);
         $type->help = '';
         if ($trimmeddescription != '') {
             // Clean the description. We don't want tags here.
             $type->help     = clean_param($trimmeddescription, PARAM_NOTAGS);
             $type->helplink = get_string('modulename_shortcut_link', 'orcalti');
         }
-        if (empty($ltitype->icon)) {
-            $type->icon = $OUTPUT->pix_icon('icon', '', 'orcalti', array('class' => 'icon'));
+        if (empty($orcaltitype->icon)) {
+            $type->icon = $OUTPUT->pix_icon('monologo', '', 'orcalti', array('class' => 'icon'));
         } else {
-            $type->icon = html_writer::empty_tag('img', array('src' => $ltitype->icon, 'alt' => $ltitype->name, 'class' => 'icon'));
+            $type->icon = html_writer::empty_tag('img', array('src' => $orcaltitype->icon, 'alt' => $orcaltitype->name, 'class' => 'icon'));
         }
-        $type->link = new moodle_url('/course/modedit.php', array('add' => 'orcalti', 'return' => 0, 'typeid' => $ltitype->id));
+        $type->link = new moodle_url('/course/modedit.php', array('add' => 'orcalti', 'return' => 0, 'typeid' => $orcaltitype->id));
 
         $types[] = new \core_course\local\entity\content_item(
             $type->id + 1,
@@ -364,7 +344,8 @@ function mod_orcalti_get_all_content_items(\core_course\local\entity\content_ite
             $type->icon,
             $type->help,
             $defaultmodulecontentitem->get_archetype(),
-            $defaultmodulecontentitem->get_component_name()
+            $defaultmodulecontentitem->get_component_name(),
+            $defaultmodulecontentitem->get_purpose()
         );
     }
 
@@ -384,7 +365,7 @@ function orcalti_get_coursemodule_info($coursemodule) {
     global $DB, $CFG;
     require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 
-    if (!$lti = $DB->get_record('orcalti', array('id' => $coursemodule->instance),
+    if (!$orcalti = $DB->get_record('orcalti', array('id' => $coursemodule->instance),
             'icon, secureicon, intro, introformat, name, typeid, toolurl, launchcontainer')) {
         return null;
     }
@@ -393,12 +374,12 @@ function orcalti_get_coursemodule_info($coursemodule) {
 
     if ($coursemodule->showdescription) {
         // Convert intro to html. Do not filter cached version, filters run at display time.
-        $info->content = format_module_intro('orcalti', $lti, $coursemodule->id, false);
+        $info->content = format_module_intro('orcalti', $orcalti, $coursemodule->id, false);
     }
 
-    if (!empty($lti->typeid)) {
-        $toolconfig = orcalti_get_type_config($lti->typeid);
-    } else if ($tool = orcalti_get_tool_by_url_match($lti->toolurl)) {
+    if (!empty($orcalti->typeid)) {
+        $toolconfig = orcalti_get_type_config($orcalti->typeid);
+    } else if ($tool = orcalti_get_tool_by_url_match($orcalti->toolurl)) {
         $toolconfig = orcalti_get_type_config($tool->id);
     } else {
         $toolconfig = array();
@@ -407,26 +388,26 @@ function orcalti_get_coursemodule_info($coursemodule) {
     // We want to use the right icon based on whether the
     // current page is being requested over http or https.
     if (orcalti_request_is_using_ssl() &&
-        (!empty($lti->secureicon) || (isset($toolconfig['secureicon']) && !empty($toolconfig['secureicon'])))) {
-        if (!empty($lti->secureicon)) {
-            $info->iconurl = new moodle_url($lti->secureicon);
+        (!empty($orcalti->secureicon) || (isset($toolconfig['secureicon']) && !empty($toolconfig['secureicon'])))) {
+        if (!empty($orcalti->secureicon)) {
+            $info->iconurl = new moodle_url($orcalti->secureicon);
         } else {
             $info->iconurl = new moodle_url($toolconfig['secureicon']);
         }
-    } else if (!empty($lti->icon)) {
-        $info->iconurl = new moodle_url($lti->icon);
+    } else if (!empty($orcalti->icon)) {
+        $info->iconurl = new moodle_url($orcalti->icon);
     } else if (isset($toolconfig['icon']) && !empty($toolconfig['icon'])) {
         $info->iconurl = new moodle_url($toolconfig['icon']);
     }
 
     // Does the link open in a new window?
-    $launchcontainer = orcalti_get_launch_container($lti, $toolconfig);
+    $launchcontainer = orcalti_get_launch_container($orcalti, $toolconfig);
     if ($launchcontainer == ORCALTI_LAUNCH_CONTAINER_WINDOW) {
         $launchurl = new moodle_url('/mod/orcalti/launch.php', array('id' => $coursemodule->id));
-        $info->onclick = "window.open('" . $launchurl->out(false) . "', 'lti-".$coursemodule->id."'); return false;";
+        $info->onclick = "window.open('" . $launchurl->out(false) . "', 'orcalti-".$coursemodule->id."'); return false;";
     }
 
-    $info->name = $lti->name;
+    $info->name = $orcalti->name;
 
     return $info;
 }
@@ -441,7 +422,7 @@ function orcalti_get_coursemodule_info($coursemodule) {
  * @return null
  * @TODO: implement this moodle function (if needed)
  **/
-function orcalti_user_outline($course, $user, $mod, $basiclti) {
+function orcalti_user_outline($course, $user, $mod, $basicorcalti) {
     return null;
 }
 
@@ -452,13 +433,13 @@ function orcalti_user_outline($course, $user, $mod, $basiclti) {
  * @return boolean
  * @TODO: implement this moodle function (if needed)
  **/
-function orcalti_user_complete($course, $user, $mod, $basiclti) {
+function orcalti_user_complete($course, $user, $mod, $basicorcalti) {
     return true;
 }
 
 /**
  * Given a course and a time, this module should find recent activity
- * that has occurred in basiclti activities and print it out.
+ * that has occurred in basicorcalti activities and print it out.
  * Return true if there was output, or false is there was none.
  *
  * @uses $CFG
@@ -466,7 +447,7 @@ function orcalti_user_complete($course, $user, $mod, $basiclti) {
  * @TODO: implement this moodle function
  **/
 function orcalti_print_recent_activity($course, $isteacher, $timestart) {
-    return false;  // True if anything was printed, otherwise false.
+    return false;  //  True if anything was printed, otherwise false.
 }
 
 /**
@@ -509,18 +490,18 @@ function orcalti_scale_used() {
 }
 
 /**
- * Checks if scale is being used by any instance of basiclti.
+ * Checks if scale is being used by any instance of basicorcalti.
  * This function was added in 1.9
  *
  * This is used to find out if scale used anywhere
  * @param $scaleid int
- * @return boolean True if the scale is used by any basiclti
+ * @return boolean True if the scale is used by any basicorcalti
  *
  */
 function orcalti_scale_used_anywhere($scaleid) {
     global $DB;
 
-    if ($scaleid && $DB->record_exists('orcalti', array('grade' => -$scaleid))) {
+    if ($scaleid and $DB->record_exists('orcalti', array('grade' => -$scaleid))) {
         return true;
     } else {
         return false;
@@ -548,56 +529,56 @@ function orcalti_uninstall() {
 }
 
 /**
- * Returns available Basic LTI types
+ * Returns available Basic ORCALTI types
  *
- * @return array of basicLTI types
+ * @return array of basicORCALTI types
  */
 function orcalti_get_orcalti_types() {
     global $DB;
 
-    return $DB->get_records('orcalti_types', null, 'state DESC, timemodified DESC');
+    return $DB->get_records('lti_types', null, 'state DESC, timemodified DESC');
 }
 
 /**
- * Returns available Basic LTI types that match the given
+ * Returns available Basic ORCALTI types that match the given
  * tool proxy id
  *
  * @param int $toolproxyid Tool proxy id
- * @return array of basicLTI types
+ * @return array of basicORCALTI types
  */
 function orcalti_get_orcalti_types_from_proxy_id($toolproxyid) {
     global $DB;
 
-    return $DB->get_records('orcalti_types', array('toolproxyid' => $toolproxyid), 'state DESC, timemodified DESC');
+    return $DB->get_records('lti_types', array('toolproxyid' => $toolproxyid), 'state DESC, timemodified DESC');
 }
 
 /**
- * Create grade item for given basiclti
+ * Create grade item for given basicorcalti
  *
  * @category grade
- * @param object $basiclti object with extra cmidnumber
+ * @param object $basicorcalti object with extra cmidnumber
  * @param mixed optional array/object of grade(s); 'reset' means reset grades in gradebook
  * @return int 0 if ok, error code otherwise
  */
-function orcalti_grade_item_update($basiclti, $grades = null) {
+function orcalti_grade_item_update($basicorcalti, $grades = null) {
     global $CFG;
     require_once($CFG->libdir.'/gradelib.php');
     require_once($CFG->dirroot.'/mod/orcalti/servicelib.php');
 
-    if (!orcalti_accepts_grades($basiclti)) {
+    if (!orcalti_accepts_grades($basicorcalti)) {
         return 0;
     }
 
-    $params = array('itemname' => $basiclti->name, 'idnumber' => $basiclti->cmidnumber);
+    $params = array('itemname' => $basicorcalti->name, 'idnumber' => $basicorcalti->cmidnumber);
 
-    if ($basiclti->grade > 0) {
+    if ($basicorcalti->grade > 0) {
         $params['gradetype'] = GRADE_TYPE_VALUE;
-        $params['grademax']  = $basiclti->grade;
+        $params['grademax']  = $basicorcalti->grade;
         $params['grademin']  = 0;
 
-    } else if ($basiclti->grade < 0) {
+    } else if ($basicorcalti->grade < 0) {
         $params['gradetype'] = GRADE_TYPE_SCALE;
-        $params['scaleid']   = -$basiclti->grade;
+        $params['scaleid']   = -$basicorcalti->grade;
 
     } else {
         $params['gradetype'] = GRADE_TYPE_TEXT; // Allow text comments only.
@@ -608,37 +589,37 @@ function orcalti_grade_item_update($basiclti, $grades = null) {
         $grades = null;
     }
 
-    return grade_update('mod/orcalti', $basiclti->course, 'mod', 'orcalti', $basiclti->id, 0, $grades, $params);
+    return grade_update('mod/orcalti', $basicorcalti->course, 'mod', 'orcalti', $basicorcalti->id, 0, $grades, $params);
 }
 
 /**
  * Update activity grades
  *
- * @param stdClass $basiclti The LTI instance
+ * @param stdClass $basicorcalti The ORCALTI instance
  * @param int      $userid Specific user only, 0 means all.
  * @param bool     $nullifnone Not used
  */
-function orcalti_update_grades($basiclti, $userid=0, $nullifnone=true) {
+function orcalti_update_grades($basicorcalti, $userid=0, $nullifnone=true) {
     global $CFG;
     require_once($CFG->dirroot.'/mod/orcalti/servicelib.php');
-    // LTI doesn't have its own grade table so the only thing to do is update the grade item.
-    if (orcalti_accepts_grades($basiclti)) {
-        orcalti_grade_item_update($basiclti);
+    // ORCALTI doesn't have its own grade table so the only thing to do is update the grade item.
+    if (orcalti_accepts_grades($basicorcalti)) {
+        orcalti_grade_item_update($basicorcalti);
     }
 }
 
 /**
- * Delete grade item for given basiclti
+ * Delete grade item for given basicorcalti
  *
  * @category grade
- * @param object $basiclti object
- * @return object basiclti
+ * @param object $basicorcalti object
+ * @return object basicorcalti
  */
-function orcalti_grade_item_delete($basiclti) {
+function orcalti_grade_item_delete($basicorcalti) {
     global $CFG;
     require_once($CFG->libdir.'/gradelib.php');
 
-    return grade_update('mod/orcalti', $basiclti->course, 'mod', 'orcalti', $basiclti->id, 0, null, array('deleted' => 1));
+    return grade_update('mod/orcalti', $basicorcalti->course, 'mod', 'orcalti', $basicorcalti->id, 0, null, array('deleted' => 1));
 }
 
 /**
@@ -662,24 +643,24 @@ function orcalti_get_view_actions() {
 /**
  * Mark the activity completed (if required) and trigger the course_module_viewed event.
  *
- * @param  stdClass $lti        lti object
+ * @param  stdClass $orcalti        orcalti object
  * @param  stdClass $course     course object
  * @param  stdClass $cm         course module object
  * @param  stdClass $context    context object
  * @since Moodle 3.0
  */
-function orcalti_view($lti, $course, $cm, $context) {
+function orcalti_view($orcalti, $course, $cm, $context) {
 
     // Trigger course_module_viewed event.
     $params = array(
         'context' => $context,
-        'objectid' => $lti->id
+        'objectid' => $orcalti->id
     );
 
     $event = \mod_orcalti\event\course_module_viewed::create($params);
     $event->add_record_snapshot('course_modules', $cm);
     $event->add_record_snapshot('course', $course);
-    $event->add_record_snapshot('orcalti', $lti);
+    $event->add_record_snapshot('orcalti', $orcalti);
     $event->trigger();
 
     // Completion.

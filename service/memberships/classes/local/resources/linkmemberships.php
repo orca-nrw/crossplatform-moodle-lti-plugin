@@ -35,7 +35,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * A resource implementing Link Memberships.
  * The link membership is no longer defined in the published
- * version of the LTI specification. It is replaced by the
+ * version of the ORCALTI specification. It is replaced by the
  * rlid parameter in the context membership URL.
  *
  * @package    orcaltiservice_memberships
@@ -83,31 +83,31 @@ class linkmemberships extends resource_base {
             $response->set_code(404);
             return;
         }
-        if (!($lti = $DB->get_record('orcalti', array('id' => $linkid), 'id,course,typeid,servicesalt', IGNORE_MISSING))) {
+        if (!($orcalti = $DB->get_record('orcalti', array('id' => $linkid), 'id,course,typeid,servicesalt', IGNORE_MISSING))) {
             $response->set_code(404);
             return;
         }
-        if (!$this->check_tool($lti->typeid, $response->get_request_data(), array(memberships::SCOPE_MEMBERSHIPS_READ))) {
+        if (!$this->check_tool($orcalti->typeid, $response->get_request_data(), array(memberships::SCOPE_MEMBERSHIPS_READ))) {
             $response->set_code(403);
             return;
         }
-        if (!($course = $DB->get_record('course', array('id' => $lti->course), 'id', IGNORE_MISSING))) {
+        if (!($course = $DB->get_record('course', array('id' => $orcalti->course), 'id', IGNORE_MISSING))) {
             $response->set_code(404);
             return;
         }
-        if (!($context = \context_course::instance($lti->course))) {
+        if (!($context = \context_course::instance($orcalti->course))) {
             $response->set_code(404);
             return;
         }
         $modinfo = get_fast_modinfo($course);
-        $cm = get_coursemodule_from_instance('orcalti', $linkid, $lti->course, false, MUST_EXIST);
+        $cm = get_coursemodule_from_instance('orcalti', $linkid, $orcalti->course, false, MUST_EXIST);
         $cm = $modinfo->get_cm($cm->id);
         $info = new info_module($cm);
         if ($info->is_available_for_all()) {
             $info = null;
         }
         $json = $this->get_service()->get_members_json($this, $context, $course, $role,
-                                                       $limitfrom, $limitnum, $lti, $info, $response);
+                                                       $limitfrom, $limitnum, $orcalti, $info, $response);
 
         $response->set_content_type($this->formats[0]);
         $response->set_body($json);
@@ -118,7 +118,7 @@ class linkmemberships extends resource_base {
      *
      * @param string $typeid
      *
-     * @return array with the permissions related to this resource by the $lti_type or null if none.
+     * @return array with the permissions related to this resource by the $orcalti_type or null if none.
      */
     public function get_permissions($typeid) {
         $tool = orcalti_get_type_type_config($typeid);

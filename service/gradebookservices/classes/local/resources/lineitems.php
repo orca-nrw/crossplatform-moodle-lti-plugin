@@ -17,7 +17,7 @@
 /**
  * This file contains a class definition for the LineItem container resource
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @author     Dirk Singels, Diego del Blanco, Claude Vervoort
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * A resource implementing LineItem container.
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -42,7 +42,7 @@ class lineitems extends resource_base {
     /**
      * Class constructor.
      *
-     * @param \orcaltiservice_gradebookservices\local\service\gradebookservices $service Service instance
+     * @param \orcaltisrv_gradebookservices\local\service\gradebookservices $service Service instance
      */
     public function __construct($service) {
 
@@ -74,7 +74,7 @@ class lineitems extends resource_base {
             $contenttype = $response->get_content_type();
         }
         $container = empty($contenttype) || ($contenttype === $this->formats[0]);
-        // We will receive typeid when working with LTI 1.x, if not then we are in LTI 2.
+        // We will receive typeid when working with ORCALTI 1.x, if not then we are in ORCALTI 2.
         $typeid = optional_param('type_id', null, PARAM_INT);
 
         $scopes = array(gradebookservices::SCOPE_GRADEBOOKSERVICES_LINEITEM);
@@ -99,18 +99,18 @@ class lineitems extends resource_base {
             }
             if ($response->get_request_method() !== self::HTTP_POST) {
                 $resourceid = optional_param('resource_id', null, PARAM_TEXT);
-                $ltilinkid = optional_param('resource_link_id', null, PARAM_TEXT);
-                if (is_null($ltilinkid)) {
-                    $ltilinkid = optional_param('lti_link_id', null, PARAM_TEXT);
+                $orcaltilinkid = optional_param('resource_link_id', null, PARAM_TEXT);
+                if (is_null($orcaltilinkid)) {
+                    $orcaltilinkid = optional_param('orcalti_link_id', null, PARAM_TEXT);
                 }
                 $tag = optional_param('tag', null, PARAM_TEXT);
                 $limitnum = optional_param('limit', 0, PARAM_INT);
                 $limitfrom = optional_param('from', 0, PARAM_INT);
-                $itemsandcount = $this->get_service()->get_lineitems($contextid, $resourceid, $ltilinkid, $tag, $limitfrom,
+                $itemsandcount = $this->get_service()->get_lineitems($contextid, $resourceid, $orcaltilinkid, $tag, $limitfrom,
                         $limitnum, $typeid);
                 $items = $itemsandcount[1];
                 $totalcount = $itemsandcount[0];
-                $json = $this->get_json_for_get_request($items, $resourceid, $ltilinkid, $tag, $limitfrom,
+                $json = $this->get_json_for_get_request($items, $resourceid, $orcaltilinkid, $tag, $limitfrom,
                         $limitnum, $totalcount, $typeid, $response);
                 $response->set_content_type($this->formats[0]);
             } else {
@@ -132,7 +132,7 @@ class lineitems extends resource_base {
      *
      * @param array $items Array of lineitems
      * @param string $resourceid Resource identifier used for filtering, may be null
-     * @param string $ltilinkid Resource Link identifier used for filtering, may be null
+     * @param string $orcaltilinkid Resource Link identifier used for filtering, may be null
      * @param string $tag Tag identifier used for filtering, may be null
      * @param int $limitfrom Offset of the first line item to return
      * @param int $limitnum Maximum number of line items to return, ignored if zero or less
@@ -142,7 +142,7 @@ class lineitems extends resource_base {
 
      * @return string
      */
-    private function get_json_for_get_request($items, $resourceid, $ltilinkid,
+    private function get_json_for_get_request($items, $resourceid, $orcaltilinkid,
             $tag, $limitfrom, $limitnum, $totalcount, $typeid, $response) {
 
         $firstpage = null;
@@ -164,8 +164,8 @@ class lineitems extends resource_base {
             if (isset($resourceid)) {
                 $baseurl->param('resource_id', $resourceid);
             }
-            if (isset($ltilinkid)) {
-                $baseurl->param('resource_link_id', $ltilinkid);
+            if (isset($orcaltilinkid)) {
+                $baseurl->param('resource_link_id', $orcaltilinkid);
             }
             if (isset($tag)) {
                 $baseurl->param('tag', $tag);
@@ -243,17 +243,17 @@ class lineitems extends resource_base {
         }
         require_once($CFG->libdir.'/gradelib.php');
         $resourceid = (isset($json->resourceId)) ? $json->resourceId : '';
-        $ltilinkid = (isset($json->resourceLinkId)) ? $json->resourceLinkId : null;
-        if ($ltilinkid == null) {
-            $ltilinkid = (isset($json->ltiLinkId)) ? $json->ltiLinkId : null;
+        $orcaltilinkid = (isset($json->resourceLinkId)) ? $json->resourceLinkId : null;
+        if ($orcaltilinkid == null) {
+            $orcaltilinkid = (isset($json->orcaltiLinkId)) ? $json->orcaltiLinkId : null;
         }
-        if ($ltilinkid != null) {
+        if ($orcaltilinkid != null) {
             if (is_null($typeid)) {
-                if (!gradebookservices::check_orcalti_id($ltilinkid, $contextid, $this->get_service()->get_tool_proxy()->id)) {
+                if (!gradebookservices::check_orcalti_id($orcaltilinkid, $contextid, $this->get_service()->get_tool_proxy()->id)) {
                     throw new \Exception(null, 403);
                 }
             } else {
-                if (!gradebookservices::check_orcalti_1x_id($ltilinkid, $contextid, $typeid)) {
+                if (!gradebookservices::check_orcalti_1x_id($orcaltilinkid, $contextid, $typeid)) {
                     throw new \Exception(null, 403);
                 }
             }
@@ -264,11 +264,11 @@ class lineitems extends resource_base {
             $baseurl = null;
         } else {
             $toolproxyid = null;
-            $baseurl = orcalti_get_type_type_config($typeid)->lti_toolurl;
+            $baseurl = orcalti_get_type_type_config($typeid)->orcalti_toolurl;
         }
         $gradebookservices = new gradebookservices();
         $id = $gradebookservices->add_standalone_lineitem($contextid, $json->label,
-            $max, $baseurl, $ltilinkid, $resourceid, $tag, $typeid, $toolproxyid);
+            $max, $baseurl, $orcaltilinkid, $resourceid, $tag, $typeid, $toolproxyid);
         if (is_null($typeid)) {
             $json->id = parent::get_endpoint() . "/{$id}/lineitem";
         } else {

@@ -17,7 +17,7 @@
 /**
  * This file contains the class for restore of this gradebookservices plugin
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @author     Dirk Singels, Diego del Blanco, Claude Vervoort
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -32,15 +32,15 @@ require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
  * Restore subplugin class.
  *
  * Provides the necessary information
- * needed to restore the lineitems related with the lti activity (coupled),
+ * needed to restore the lineitems related with the orcalti activity (coupled),
  * and all the uncoupled ones from the course.
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @author     Dirk Singels, Diego del Blanco, Claude Vervoort
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class restore_orcaltiservice_gradebookservices_subplugin extends restore_subplugin {
+class restore_orcaltisrv_gradebookservices_subplugin extends restore_subplugin {
 
     /**
      * Returns the subplugin structure to attach to the XML element.
@@ -62,11 +62,11 @@ class restore_orcaltiservice_gradebookservices_subplugin extends restore_subplug
      * @param mixed $data
      * @return void
      */
-    public function process_orcaltiservice_gradebookservices_lineitem($data) {
+    public function process_orcaltisrv_gradebookservices_lineitem($data) {
         global $DB;
         $data = (object)$data;
         // The coupled lineitems are restored as any other grade item
-        // so we will only create the entry in the orcaltiservice_gradebookservices table.
+        // so we will only create the entry in the orcaltisrv_gradebookservices table.
         // We will try to find a valid toolproxy in the system.
         // If it has been found before... we use it.
         /* cache parent property to account for missing PHPDoc type specification */
@@ -74,8 +74,8 @@ class restore_orcaltiservice_gradebookservices_subplugin extends restore_subplug
         $activitytask = $this->task;
         $courseid = $activitytask->get_courseid();
         if ($data->typeid != null) {
-            if ($ltitypeid = $this->get_mappingid('orcaltitype', $data->typeid)) {
-                $newtypeid = $ltitypeid;
+            if ($orcaltitypeid = $this->get_mappingid('orcaltitype', $data->typeid)) {
+                $newtypeid = $orcaltitypeid;
             } else { // If not, then we will call our own function to find it.
                 $newtypeid = $this->find_typeid($data, $courseid);
             }
@@ -83,19 +83,23 @@ class restore_orcaltiservice_gradebookservices_subplugin extends restore_subplug
             $newtypeid = null;
         }
         if ($data->toolproxyid != null) {
-            $ltitoolproxy = $this->get_mappingid('ltitoolproxy', $data->toolproxyid);
-            if ($ltitoolproxy && $ltitoolproxy != 0) {
-                $newtoolproxyid = $ltitoolproxy;
+            $orcaltitoolproxy = $this->get_mappingid('orcaltitoolproxy', $data->toolproxyid);
+            if ($orcaltitoolproxy && $orcaltitoolproxy != 0) {
+                $newtoolproxyid = $orcaltitoolproxy;
             } else { // If not, then we will call our own function to find it.
                 $newtoolproxyid = $this->find_proxy_id($data);
             }
         } else {
             $newtoolproxyid = null;
         }
-        if ($data->ltilinkid != null) {
-            $ltilinkid = $this->get_new_parentid('orcalti');
+        if ($data->orcaltilinkid != null) {
+            if ($data->orcaltilinkid != $this->get_old_parentid('orcalti')) {
+                // This is a linked item, but not for the current orcalti link, so skip it.
+                return;
+            }
+            $orcaltilinkid = $this->get_new_parentid('orcalti');
         } else {
-            $ltilinkid = null;
+            $orcaltilinkid = null;
         }
         $resourceid = null;
         if (property_exists( $data, 'resourceid' )) {
@@ -107,11 +111,13 @@ class restore_orcaltiservice_gradebookservices_subplugin extends restore_subplug
                     'gradeitemid' => 0,
                     'courseid' => $courseid,
                     'toolproxyid' => $newtoolproxyid,
-                    'ltilinkid' => $ltilinkid,
+                    'orcaltilinkid' => $orcaltilinkid,
                     'typeid' => $newtypeid,
                     'baseurl' => $data->baseurl,
                     'resourceid' => $resourceid,
-                    'tag' => $data->tag
+                    'tag' => $data->tag,
+                    'subreviewparams' => $data->subreviewparams ?? '',
+                    'subreviewurl' => $data->subreviewurl ?? ''
             ));
             $this->set_mapping('gbsgradeitemoldid', $newgbsid, $data->gradeitemid);
             $this->set_mapping('gbsgradeitemrestored', $data->id, $data->id);
@@ -156,7 +162,7 @@ class restore_orcaltiservice_gradebookservices_subplugin extends restore_subplug
 
         // 1. Find a type with the same id in the same course.
         $dbtypeidparameter = array('id' => $oldtypeid, 'course' => $courseid, 'baseurl' => $data->baseurl);
-        $dbtype = $DB->get_field_select('orcalti_types', 'id', "id=:id
+        $dbtype = $DB->get_field_select('lti_types', 'id', "id=:id
                 AND course=:course AND ".$DB->sql_compare_text('baseurl')."=:baseurl",
                 $dbtypeidparameter);
         if ($dbtype) {
@@ -164,7 +170,7 @@ class restore_orcaltiservice_gradebookservices_subplugin extends restore_subplug
         } else {
             // 2. Find a site type for all the courses (course == 1), but with the same id.
             $dbtypeidparameter = array('id' => $oldtypeid, 'baseurl' => $data->baseurl);
-            $dbtype = $DB->get_field_select('orcalti_types', 'id', "id=:id
+            $dbtype = $DB->get_field_select('lti_types', 'id', "id=:id
                     AND course=1 AND ".$DB->sql_compare_text('baseurl')."=:baseurl",
                     $dbtypeidparameter);
             if ($dbtype) {
@@ -172,7 +178,7 @@ class restore_orcaltiservice_gradebookservices_subplugin extends restore_subplug
             } else {
                 // 3. Find a type with the same baseurl in the actual site.
                 $dbtypeidparameter = array('course' => $courseid, 'baseurl' => $data->baseurl);
-                $dbtype = $DB->get_field_select('orcalti_types', 'id', "course=:course
+                $dbtype = $DB->get_field_select('lti_types', 'id', "course=:course
                         AND ".$DB->sql_compare_text('baseurl')."=:baseurl",
                         $dbtypeidparameter);
                 if ($dbtype) {
@@ -180,7 +186,7 @@ class restore_orcaltiservice_gradebookservices_subplugin extends restore_subplug
                 } else {
                     // 4. Find a site type for all the courses (course == 1) with the same baseurl.
                     $dbtypeidparameter = array('course' => 1, 'baseurl' => $data->baseurl);
-                    $dbtype = $DB->get_field_select('orcalti_types', 'id', "course=1
+                    $dbtype = $DB->get_field_select('lti_types', 'id', "course=1
                             AND ".$DB->sql_compare_text('baseurl')."=:baseurl",
                             $dbtypeidparameter);
                     if ($dbtype) {
@@ -219,14 +225,14 @@ class restore_orcaltiservice_gradebookservices_subplugin extends restore_subplug
         if ($gi) {
             $gbs = $DB->get_records('orcaltisrv_gradebookservices', ['gradeitemid' => $gi->id]);
             if (empty($gbs)) {
-                // The currently restored LTI link has a grade item but no gbs, so let's create a gbs entry.
+                // The currently restored ORCALTI link has a grade item but no gbs, so let's create a gbs entry.
                 if ($instance = $DB->get_record('orcalti', array('id' => $gi->iteminstance))) {
                     if ($tool = orcalti_get_instance_type($instance)) {
                         $DB->insert_record('orcaltisrv_gradebookservices', (object) array(
                             'gradeitemid' => $gi->id,
                             'courseid' => $courseid,
                             'toolproxyid' => $tool->toolproxyid,
-                            'ltilinkid' => $gi->iteminstance,
+                            'orcaltilinkid' => $gi->iteminstance,
                             'typeid' => $tool->id,
                             'baseurl' => $tool->baseurl,
                             'resourceid' => $gi->idnumber

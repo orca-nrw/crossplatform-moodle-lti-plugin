@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * LTI web service endpoints
+ * ORCALTI web service endpoints
  *
  * @package mod_orcalti
  * @copyright  Copyright (c) 2011 Moodlerooms Inc. (http://www.moodlerooms.com)
@@ -32,7 +32,7 @@ require_once($CFG->dirroot.'/mod/orcalti/servicelib.php');
 
 // TODO: Switch to core oauthlib once implemented - MDL-30149.
 use mod_orcalti\service_exception_handler;
-use moodle\mod\orcalti as lti;
+use moodle\mod\orcalti as orcalti;
 use orcaltiservice_basicoutcomes\local\service\basicoutcomes;
 
 $rawbody = file_get_contents("php://input");
@@ -51,7 +51,7 @@ $ok = true;
 $type = null;
 $toolproxy = false;
 
-$consumerkey = lti\get_oauth_key_from_headers(null, array(basicoutcomes::SCOPE_BASIC_OUTCOMES));
+$consumerkey = orcalti\get_oauth_key_from_headers(null, array(basicoutcomes::SCOPE_BASIC_OUTCOMES));
 if ($consumerkey === false) {
     throw new Exception('Missing or invalid consumer key or access token.');
 } else if (is_string($consumerkey)) {
@@ -70,13 +70,13 @@ if ($consumerkey === false) {
 }
 
 // TODO MDL-46023 Replace this code with a call to the new library.
-$origentity = libxml_disable_entity_loader(true);
+$origentity = orcalti_libxml_disable_entity_loader(true);
 $xml = simplexml_load_string($rawbody);
 if (!$xml) {
-    libxml_disable_entity_loader($origentity);
+    orcalti_libxml_disable_entity_loader($origentity);
     throw new Exception('Invalid XML content');
 }
-libxml_disable_entity_loader($origentity);
+orcalti_libxml_disable_entity_loader($origentity);
 
 $body = $xml->imsx_POXBody;
 foreach ($body->children() as $child) {
@@ -91,16 +91,16 @@ switch ($messagetype) {
     case 'replaceResultRequest':
         $parsed = orcalti_parse_grade_replace_message($xml);
 
-        $ltiinstance = $DB->get_record('orcalti', array('id' => $parsed->instanceid));
+        $orcaltiinstance = $DB->get_record('orcalti', array('id' => $parsed->instanceid));
 
-        if (!orcalti_accepts_grades($ltiinstance)) {
+        if (!orcalti_accepts_grades($orcaltiinstance)) {
             throw new Exception('Tool does not accept grades');
         }
 
-        orcalti_verify_sourcedid($ltiinstance, $parsed);
+        orcalti_verify_sourcedid($orcaltiinstance, $parsed);
         orcalti_set_session_user($parsed->userid);
 
-        $gradestatus = orcalti_update_grade($ltiinstance, $parsed->userid, $parsed->launchid, $parsed->gradeval);
+        $gradestatus = orcalti_update_grade($orcaltiinstance, $parsed->userid, $parsed->launchid, $parsed->gradeval);
 
         if (!$gradestatus) {
             throw new Exception('Grade replace response');
@@ -120,19 +120,19 @@ switch ($messagetype) {
     case 'readResultRequest':
         $parsed = orcalti_parse_grade_read_message($xml);
 
-        $ltiinstance = $DB->get_record('orcalti', array('id' => $parsed->instanceid));
+        $orcaltiinstance = $DB->get_record('orcalti', array('id' => $parsed->instanceid));
 
-        if (!orcalti_accepts_grades($ltiinstance)) {
+        if (!orcalti_accepts_grades($orcaltiinstance)) {
             throw new Exception('Tool does not accept grades');
         }
 
         // Getting the grade requires the context is set.
-        $context = context_course::instance($ltiinstance->course);
+        $context = context_course::instance($orcaltiinstance->course);
         $PAGE->set_context($context);
 
-        orcalti_verify_sourcedid($ltiinstance, $parsed);
+        orcalti_verify_sourcedid($orcaltiinstance, $parsed);
 
-        $grade = orcalti_read_grade($ltiinstance, $parsed->userid);
+        $grade = orcalti_read_grade($orcaltiinstance, $parsed->userid);
 
         $responsexml = orcalti_get_response_xml(
                 'success',  // Empty grade is also 'success'.
@@ -153,16 +153,16 @@ switch ($messagetype) {
     case 'deleteResultRequest':
         $parsed = orcalti_parse_grade_delete_message($xml);
 
-        $ltiinstance = $DB->get_record('orcalti', array('id' => $parsed->instanceid));
+        $orcaltiinstance = $DB->get_record('orcalti', array('id' => $parsed->instanceid));
 
-        if (!orcalti_accepts_grades($ltiinstance)) {
+        if (!orcalti_accepts_grades($orcaltiinstance)) {
             throw new Exception('Tool does not accept grades');
         }
 
-        orcalti_verify_sourcedid($ltiinstance, $parsed);
+        orcalti_verify_sourcedid($orcaltiinstance, $parsed);
         orcalti_set_session_user($parsed->userid);
 
-        $gradestatus = orcalti_delete_grade($ltiinstance, $parsed->userid);
+        $gradestatus = orcalti_delete_grade($orcaltiinstance, $parsed->userid);
 
         if (!$gradestatus) {
             throw new Exception('Grade delete request');
@@ -181,7 +181,7 @@ switch ($messagetype) {
 
     default:
         // Fire an event if we get a web service request which we don't support directly.
-        // This will allow others to extend the LTI services, which I expect to be a common
+        // This will allow others to extend the ORCALTI services, which I expect to be a common
         // use case, at least until the spec matures.
         $data = new stdClass();
         $data->body = $rawbody;
@@ -197,24 +197,24 @@ switch ($messagetype) {
         $eventdata['other']['consumerkey'] = $consumerkey;
 
         // Before firing the event, allow subplugins a chance to handle.
-        if (orcalti_extend_lti_services($data)) {
+        if (orcalti_extend_orcalti_services($data)) {
             break;
         }
 
         // If an event handler handles the web service, it should set this global to true
         // So this code knows whether to send an "operation not supported" or not.
-        global $ltiwebservicehandled;
-        $ltiwebservicehandled = false;
+        global $orcaltiwebservicehandled;
+        $orcaltiwebservicehandled = false;
 
         try {
             $event = \mod_orcalti\event\unknown_service_api_called::create($eventdata);
             $event->set_message_data($data);
             $event->trigger();
         } catch (Exception $e) {
-            $ltiwebservicehandled = false;
+            $orcaltiwebservicehandled = false;
         }
 
-        if (!$ltiwebservicehandled) {
+        if (!$orcaltiwebservicehandled) {
             $responsexml = orcalti_get_response_xml(
                 'unsupported',
                 'unsupported',
