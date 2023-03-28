@@ -17,7 +17,7 @@
 /**
  * This file contains the class for restore of this gradebookservices plugin
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @author     Dirk Singels, Diego del Blanco
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -32,12 +32,12 @@ require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 /**
  * Provides the information to backup gradebookservices lineitems
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @author     Dirk Singels, Diego del Blanco, Claude Vervoort
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class backup_orcaltiservice_gradebookservices_subplugin extends backup_subplugin {
+class backup_orcaltisrv_gradebookservices_subplugin extends backup_subplugin {
 
     /** TypeId contained in DB but is invalid */
     const NONVALIDTYPEID = 0;
@@ -60,11 +60,13 @@ class backup_orcaltiservice_gradebookservices_subplugin extends backup_subplugin
                 'toolproxyid',
                 'typeid',
                 'baseurl',
-                'ltilinkid',
+                'orcaltilinkid',
                 'resourceid',
                 'tag',
                 'vendorcode',
-                'guid'
+                'guid',
+                'subreviewurl',
+                'subreviewparams'
                 )
         );
 
@@ -84,30 +86,30 @@ class backup_orcaltiservice_gradebookservices_subplugin extends backup_subplugin
         $activitytask = $this->task;
         $activityid = $activitytask->get_activityid();
         $activitycourseid = $activitytask->get_courseid();
-        $lti = $DB->get_record('orcalti', ['id' => $activityid], 'typeid, toolurl, securetoolurl');
-        $ltitype = $DB->get_record('orcalti_types', ['id' => $lti->typeid], 'toolproxyid, baseurl');
-        if ($ltitype) {
-            $typeid = $lti->typeid;
-            $toolproxyid = $ltitype->toolproxyid;
-        } else if ($lti->typeid == self::NONVALIDTYPEID) { // This activity comes from an old backup.
+        $orcalti = $DB->get_record('orcalti', ['id' => $activityid], 'typeid, toolurl, securetoolurl');
+        $orcaltitype = $DB->get_record('lti_types', ['id' => $orcalti->typeid], 'toolproxyid, baseurl');
+        if ($orcaltitype) {
+            $typeid = $orcalti->typeid;
+            $toolproxyid = $orcaltitype->toolproxyid;
+        } else if ($orcalti->typeid == self::NONVALIDTYPEID) { // This activity comes from an old backup.
             // 1. Let's check if the activity is coupled. If so, find the values in the GBS element.
             $gbsrecord = $DB->get_record('orcaltisrv_gradebookservices',
-                    ['ltilinkid' => $activityid], 'typeid,toolproxyid,baseurl');
+                    ['orcaltilinkid' => $activityid], 'typeid,toolproxyid,baseurl');
             if ($gbsrecord) {
                 $typeid = $gbsrecord->typeid;
                 $toolproxyid = $gbsrecord->toolproxyid;
             } else { // 2. If it is uncoupled... we will need to guess the right activity typeid
                 // Guess the typeid for the activity.
-                $tool = orcalti_get_tool_by_url_match($lti->toolurl, $activitycourseid);
+                $tool = orcalti_get_tool_by_url_match($orcalti->toolurl, $activitycourseid);
                 if (!$tool) {
-                    $tool = orcalti_get_tool_by_url_match($lti->securetoolurl, $activitycourseid);
+                    $tool = orcalti_get_tool_by_url_match($orcalti->securetoolurl, $activitycourseid);
                 }
                 if ($tool) {
                     $alttypeid = $tool->id;
                     // If we have a valid typeid then get types again.
                     if ($alttypeid != self::NONVALIDTYPEID) {
-                        $ltitype = $DB->get_record('orcalti_types', ['id' => $alttypeid], 'toolproxyid, baseurl');
-                        $toolproxyid = $ltitype->toolproxyid;
+                        $orcaltitype = $DB->get_record('lti_types', ['id' => $alttypeid], 'toolproxyid, baseurl');
+                        $toolproxyid = $orcaltitype->toolproxyid;
                     }
                 }
             }

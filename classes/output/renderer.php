@@ -23,6 +23,8 @@
  */
 namespace mod_orcalti\output;
 
+defined('MOODLE_INTERNAL') || die;
+
 use plugin_renderer_base;
 
 /**
@@ -56,6 +58,18 @@ class renderer extends plugin_renderer_base {
     public function render_external_registration_return_page($page) {
         $data = $page->export_for_template($this);
         return parent::render_from_template('mod_orcalti/external_registration_return', $data);
+    }
+
+    /**
+     * Render the external registration return page
+     *
+     * @param tool_configure_page $page
+     *
+     * @return string html for the page
+     */
+    public function render_registration_upgrade_choice_page($page) {
+        $data = $page->export_for_template($this);
+        return parent::render_from_template('mod_orcalti/registration_upgrade_choice_page', $data);
     }
 
     /**

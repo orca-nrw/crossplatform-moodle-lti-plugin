@@ -21,7 +21,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-LTI Source plugins directory
+ORCALTI Source plugins directory
 ==============================
-This directory contains LTI source plugins which are plugins that can register custom handlers
-to process lti messages.
+This directory contains ORCALTI source plugins which are plugins that can register custom handlers
+to process orcalti messages.

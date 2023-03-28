@@ -14,11 +14,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A list of keys and their keycodes that are used by the LTI modules.
+ * A list of keys and their keycodes that are used by the ORCALTI modules.
  *
  * @module     mod_orcalti/keys
  * @class      keys
- * @package    mod_orcalti
  * @copyright  2015 Ryan Wyllie <ryan@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      3.1

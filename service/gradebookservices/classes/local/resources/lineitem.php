@@ -17,7 +17,7 @@
 /**
  * This file contains a class definition for the LineItem resource
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @author     Dirk Singels, Diego del Blanco, Claude Vervoort
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * A resource implementing LineItem.
  *
- * @package    orcaltiservice_gradebookservices
+ * @package    orcaltisrv_gradebookservices
  * @copyright  2017 Cengage Learning http://www.cengage.com
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -69,7 +69,7 @@ class lineitem extends resource_base {
         $contextid = $params['context_id'];
         $itemid = $params['item_id'];
         $isget = $response->get_request_method() === self::HTTP_GET;
-        // We will receive typeid when working with LTI 1.x, if not then we are in LTI 2.
+        // We will receive typeid when working with ORCALTI 1.x, if not then we are in ORCALTI 2.
         $typeid = optional_param('type_id', null, PARAM_INT);
 
         $scopes = array(gradebookservices::SCOPE_GRADEBOOKSERVICES_LINEITEM);
@@ -136,7 +136,7 @@ class lineitem extends resource_base {
      * Process a PUT request.
      *
      * @param string $body PUT body
-     * @param \orcaltiservice_gradebookservices\local\resources\lineitem $olditem Grade item instance
+     * @param \orcaltisrv_gradebookservices\local\resources\lineitem $olditem Grade item instance
      * @param string $typeid Tool Type Id
      *
      * @return string
@@ -178,14 +178,27 @@ class lineitem extends resource_base {
             }
             $gbs->tag = $tag;
             $gbs->resourceid = $resourceid;
+            $incomingurl = null;
+            $incomingparams = null;
+            if (isset($json->submissionReview)) {
+                $incomingurl = $json->submissionReview->url ?? 'DEFAULT';
+                if (isset($json->submissionReview->custom)) {
+                    $incomingparams = orcalti_params_to_string($json->submissionReview->custom);
+                }
+            }
+            if ($gbs->subreviewurl ?? null !== $incomingurl || $gbs->subreviewparams ?? null !== $incomingparams) {
+                $upgradegradebookservices = true;
+                $gbs->subreviewurl = $incomingurl;
+                $gbs->subreviewparams = $incomingparams;
+            }
         }
-        $ltilinkid = null;
+        $orcaltilinkid = null;
         if (isset($json->resourceLinkId)) {
             if (is_numeric($json->resourceLinkId)) {
-                $ltilinkid = $json->resourceLinkId;
+                $orcaltilinkid = $json->resourceLinkId;
                 if ($gbs) {
-                    if (intval($gbs->ltilinkid) !== intval($json->resourceLinkId)) {
-                        $gbs->ltilinkid = $json->resourceLinkId;
+                    if (intval($gbs->orcaltilinkid) !== intval($json->resourceLinkId)) {
+                        $gbs->orcaltilinkid = $json->resourceLinkId;
                         $upgradegradebookservices = true;
                     }
                 } else {
@@ -197,17 +210,17 @@ class lineitem extends resource_base {
             } else {
                 throw new \Exception(null, 400);
             }
-        } else if (isset($json->ltiLinkId)) {
-            if (is_numeric($json->ltiLinkId)) {
-                $ltilinkid = $json->ltiLinkId;
+        } else if (isset($json->orcaltiLinkId)) {
+            if (is_numeric($json->orcaltiLinkId)) {
+                $orcaltilinkid = $json->orcaltiLinkId;
                 if ($gbs) {
-                    if (intval($gbs->ltilinkid) !== intval($json->ltiLinkId)) {
-                        $gbs->ltilinkid = $json->ltiLinkId;
+                    if (intval($gbs->orcaltilinkid) !== intval($json->orcaltiLinkId)) {
+                        $gbs->orcaltilinkid = $json->orcaltiLinkId;
                         $upgradegradebookservices = true;
                     }
                 } else {
-                    if (intval($item->iteminstance) !== intval($json->ltiLinkId)) {
-                        $item->iteminstance = intval($json->ltiLinkId);
+                    if (intval($item->iteminstance) !== intval($json->orcaltiLinkId)) {
+                        $item->iteminstance = intval($json->orcaltiLinkId);
                         $updategradeitem = true;
                     }
                 }
@@ -215,21 +228,21 @@ class lineitem extends resource_base {
                 throw new \Exception(null, 400);
             }
         }
-        if ($ltilinkid != null) {
+        if ($orcaltilinkid != null) {
             if (is_null($typeid)) {
-                if (!gradebookservices::check_orcalti_id($ltilinkid, $item->courseid,
+                if (!gradebookservices::check_orcalti_id($orcaltilinkid, $item->courseid,
                         $this->get_service()->get_tool_proxy()->id)) {
                             throw new \Exception(null, 403);
                 }
             } else {
-                if (!gradebookservices::check_orcalti_1x_id($ltilinkid, $item->courseid,
+                if (!gradebookservices::check_orcalti_1x_id($orcaltilinkid, $item->courseid,
                         $typeid)) {
                             throw new \Exception(null, 403);
                 }
             }
         }
         if ($updategradeitem) {
-            if (!$item->update('mod/orcaltiservice_gradebookservices')) {
+            if (!$item->update('mod/orcaltisrv_gradebookservices')) {
                 throw new \Exception(null, 500);
             }
             if ($rescalegrades) {
@@ -246,7 +259,7 @@ class lineitem extends resource_base {
                 $baseurl = null;
             } else {
                 $toolproxyid = null;
-                $baseurl = orcalti_get_type_type_config($typeid)->lti_toolurl;
+                $baseurl = orcalti_get_type_type_config($typeid)->orcalti_toolurl;
             }
             $DB->update_record('orcaltisrv_gradebookservices', (object)array(
                     'id' => $gbs->id,
@@ -255,9 +268,11 @@ class lineitem extends resource_base {
                     'toolproxyid' => $toolproxyid,
                     'typeid' => $typeid,
                     'baseurl' => $baseurl,
-                    'ltilinkid' => $ltilinkid,
+                    'orcaltilinkid' => $orcaltilinkid,
                     'resourceid' => $resourceid,
-                    'tag' => $gbs->tag
+                    'tag' => $gbs->tag,
+                    'subreviewurl' => $gbs->subreviewurl,
+                    'subreviewparams' => $gbs->subreviewparams
             ));
         }
 
@@ -275,7 +290,7 @@ class lineitem extends resource_base {
     /**
      * Process a DELETE request.
      *
-     * @param \orcaltiservice_gradebookservices\local\resources\lineitem $item Grade item instance
+     * @param \orcaltisrv_gradebookservices\local\resources\lineitem $item Grade item instance
      * @throws \Exception
      */
     private function process_delete_request($item) {
@@ -285,7 +300,7 @@ class lineitem extends resource_base {
         if (($gbs = gradebookservices::find_orcaltiservice_gradebookservice_for_lineitem($item->id)) == false) {
             throw new \Exception(null, 403);
         }
-        if (!$gradeitem->delete('mod/orcaltiservice_gradebookservices')) {
+        if (!$gradeitem->delete('mod/orcaltisrv_gradebookservices')) {
             throw new \Exception(null, 500);
         } else {
             $sqlparams = array();
@@ -315,7 +330,13 @@ class lineitem extends resource_base {
             }
             $id = optional_param('id', 0, PARAM_INT); // Course Module ID.
             if (empty($id)) {
-                $id = optional_param('lti_message_hint', 0, PARAM_INT);
+                $hint = optional_param('lti_message_hint', "", PARAM_TEXT);
+                if ($hint) {
+                    $hintdec = json_decode($hint);
+                    if (isset($hintdec->cmid)) {
+                        $id = $hintdec->cmid;
+                    }
+                }
             }
             if (!empty($id)) {
                 $cm = get_coursemodule_from_id('orcalti', $id, 0, false, MUST_EXIST);

@@ -50,7 +50,7 @@ class provider implements
      * @return collection A listing of user data stored through this system.
      */
     public static function get_metadata(collection $collection) : collection {
-        $collection->link_external_location('External LTI provider.', [
+        $collection->link_external_location('External ORCALTI provider.', [
             'userid' => 'privacy:metadata:userid',
             'useridnumber' => 'privacy:metadata:useridnumber',
             'fullname' => 'privacy:metadata:fullname',
@@ -97,7 +97,7 @@ class provider implements
     }
 
     /**
-     * Delete multiple users within a single context.
+     * Delete muorcaltiple users within a single context.
      *
      * @param approved_userlist $userlist The approved context and user information to delete information for.
      */

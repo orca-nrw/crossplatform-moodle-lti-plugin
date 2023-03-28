@@ -54,7 +54,7 @@ class contextmemberships extends resource_base {
         $this->template = '/{context_type}/{context_id}/bindings/{tool_code}/memberships';
         $this->variables[] = 'ToolProxyBinding.memberships.url';
         $this->formats[] = 'application/vnd.ims.lis.v2.membershipcontainer+json';
-        $this->formats[] = 'application/vnd.ims.lti-nrps.v2.membershipcontainer+json';
+        $this->formats[] = 'application/vnd.ims.orcalti-nrps.v2.membershipcontainer+json';
         $this->methods[] = self::HTTP_GET;
 
     }
@@ -72,7 +72,7 @@ class contextmemberships extends resource_base {
         $limitnum = optional_param('limit', 0, PARAM_INT);
         $limitfrom = optional_param('from', 0, PARAM_INT);
         $linkid = optional_param('rlid', '', PARAM_TEXT);
-        $lti = null;
+        $orcalti = null;
         $modinfo = null;
 
         if ($limitnum <= 0) {
@@ -95,11 +95,11 @@ class contextmemberships extends resource_base {
                 throw new \Exception("Not Found: Course instance {$course->id} doesn't exist", 404);
             }
             if (!empty($linkid)) {
-                if (!($lti = $DB->get_record('orcalti', array('id' => $linkid), 'id,course,typeid,servicesalt', IGNORE_MISSING))) {
-                    throw new \Exception("Not Found: LTI link {$linkid} doesn't exist", 404);
+                if (!($orcalti = $DB->get_record('orcalti', array('id' => $linkid), 'id,course,typeid,servicesalt', IGNORE_MISSING))) {
+                    throw new \Exception("Not Found: ORCALTI link {$linkid} doesn't exist", 404);
                 }
                 $modinfo = get_fast_modinfo($course);
-                $cm = get_coursemodule_from_instance('orcalti', $linkid, $lti->course, false, MUST_EXIST);
+                $cm = get_coursemodule_from_instance('orcalti', $linkid, $orcalti->course, false, MUST_EXIST);
                 $cm = $modinfo->get_cm($cm->id);
                 $modinfo = new info_module($cm);
                 if ($modinfo->is_available_for_all()) {
@@ -107,7 +107,7 @@ class contextmemberships extends resource_base {
                 }
             }
 
-            $json = $this->get_service()->get_members_json($this, $context, $course, $role, $limitfrom, $limitnum, $lti,
+            $json = $this->get_service()->get_members_json($this, $context, $course, $role, $limitfrom, $limitnum, $orcalti,
                 $modinfo, $response);
 
             $response->set_body($json);

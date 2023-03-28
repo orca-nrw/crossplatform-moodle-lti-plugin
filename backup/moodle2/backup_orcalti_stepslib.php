@@ -14,21 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 //
-// This file is part of BasicLTI4Moodle
+// This file is part of BasicORCALTI4Moodle
 //
-// BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)
-// consumer for Moodle 1.9 and Moodle 2.0. BasicLTI is a IMS Standard that allows web
-// based learning tools to be easily integrated in LMS as native ones. The IMS BasicLTI
+// BasicORCALTI4Moodle is an IMS BasicORCALTI (Basic Learning Tools for Interoperability)
+// consumer for Moodle 1.9 and Moodle 2.0. BasicORCALTI is a IMS Standard that allows web
+// based learning tools to be easily integrated in LMS as native ones. The IMS BasicORCALTI
 // specification is part of the IMS standard Common Cartridge 1.1 Sakai and other main LMS
-// are already supporting or going to support BasicLTI. This project Implements the consumer
+// are already supporting or going to support BasicORCALTI. This project Implements the consumer
 // for Moodle. Moodle is a Free Open source Learning Management System by Martin Dougiamas.
-// BasicLTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
+// BasicORCALTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
 // at the GESSI research group at UPC.
-// SimpleLTI consumer for Moodle is an implementation of the early specification of LTI
+// SimpleORCALTI consumer for Moodle is an implementation of the early specification of ORCALTI
 // by Charles Severance (Dr Chuck) htp://dr-chuck.com , developed by Jordi Piguillem in a
 // Google Summer of Code 2008 project co-mentored by Charles Severance and Marc Alier.
 //
-// BasicLTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
+// BasicORCALTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
 // of the Universitat Politecnica de Catalunya http://www.upc.edu
 // Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
 
@@ -46,6 +46,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die;
 
 /**
  * Define the complete assignment structure for backup, with file and id annotations
@@ -63,7 +64,7 @@ class backup_orcalti_activity_structure_step extends backup_activity_structure_s
         $userinfo = $this->get_setting_value('userinfo');
 
         // Define each element separated.
-        $lti = new backup_nested_element('orcalti', array('id'), array(
+        $orcalti = new backup_nested_element('orcalti', array('id'), array(
             'name',
             'intro',
             'introformat',
@@ -91,14 +92,14 @@ class backup_orcalti_activity_structure_step extends backup_activity_structure_s
             )
         );
 
-        $ltitype = new backup_nested_element('orcaltitype', array('id'), array(
+        $orcaltitype = new backup_nested_element('orcaltitype', array('id'), array(
             'name',
             'baseurl',
             'tooldomain',
             'state',
             'course',
             'coursevisible',
-            'ltiversion',
+            'orcaltiversion',
             'clientid',
             'toolproxyid',
             'enabledcapability',
@@ -112,30 +113,30 @@ class backup_orcalti_activity_structure_step extends backup_activity_structure_s
             )
         );
 
-        $ltitypesconfigs = new backup_nested_element('ltitypesconfigs');
-        $ltitypesconfig  = new backup_nested_element('ltitypesconfig', array('id'), array(
+        $orcaltitypesconfigs = new backup_nested_element('orcaltitypesconfigs');
+        $orcaltitypesconfig  = new backup_nested_element('orcaltitypesconfig', array('id'), array(
                 'name',
                 'value',
             )
         );
-        $ltitypesconfigencrypted  = new backup_nested_element('ltitypesconfigencrypted', array('id'), array(
+        $orcaltitypesconfigencrypted  = new backup_nested_element('orcaltitypesconfigencrypted', array('id'), array(
                 'name',
                 new encrypted_final_element('value'),
             )
         );
 
-        $ltitoolproxy = new backup_nested_element('ltitoolproxy', array('id'));
+        $orcaltitoolproxy = new backup_nested_element('orcaltitoolproxy', array('id'));
 
-        $ltitoolsettings = new backup_nested_element('ltitoolsettings');
-        $ltitoolsetting  = new backup_nested_element('ltitoolsetting', array('id'), array(
+        $orcaltitoolsettings = new backup_nested_element('orcaltitoolsettings');
+        $orcaltitoolsetting  = new backup_nested_element('orcaltitoolsetting', array('id'), array(
                 'settings',
                 'timecreated',
                 'timemodified',
             )
         );
 
-        $ltisubmissions = new backup_nested_element('ltisubmissions');
-        $ltisubmission = new backup_nested_element('ltisubmission', array('id'), array(
+        $orcaltisubmissions = new backup_nested_element('orcaltisubmissions');
+        $orcaltisubmission = new backup_nested_element('orcaltisubmission', array('id'), array(
             'userid',
             'datesubmitted',
             'dateupdated',
@@ -145,87 +146,87 @@ class backup_orcalti_activity_structure_step extends backup_activity_structure_s
             'state'
         ));
 
-        // Build the tree.
-        $lti->add_child($ltitype);
-        $ltitype->add_child($ltitypesconfigs);
-        $ltitypesconfigs->add_child($ltitypesconfig);
-        $ltitypesconfigs->add_child($ltitypesconfigencrypted);
-        $ltitype->add_child($ltitoolproxy);
-        $ltitoolproxy->add_child($ltitoolsettings);
-        $ltitoolsettings->add_child($ltitoolsetting);
-        $lti->add_child($ltisubmissions);
-        $ltisubmissions->add_child($ltisubmission);
+        // Build the tree
+        $orcalti->add_child($orcaltitype);
+        $orcaltitype->add_child($orcaltitypesconfigs);
+        $orcaltitypesconfigs->add_child($orcaltitypesconfig);
+        $orcaltitypesconfigs->add_child($orcaltitypesconfigencrypted);
+        $orcaltitype->add_child($orcaltitoolproxy);
+        $orcaltitoolproxy->add_child($orcaltitoolsettings);
+        $orcaltitoolsettings->add_child($orcaltitoolsetting);
+        $orcalti->add_child($orcaltisubmissions);
+        $orcaltisubmissions->add_child($orcaltisubmission);
 
         // Define sources.
-        $ltirecord = $DB->get_record('orcalti', ['id' => $this->task->get_activityid()]);
-        $lti->set_source_array([$ltirecord]);
+        $orcaltirecord = $DB->get_record('orcalti', ['id' => $this->task->get_activityid()]);
+        $orcalti->set_source_array([$orcaltirecord]);
 
-        $ltitypedata = $this->retrieve_orcalti_type($ltirecord);
-        $ltitype->set_source_array($ltitypedata ? [$ltitypedata] : []);
+        $orcaltitypedata = $this->retrieve_orcalti_type($orcaltirecord);
+        $orcaltitype->set_source_array($orcaltitypedata ? [$orcaltitypedata] : []);
 
-        if (isset($ltitypedata->baseurl)) {
+        if (isset($orcaltitypedata->baseurl)) {
             // Add type config values only if the type was backed up. Encrypt password and resourcekey.
-            $params = [backup_helper::is_sqlparam($ltitypedata->id),
+            $params = [backup_helper::is_sqlparam($orcaltitypedata->id),
                 backup_helper::is_sqlparam('password'),
                 backup_helper::is_sqlparam('resourcekey')];
-            $ltitypesconfig->set_source_sql("SELECT id, name, value
-                FROM {orcalti_types_config}
+            $orcaltitypesconfig->set_source_sql("SELECT id, name, value
+                FROM {lti_types_config}
                 WHERE typeid = ? AND name <> ? AND name <> ?", $params);
-            $ltitypesconfigencrypted->set_source_sql("SELECT id, name, value
-                FROM {orcalti_types_config}
+            $orcaltitypesconfigencrypted->set_source_sql("SELECT id, name, value
+                FROM {lti_types_config}
                 WHERE typeid = ? AND (name = ? OR name = ?)", $params);
         }
 
-        if (!empty($ltitypedata->toolproxyid)) {
-            // If this is LTI 2 tool add settings for the current activity.
-            $ltitoolproxy->set_source_array([['id' => $ltitypedata->toolproxyid]]);
-            $ltitoolsetting->set_source_sql("SELECT *
+        if (!empty($orcaltitypedata->toolproxyid)) {
+            // If this is ORCALTI 2 tool add settings for the current activity.
+            $orcaltitoolproxy->set_source_array([['id' => $orcaltitypedata->toolproxyid]]);
+            $orcaltitoolsetting->set_source_sql("SELECT *
                 FROM {orcalti_tool_settings}
                 WHERE toolproxyid = ? AND course = ? AND coursemoduleid = ?",
-                [backup_helper::is_sqlparam($ltitypedata->toolproxyid), backup::VAR_COURSEID, backup::VAR_MODID]);
+                [backup_helper::is_sqlparam($orcaltitypedata->toolproxyid), backup::VAR_COURSEID, backup::VAR_MODID]);
         } else {
-            $ltitoolproxy->set_source_array([]);
+            $orcaltitoolproxy->set_source_array([]);
         }
 
         // All the rest of elements only happen if we are including user info.
         if ($userinfo) {
-            $ltisubmission->set_source_table('orcalti_submission', array('orcaltiid' => backup::VAR_ACTIVITYID));
+            $orcaltisubmission->set_source_table('orcalti_submission', array('orcaltiid' => backup::VAR_ACTIVITYID));
         }
 
-        // Define id annotations.
-        $ltitype->annotate_ids('user', 'createdby');
-        $ltitype->annotate_ids('course', 'course');
-        $ltisubmission->annotate_ids('user', 'userid');
+        // Define id annotations
+        $orcaltitype->annotate_ids('user', 'createdby');
+        $orcaltitype->annotate_ids('course', 'course');
+        $orcaltisubmission->annotate_ids('user', 'userid');
 
         // Define file annotations.
-        $lti->annotate_files('mod_orcalti', 'intro', null); // This file areas haven't itemid.
+        $orcalti->annotate_files('mod_orcalti', 'intro', null); // This file areas haven't itemid.
 
         // Add support for subplugin structures.
-        $this->add_subplugin_structure('orcaltisource', $lti, true);
-        $this->add_subplugin_structure('orcaltiservice', $lti, true);
+        $this->add_subplugin_structure('orcaltisource', $orcalti, true);
+        $this->add_subplugin_structure('orcaltiservice', $orcalti, true);
 
-        // Return the root element (lti), wrapped into standard activity structure.
-        return $this->prepare_activity_structure($lti);
+        // Return the root element (orcalti), wrapped into standard activity structure.
+        return $this->prepare_activity_structure($orcalti);
     }
 
     /**
-     * Retrieves a record from {lti_type} table associated with the current activity
+     * Retrieves a record from {orcalti_type} table associated with the current activity
      *
      * Information about site tools is not returned because it is insecure to back it up,
      * only fields necessary for same-site tool matching are left in the record
      *
-     * @param stdClass $ltirecord record from {orcalti} table
+     * @param stdClass $orcaltirecord record from {orcalti} table
      * @return stdClass|null
      */
-    protected function retrieve_orcalti_type($ltirecord) {
+    protected function retrieve_orcalti_type($orcaltirecord) {
         global $DB;
-        if (!$ltirecord->typeid) {
+        if (!$orcaltirecord->typeid) {
             return null;
         }
 
-        $record = $DB->get_record('orcalti_types', ['id' => $ltirecord->typeid]);
+        $record = $DB->get_record('lti_types', ['id' => $orcaltirecord->typeid]);
         if ($record && $record->course == SITEID) {
-            // Site LTI types or registrations are not backed up except for their name (which is visible).
+            // Site ORCALTI types or registrations are not backed up except for their name (which is visible).
             // Predefined course types can be backed up.
             $allowedkeys = ['id', 'course', 'name', 'toolproxyid'];
             foreach ($record as $key => $value) {

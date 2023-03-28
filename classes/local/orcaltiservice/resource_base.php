@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains an abstract definition of an LTI resource
+ * This file contains an abstract definition of an ORCALTI resource
  *
  * @package    mod_orcalti
  * @copyright  2014 Vital Source Technologies http://vitalsource.com
@@ -207,7 +207,7 @@ abstract class resource_base {
      *
      * @param response $response  Response object for this request.
      */
-    abstract public function execute($response);
+    public abstract function execute($response);
 
     /**
      * Check to make sure the request is valid.
@@ -267,7 +267,7 @@ abstract class resource_base {
      */
     public function check_tool_proxy($toolproxyguid, $body = null) {
 
-        debugging('check_tool_proxy() is deprecated to allow LTI 1 connections to support services. ' .
+        debugging('check_tool_proxy() is deprecated to allow ORCALTI 1 connections to support services. ' .
                   'Please use resource_base::check_tool() instead.', DEBUG_DEVELOPER);
         $ok = false;
         if ($this->get_service()->check_tool_proxy($toolproxyguid, $body)) {
@@ -311,7 +311,7 @@ abstract class resource_base {
      * @see resource_base::check_tool()
      */
     public function check_type($typeid, $contextid, $permissionrequested, $body = null) {
-        debugging('check_type() is deprecated to allow LTI 1 connections to support services. ' .
+        debugging('check_type() is deprecated to allow ORCALTI 1 connections to support services. ' .
                   'Please use resource_base::check_tool() instead.', DEBUG_DEVELOPER);
         $ok = false;
         if ($this->get_service()->check_type($typeid, $contextid, $body)) {
@@ -333,13 +333,13 @@ abstract class resource_base {
     /**
      * get permissions from the config of the tool for that resource
      *
-     * @param int $ltitype Type of LTI
-     * @return array with the permissions related to this resource by the $ltitype or empty if none.
+     * @param int $orcaltitype Type of ORCALTI
+     * @return array with the permissions related to this resource by the $orcaltitype or empty if none.
      * @deprecated since Moodle 3.7 MDL-62599 - please do not use this function any more.
      * @see resource_base::check_tool()
      */
-    public function get_permissions($ltitype) {
-        debugging('get_permissions() is deprecated to allow LTI 1 connections to support services. ' .
+    public function get_permissions($orcaltitype) {
+        debugging('get_permissions() is deprecated to allow ORCALTI 1 connections to support services. ' .
                   'Please use resource_base::check_tool() instead.', DEBUG_DEVELOPER);
         return array();
     }

@@ -23,5 +23,5 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Tool Consumer Profile LTI Service';
-$string['privacy:metadata'] = 'The Tool Consumer Profile LTI Service plugin does not store any personal data.';
+$string['pluginname'] = 'Tool Consumer Profile ORCALTI Service';
+$string['privacy:metadata'] = 'The Tool Consumer Profile ORCALTI Service plugin does not store any personal data.';

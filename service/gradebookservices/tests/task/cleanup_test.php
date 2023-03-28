@@ -14,33 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Tests cleaning up the gradebook services task.
- *
- * @package orcaltiservice_gradebookservices
- * @category test
- * @copyright 2018 Mark Nelson <markn@moodle.com>
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
-defined('MOODLE_INTERNAL') || die();
+namespace orcaltisrv_gradebookservices\task;
 
 /**
  * Tests cleaning up the gradebook services task.
  *
- * @package orcaltiservice_gradebookservices
+ * @package orcaltisrv_gradebookservices
  * @category test
  * @copyright 2018 Mark Nelson <markn@moodle.com>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class orcaltiservice_gradebookservices_cleanup_task_testcase extends advanced_testcase {
+class cleanup_test extends \advanced_testcase {
 
     /**
      * Test set up.
      *
      * This is executed before running any test in this file.
      */
-    public function setUp() {
+    public function setUp(): void {
         $this->resetAfterTest();
     }
 
@@ -53,25 +44,25 @@ class orcaltiservice_gradebookservices_cleanup_task_testcase extends advanced_te
         // Create a course.
         $course = $this->getDataGenerator()->create_course();
 
-        // Create a few LTI items.
-        $lti = $this->getDataGenerator()->create_module('orcalti', ['course' => $course->id]);
-        $lti2 = $this->getDataGenerator()->create_module('orcalti', ['course' => $course->id]);
+        // Create a few ORCALTI items.
+        $orcalti = $this->getDataGenerator()->create_module('orcalti', ['course' => $course->id]);
+        $orcalti2 = $this->getDataGenerator()->create_module('orcalti', ['course' => $course->id]);
 
         $conditions = [
             'courseid' => $course->id,
             'itemtype' => 'mod',
             'itemmodule' => 'orcalti',
-            'iteminstance' => $lti->id
+            'iteminstance' => $orcalti->id
         ];
 
         // Get the grade items.
         $gradeitem = $DB->get_record('grade_items', $conditions);
 
-        $conditions['iteminstance'] = $lti2->id;
+        $conditions['iteminstance'] = $orcalti2->id;
         $gradeitem2 = $DB->get_record('grade_items', $conditions);
 
         // Insert these into the 'orcaltisrv_gradebookservices' table.
-        $data = new stdClass();
+        $data = new \stdClass();
         $data->gradeitemid = $gradeitem->id;
         $data->courseid = $course->id;
         $DB->insert_record('orcaltisrv_gradebookservices', $data);
@@ -79,17 +70,17 @@ class orcaltiservice_gradebookservices_cleanup_task_testcase extends advanced_te
         $data->gradeitemid = $gradeitem2->id;
         $DB->insert_record('orcaltisrv_gradebookservices', $data);
 
-        $task = new \orcaltiservice_gradebookservices\task\cleanup_task();
+        $task = new cleanup_task();
         $task->execute();
 
         // Check they both still exist.
         $this->assertEquals(2, $DB->count_records('orcaltisrv_gradebookservices'));
 
-        // Delete the first LTI activity.
-        course_delete_module($lti->cmid);
+        // Delete the first ORCALTI activity.
+        course_delete_module($orcalti->cmid);
 
         // Run the task again.
-        $task = new \orcaltiservice_gradebookservices\task\cleanup_task();
+        $task = new cleanup_task();
         $task->execute();
 
         // Check only the second grade item exists.
@@ -116,17 +107,17 @@ class orcaltiservice_gradebookservices_cleanup_task_testcase extends advanced_te
             'courseid' => $course->id,
             'itemtype' => 'manual'
         ];
-        $gradeitem = new grade_item($params);
+        $gradeitem = new \grade_item($params);
         $gradeitem->insert();
 
-        // Insert it into the 'orcaltiservice_gradebookservices' table.
-        $data = new stdClass();
+        // Insert it into the 'orcaltisrv_gradebookservices' table.
+        $data = new \stdClass();
         $data->gradeitemid = $gradeitem->id;
         $data->courseid = $course->id;
         $DB->insert_record('orcaltisrv_gradebookservices', $data);
 
         // Run the task.
-        $task = new \orcaltiservice_gradebookservices\task\cleanup_task();
+        $task = new cleanup_task();
         $task->execute();
 
         // Check it still exist.
@@ -136,7 +127,7 @@ class orcaltiservice_gradebookservices_cleanup_task_testcase extends advanced_te
         $gradeitem->delete();
 
         // Run the task again.
-        $task = new \orcaltiservice_gradebookservices\task\cleanup_task();
+        $task = new cleanup_task();
         $task->execute();
 
         // Check it has been removed.

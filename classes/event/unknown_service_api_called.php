@@ -23,11 +23,12 @@
  */
 
 namespace mod_orcalti\event;
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * The mod_orcalti unknown service api called event class.
  *
- * Event for when something happens with an unknown lti service API call.
+ * Event for when something happens with an unknown orcalti service API call.
  *
  * @package    mod_orcalti
  * @since      Moodle 2.6
@@ -84,7 +85,7 @@ class unknown_service_api_called extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('ltiunknownserviceapicall', 'mod_orcalti');
+        return get_string('orcaltiunknownserviceapicall', 'mod_orcalti');
     }
 
     /**
@@ -93,7 +94,7 @@ class unknown_service_api_called extends \core\event\base {
      * @return null|string legacy event name
      */
     public static function get_legacy_eventname() {
-        return 'lti_unknown_service_api_call';
+        return 'orcalti_unknown_service_api_call';
     }
 
     /**

@@ -14,25 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 //
-// This file is part of BasicLTI4Moodle
+// This file is part of BasicORCALTI4Moodle
 //
-// BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)
-// consumer for Moodle 1.9 and Moodle 2.0. BasicLTI is a IMS Standard that allows web
-// based learning tools to be easily integrated in LMS as native ones. The IMS BasicLTI
+// BasicORCALTI4Moodle is an IMS BasicORCALTI (Basic Learning Tools for Interoperability)
+// consumer for Moodle 1.9 and Moodle 2.0. BasicORCALTI is a IMS Standard that allows web
+// based learning tools to be easily integrated in LMS as native ones. The IMS BasicORCALTI
 // specification is part of the IMS standard Common Cartridge 1.1 Sakai and other main LMS
-// are already supporting or going to support BasicLTI. This project Implements the consumer
+// are already supporting or going to support BasicORCALTI. This project Implements the consumer
 // for Moodle. Moodle is a Free Open source Learning Management System by Martin Dougiamas.
-// BasicLTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
+// BasicORCALTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
 // at the GESSI research group at UPC.
-// SimpleLTI consumer for Moodle is an implementation of the early specification of LTI
+// SimpleORCALTI consumer for Moodle is an implementation of the early specification of ORCALTI
 // by Charles Severance (Dr Chuck) htp://dr-chuck.com , developed by Jordi Piguillem in a
 // Google Summer of Code 2008 project co-mentored by Charles Severance and Marc Alier.
 //
-// BasicLTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
+// BasicORCALTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
 // of the Universitat Politecnica de Catalunya http://www.upc.edu
 // Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
 
-namespace moodle\mod\orcalti; // Using a namespace as the basicLTI module imports classes with the same names.
+namespace moodle\mod\orcalti; // Using a namespace as the basicORCALTI module imports classes with the same names.
 
 defined('MOODLE_INTERNAL') || die;
 
@@ -41,10 +41,10 @@ require_once($CFG->dirroot . '/mod/orcalti/TrivialStore.php');
 
 /**
  *
- * @param int $typeid LTI type ID.
+ * @param int $typeid ORCALTI type ID.
  * @param string[] $scopes  Array of scopes which give permission for the current request.
  *
- * @return string|int|boolean  The OAuth consumer key, the LTI type ID for the validated bearer token,
+ * @return string|int|boolean  The OAuth consumer key, the ORCALTI type ID for the validated bearer token,
                                true for requests not requiring a scope, otherwise false.
  */
 function get_oauth_key_from_headers($typeid = null, $scopes = null) {

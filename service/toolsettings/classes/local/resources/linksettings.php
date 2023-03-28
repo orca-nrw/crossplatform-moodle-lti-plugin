@@ -79,12 +79,12 @@ class linksettings extends \mod_orcalti\local\orcaltiservice\resource_base {
 
         $systemsetting = null;
         $contextsetting = null;
-        $lti = null;
+        $orcalti = null;
         if ($ok) {
             $ok = !empty($linkid);
             if ($ok) {
-                $lti = $DB->get_record('orcalti', array('id' => $linkid), 'course,typeid', MUST_EXIST);
-                $ok = $this->check_tool($lti->typeid, $response->get_request_data(),
+                $orcalti = $DB->get_record('orcalti', array('id' => $linkid), 'course,typeid', MUST_EXIST);
+                $ok = $this->check_tool($orcalti->typeid, $response->get_request_data(),
                     array(toolsettings::SCOPE_TOOL_SETTINGS));
             }
             if (!$ok) {
@@ -98,7 +98,7 @@ class linksettings extends \mod_orcalti\local\orcaltiservice\resource_base {
                 $id = -$this->get_service()->get_type()->id;
             }
             if ($response->get_request_method() == 'GET') {
-                $linksettings = orcalti_get_tool_settings($id, $lti->course, $linkid);
+                $linksettings = orcalti_get_tool_settings($id, $orcalti->course, $linkid);
                 if (!empty($bubble)) {
                     $contextsetting = new contextsettings($this->get_service());
                     if ($COURSE == 'site') {
@@ -106,14 +106,14 @@ class linksettings extends \mod_orcalti\local\orcaltiservice\resource_base {
                     } else {
                         $contextsetting->params['context_type'] = 'CourseSection';
                     }
-                    $contextsetting->params['context_id'] = $lti->course;
+                    $contextsetting->params['context_id'] = $orcalti->course;
                     if ($id >= 0) {
                         $contextsetting->params['vendor_code'] = $this->get_service()->get_tool_proxy()->vendorcode;
                     } else {
                         $contextsetting->params['vendor_code'] = 'tool';
                     }
                     $contextsetting->params['product_code'] = abs($id);
-                    $contextsettings = orcalti_get_tool_settings($id, $lti->course);
+                    $contextsettings = orcalti_get_tool_settings($id, $orcalti->course);
                     $systemsetting = new systemsettings($this->get_service());
                     if ($id >= 0) {
                         $systemsetting->params['config_type'] = 'toolproxy';
@@ -135,7 +135,7 @@ class linksettings extends \mod_orcalti\local\orcaltiservice\resource_base {
                     $json .= "{";
                 } else {
                     $response->set_content_type($this->formats[0]);
-                    $json .= "{\n  \"@context\":\"http://purl.imsglobal.org/ctx/lti/v2/ToolSettings\",\n  \"@graph\":[\n";
+                    $json .= "{\n  \"@context\":\"http://purl.imsglobal.org/ctx/orcalti/v2/ToolSettings\",\n  \"@graph\":[\n";
                 }
                 $settings = toolsettings::settings_to_json($systemsettings, $simpleformat, 'ToolProxy', $systemsetting);
                 $json .= $settings;
@@ -189,7 +189,7 @@ class linksettings extends \mod_orcalti\local\orcaltiservice\resource_base {
                     }
                 }
                 if ($ok) {
-                    orcalti_set_tool_settings($settings, $id, $lti->course, $linkid);
+                    orcalti_set_tool_settings($settings, $id, $orcalti->course, $linkid);
                 } else {
                     $response->set_code(406);
                 }

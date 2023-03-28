@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the cache definitions for the lti plugin
+ * This file contains the cache definitions for the orcalti plugin
  *
  * @package    mod_orcalti
  * @copyright 2020 Carlos Vinícius Monteiro Costa

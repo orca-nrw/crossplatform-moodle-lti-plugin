@@ -65,9 +65,9 @@
         "urls": {
             "icon": "https://www.example.com/icon1.png",
             "edit": "https://www.example.com/mod/orcalti/typessettings.php",
-            "publickeyset": "https:\/\/moodle.example.com\/mod\/lti\/certs.php",
-            "accesstoken": "https:\/\/moodle.example.com\/mod\/lti\/token.php",
-            "authrequest": "https:\/\/moodle.example.com\/mod\/lti\/auth.php"
+            "publickeyset": "https:\/\/moodle.example.com\/mod\/orcalti\/certs.php",
+            "accesstoken": "https:\/\/moodle.example.com\/mod\/orcalti\/token.php",
+            "authrequest": "https:\/\/moodle.example.com\/mod\/orcalti\/auth.php"
         },
         "clientid": null,
         "deploymentid": 1,
@@ -76,7 +76,7 @@
 
 }}
 <div class="tool-card" data-type-id="{{id}}" data-uniqid="{{uniqid}}"
-    data-modaltitle="{{#str}} tooldetailsmodaltitle, mod_orcalti {{/str}}"
+    data-modaorcaltitle="{{#str}} tooldetailsmodaorcaltitle, mod_orcalti {{/str}}"
     data-mailtosubject="{{#str}} tooldetailsmailtosubject, mod_orcalti {{/str}}"
     data-platformidstr="{{#str}} tooldetailsplatformid, mod_orcalti {{/str}}"
     data-clientidstr="{{#str}} tooldetailsclientid, mod_orcalti {{/str}}"
@@ -99,7 +99,7 @@
     <div class="tool-card-content">
         <div class="tool-card-header">
             <div class="tool-card-subheader">
-                <div class="tag
+                <div class="badge
                             {{#state.pending}}badge-info{{/state.pending}}
                             {{#state.configured}}badge-success{{/state.configured}}
                             {{#state.rejected}}badge-danger{{/state.rejected}}

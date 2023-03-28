@@ -27,8 +27,8 @@ require_once($CFG->dirroot.'/mod/orcalti/lib.php');
 require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 
 $status = optional_param('status', '', PARAM_TEXT);
-$msg = optional_param('lti_msg', '', PARAM_TEXT);
-$err = optional_param('lti_errormsg', '', PARAM_TEXT);
+$msg = optional_param('orcalti_msg', '', PARAM_TEXT);
+$err = optional_param('orcalti_errormsg', '', PARAM_TEXT);
 $id = optional_param('id', 0, PARAM_INT);
 
 // No guest autologin.
@@ -45,11 +45,11 @@ $PAGE->set_pagelayout('maintenance');
 $output = $PAGE->get_renderer('mod_orcalti');
 echo $output->header();
 
-// Check status and lti_errormsg.
+// Check status and orcalti_errormsg.
 if ($status !== 'success' && empty($err)) {
-    // We have a failed status and an empty lti_errormsg. Check if we can use lti_msg.
+    // We have a failed status and an empty orcalti_errormsg. Check if we can use orcalti_msg.
     if (!empty($msg)) {
-        // The lti_msg attribute is set, use this as the error message.
+        // The orcalti_msg attribute is set, use this as the error message.
         $err = $msg;
     } else {
         // Otherwise, use our generic error message.

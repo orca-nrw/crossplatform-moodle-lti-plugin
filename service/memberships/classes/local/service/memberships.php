@@ -103,6 +103,15 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
     }
 
     /**
+     * Get the scope(s) defined by this service.
+     *
+     * @return array
+     */
+    public function get_scopes() {
+        return [self::SCOPE_MEMBERSHIPS_READ];
+    }
+
+    /**
      * Get the JSON for members.
      *
      * @param \mod_orcalti\local\orcaltiservice\resource_base $resource       Resource handling the request
@@ -112,15 +121,15 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
      * @param string            $role       User role requested (empty if none)
      * @param int               $limitfrom  Position of first record to be returned
      * @param int               $limitnum   Maximum number of records to be returned
-     * @param object            $lti        LTI instance record
+     * @param object            $orcalti        ORCALTI instance record
      * @param \core_availability\info_module $info Conditional availability information
-     * for LTI instance (null if context-level request)
+     * for ORCALTI instance (null if context-level request)
      *
      * @return string
      * @deprecated since Moodle 3.7 MDL-62599 - please do not use this function any more.
-     * @see memberships::get_members_json($resource, $context, $course, $role, $limitfrom, $limitnum, $lti, $info, $response)
+     * @see memberships::get_members_json($resource, $context, $course, $role, $limitfrom, $limitnum, $orcalti, $info, $response)
      */
-    public static function get_users_json($resource, $context, $contextid, $tool, $role, $limitfrom, $limitnum, $lti, $info) {
+    public static function get_users_json($resource, $context, $contextid, $tool, $role, $limitfrom, $limitnum, $orcalti, $info) {
         global $DB;
 
         debugging('get_users_json() has been deprecated, ' .
@@ -133,7 +142,7 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
 
         $response = new \mod_orcalti\local\orcaltiservice\response();
 
-        $json = $memberships->get_members_json($resource, $context, $course, $role, $limitfrom, $limitnum, $lti, $info, $response);
+        $json = $memberships->get_members_json($resource, $context, $course, $role, $limitfrom, $limitnum, $orcalti, $info, $response);
 
         return $json;
     }
@@ -147,14 +156,14 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
      * @param string            $role       User role requested (empty if none)
      * @param int               $limitfrom  Position of first record to be returned
      * @param int               $limitnum   Maximum number of records to be returned
-     * @param object            $lti        LTI instance record
+     * @param object            $orcalti        ORCALTI instance record
      * @param \core_availability\info_module $info Conditional availability information
-     *      for LTI instance (null if context-level request)
+     *      for ORCALTI instance (null if context-level request)
      * @param \mod_orcalti\local\orcaltiservice\response $response       Response object for the request
      *
      * @return string
      */
-    public function get_members_json($resource, $context, $course, $role, $limitfrom, $limitnum, $lti, $info, $response) {
+    public function get_members_json($resource, $context, $course, $role, $limitfrom, $limitnum, $orcalti, $info, $response) {
 
         $withcapability = '';
         $exclude = array();
@@ -170,12 +179,12 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
             }
         }
         $users = get_enrolled_users($context, $withcapability, 0, 'u.*', null, 0, 0, true);
-        if (($response->get_accept() === 'application/vnd.ims.lti-nrps.v2.membershipcontainer+json') ||
+        if (($response->get_accept() === 'application/vnd.ims.orcalti-nrps.v2.membershipcontainer+json') ||
             (($response->get_accept() !== 'application/vnd.ims.lis.v2.membershipcontainer+json') &&
-            ($this->get_type()->ltiversion === ORCALTI_VERSION_1P3))) {
-            $json = $this->users_to_json($resource, $users, $course, $exclude, $limitfrom, $limitnum, $lti, $info, $response);
+            ($this->get_type()->orcaltiversion === ORCALTI_VERSION_1P3))) {
+            $json = $this->users_to_json($resource, $users, $course, $exclude, $limitfrom, $limitnum, $orcalti, $info, $response);
         } else {
-            $json = $this->users_to_jsonld($resource, $users, $course->id, $exclude, $limitfrom, $limitnum, $lti, $info, $response);
+            $json = $this->users_to_jsonld($resource, $users, $course->id, $exclude, $limitfrom, $limitnum, $orcalti, $info, $response);
         }
 
         return $json;
@@ -193,15 +202,15 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
      * @param array  $exclude             Array of user records to be excluded from the response
      * @param int    $limitfrom           Position of first record to be returned
      * @param int    $limitnum            Maximum number of records to be returned
-     * @param object $lti                 LTI instance record
+     * @param object $orcalti                 ORCALTI instance record
      * @param \core_availability\info_module $info Conditional availability information
-     *      for LTI instance (null if context-level request)
+     *      for ORCALTI instance (null if context-level request)
      * @param \mod_orcalti\local\orcaltiservice\response $response       Response object for the request
      *
      * @return string
      */
     private function users_to_jsonld($resource, $users, $contextid, $exclude, $limitfrom, $limitnum,
-            $lti, $info, $response) {
+            $orcalti, $info, $response) {
         global $DB;
 
         $tool = $this->get_type();
@@ -222,7 +231,7 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
         ];
 
         $enabledcapabilities = orcalti_get_enabled_capabilities($tool);
-        $islti2 = $tool->toolproxyid > 0;
+        $isorcalti2 = $tool->toolproxyid > 0;
         $n = 0;
         $more = false;
         foreach ($users as $user) {
@@ -250,10 +259,10 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
             $membership->role = explode(',', orcalti_get_ims_role($user->id, null, $contextid, true));
 
             $instanceconfig = null;
-            if (!is_null($lti)) {
-                $instanceconfig = orcalti_get_type_config_from_instance($lti->id);
+            if (!is_null($orcalti)) {
+                $instanceconfig = orcalti_get_type_config_from_instance($orcalti->id);
             }
-            $isallowedlticonfig = self::is_allowed_field_set($toolconfig, $instanceconfig,
+            $isallowedorcalticonfig = self::is_allowed_field_set($toolconfig, $instanceconfig,
                                     ['name' => 'sendname', 'email' => 'sendemailaddr']);
 
             $includedcapabilities = [
@@ -280,17 +289,17 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
                                            'source.value' => format_string($user->username)]
             ];
 
-            if (!is_null($lti)) {
+            if (!is_null($orcalti)) {
                 $message = new \stdClass();
                 $message->message_type = 'basic-lti-launch-request';
                 $conditions = array('courseid' => $contextid, 'itemtype' => 'mod',
-                        'itemmodule' => 'orcalti', 'iteminstance' => $lti->id);
+                        'itemmodule' => 'orcalti', 'iteminstance' => $orcalti->id);
 
-                if (!empty($lti->servicesalt) && $DB->record_exists('grade_items', $conditions)) {
-                    $message->lis_result_sourcedid = json_encode(orcalti_build_sourcedid($lti->id,
+                if (!empty($orcalti->servicesalt) && $DB->record_exists('grade_items', $conditions)) {
+                    $message->lis_result_sourcedid = json_encode(orcalti_build_sourcedid($orcalti->id,
                                                                                      $user->id,
-                                                                                     $lti->servicesalt,
-                                                                                     $lti->typeid));
+                                                                                     $orcalti->servicesalt,
+                                                                                     $orcalti->typeid));
                     // Not per specification but added to comply with earlier version of the service.
                     $member->resultSourcedId = $message->lis_result_sourcedid;
                 }
@@ -298,14 +307,14 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
             }
 
             foreach ($includedcapabilities as $capabilityname => $capability) {
-                if ($islti2) {
+                if ($isorcalti2) {
                     if (in_array($capabilityname, $enabledcapabilities)) {
                         $member->{$capability['member.field']} = $capability['source.value'];
                     }
                 } else {
                     if (($capability['type'] === 'id')
-                     || ($capability['type'] === 'name' && $isallowedlticonfig['name'])
-                     || ($capability['type'] === 'email' && $isallowedlticonfig['email'])) {
+                     || ($capability['type'] === 'name' && $isallowedorcalticonfig['name'])
+                     || ($capability['type'] === 'email' && $isallowedorcalticonfig['email'])) {
                         $member->{$capability['member.field']} = $capability['source.value'];
                     }
                 }
@@ -318,8 +327,8 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
         if ($more) {
             $nextlimitfrom = $limitfrom + $limitnum;
             $nextpage = "{$resource->get_endpoint()}?limit={$limitnum}&from={$nextlimitfrom}";
-            if (!is_null($lti)) {
-                $nextpage .= "&rlid={$lti->id}";
+            if (!is_null($orcalti)) {
+                $nextpage .= "&rlid={$orcalti->id}";
             }
             $arrusers['nextPage'] = $nextpage;
         }
@@ -341,14 +350,14 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
      * @param array   $exclude             Array of user records to be excluded from the response
      * @param int     $limitfrom           Position of first record to be returned
      * @param int     $limitnum            Maximum number of records to be returned
-     * @param object  $lti                 LTI instance record
-     * @param \core_availability\info_module  $info     Conditional availability information for LTI instance
+     * @param object  $orcalti                 ORCALTI instance record
+     * @param \core_availability\info_module  $info     Conditional availability information for ORCALTI instance
      * @param \mod_orcalti\local\orcaltiservice\response $response       Response object for the request
      *
      * @return string
      */
     private function users_to_json($resource, $users, $course, $exclude, $limitfrom, $limitnum,
-            $lti, $info, $response) {
+            $orcalti, $info, $response) {
         global $DB, $CFG;
 
         $tool = $this->get_type();
@@ -365,7 +374,7 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
             'members' => []
         ];
 
-        $islti2 = $tool->toolproxyid > 0;
+        $isorcalti2 = $tool->toolproxyid > 0;
         $n = 0;
         $more = false;
         foreach ($users as $user) {
@@ -391,15 +400,15 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
             $member->roles = explode(',', orcalti_get_ims_role($user->id, null, $course->id, true));
 
             $instanceconfig = null;
-            if (!is_null($lti)) {
-                $instanceconfig = orcalti_get_type_config_from_instance($lti->id);
+            if (!is_null($orcalti)) {
+                $instanceconfig = orcalti_get_type_config_from_instance($orcalti->id);
             }
-            if (!$islti2) {
-                $isallowedlticonfig = self::is_allowed_field_set($toolconfig, $instanceconfig,
+            if (!$isorcalti2) {
+                $isallowedorcalticonfig = self::is_allowed_field_set($toolconfig, $instanceconfig,
                                         ['name' => 'sendname', 'givenname' => 'sendname', 'familyname' => 'sendname',
                                          'email' => 'sendemailaddr']);
             } else {
-                $isallowedlticonfig = self::is_allowed_capability_set($tool,
+                $isallowedorcalticonfig = self::is_allowed_capability_set($tool,
                                         ['name' => 'Person.name.full', 'givenname' => 'Person.name.given',
                                          'familyname' => 'Person.name.family', 'email' => 'Person.email.primary']);
             }
@@ -421,21 +430,24 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
                                             'source.value' => format_string($user->lastname)],
                 'Person.email.primary' => ['type' => 'email',
                                             'member.field' => 'email',
-                                            'source.value' => format_string($user->email)]
+                                            'source.value' => format_string($user->email)],
+                'User.username'        => ['type' => 'name',
+                                           'member.field' => 'ext_user_username',
+                                           'source.value' => format_string($user->username)],
             ];
 
-            if (!is_null($lti)) {
+            if (!is_null($orcalti)) {
                 $message = new \stdClass();
                 $message->{'https://purl.imsglobal.org/spec/lti/claim/message_type'} = 'LtiResourceLinkRequest';
                 $conditions = array('courseid' => $course->id, 'itemtype' => 'mod',
-                        'itemmodule' => 'orcalti', 'iteminstance' => $lti->id);
+                        'itemmodule' => 'orcalti', 'iteminstance' => $orcalti->id);
 
-                if (!empty($lti->servicesalt) && $DB->record_exists('grade_items', $conditions)) {
+                if (!empty($orcalti->servicesalt) && $DB->record_exists('grade_items', $conditions)) {
                     $basicoutcome = new \stdClass();
-                    $basicoutcome->lis_result_sourcedid = json_encode(orcalti_build_sourcedid($lti->id,
+                    $basicoutcome->lis_result_sourcedid = json_encode(orcalti_build_sourcedid($orcalti->id,
                                                                                      $user->id,
-                                                                                     $lti->servicesalt,
-                                                                                     $lti->typeid));
+                                                                                     $orcalti->servicesalt,
+                                                                                     $orcalti->typeid));
                     // Add outcome service URL.
                     $serviceurl = new \moodle_url('/mod/orcalti/service.php');
                     $serviceurl = $serviceurl->out();
@@ -453,7 +465,7 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
             }
 
             foreach ($includedcapabilities as $capabilityname => $capability) {
-                if (($capability['type'] === 'id') || $isallowedlticonfig[$capability['type']]) {
+                if (($capability['type'] === 'id') || $isallowedorcalticonfig[$capability['type']]) {
                     $member->{$capability['member.field']} = $capability['source.value'];
                 }
             }
@@ -463,19 +475,19 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
         if ($more) {
             $nextlimitfrom = $limitfrom + $limitnum;
             $nextpage = "{$resource->get_endpoint()}?limit={$limitnum}&from={$nextlimitfrom}";
-            if (!is_null($lti)) {
-                $nextpage .= "&rlid={$lti->id}";
+            if (!is_null($orcalti)) {
+                $nextpage .= "&rlid={$orcalti->id}";
             }
             $response->add_additional_header("Link: <{$nextpage}>; rel=\"next\"");
         }
 
-        $response->set_content_type('application/vnd.ims.lti-nrps.v2.membershipcontainer+json');
+        $response->set_content_type('application/vnd.ims.orcalti-nrps.v2.membershipcontainer+json');
 
         return json_encode($arrusers);
     }
 
     /**
-     * Determines whether a user attribute may be used as part of LTI membership
+     * Determines whether a user attribute may be used as part of ORCALTI membership
      * @param array             $toolconfig      Tool config
      * @param object            $instanceconfig  Tool instance config
      * @param array             $fields          Set of fields to return if allowed or not
@@ -487,8 +499,8 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
             $allowed = isset($toolconfig[$field]) && (self::ALWAYS_INCLUDE_FIELD == $toolconfig[$field]);
             if (!$allowed && isset($toolconfig[$field]) && (self::DELEGATE_TO_INSTRUCTOR == $toolconfig[$field]) &&
                 !is_null($instanceconfig)) {
-                $allowed = isset($instanceconfig->{"lti_{$field}"}) &&
-                          ($instanceconfig->{"lti_{$field}"} == self::INSTRUCTOR_INCLUDED);
+                $allowed = isset($instanceconfig->{"orcalti_{$field}"}) &&
+                          ($instanceconfig->{"orcalti_{$field}"} == self::INSTRUCTOR_INCLUDED);
             }
             $isallowedstate[$key] = $allowed;
         }
@@ -519,15 +531,15 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
      * @param string $messagetype 'basic-lti-launch-request' or 'ContentItemSelectionRequest'.
      * @param string $courseid The course id.
      * @param string $user The user id.
-     * @param string $typeid The tool lti type id.
-     * @param string $modlti The id of the lti activity.
+     * @param string $typeid The tool orcalti type id.
+     * @param string $modorcalti The id of the orcalti activity.
      *
      * The type is passed to check the configuration
      * and not return parameters for services not used.
      *
      * @return array of key/value pairs to add as launch parameters.
      */
-    public function get_launch_parameters($messagetype, $courseid, $user, $typeid, $modlti = null) {
+    public function get_launch_parameters($messagetype, $courseid, $user, $typeid, $modorcalti = null) {
         global $COURSE;
 
         $launchparameters = array();
@@ -535,6 +547,7 @@ class memberships extends \mod_orcalti\local\orcaltiservice\service_base {
         if (isset($tool->{$this->get_component_id()})) {
             if ($tool->{$this->get_component_id()} == parent::SERVICE_ENABLED && $this->is_used_in_context($typeid, $courseid)) {
                 $launchparameters['context_memberships_url'] = '$ToolProxyBinding.memberships.url';
+                $launchparameters['context_memberships_v2_url'] = '$ToolProxyBinding.memberships.url';
                 $launchparameters['context_memberships_versions'] = '1.0,2.0';
             }
         }

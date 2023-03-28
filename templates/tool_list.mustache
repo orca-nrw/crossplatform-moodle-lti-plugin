@@ -17,7 +17,7 @@
 {{!
     @template mod_orcalti/tool_list
 
-    This template provides a list of LTI tools.
+    This template provides a list of ORCALTI tools.
 
     Classes required for JS:
     * none
@@ -33,14 +33,10 @@
     }
 
 }}
-<h3>{{#str}} tooltypes, mod_orcalti {{/str}}</h3>
-<div id="tool-list-loader-container">
-    {{> mod_orcalti/loader }}
-</div>
-{{^proxies}}{{^tools}}
-<div id="tool-notools-text">{{#str}} no_lti_tools, mod_orcalti {{/str}}</div>
-{{/tools}}{{/proxies}}
 <div id="tool-card-container">
+    {{^proxies}}{{^tools}}
+        <p>{{#str}} no_orcalti_tools, mod_orcalti {{/str}}</p>
+    {{/tools}}{{/proxies}}
     {{#proxies}}
         {{> mod_orcalti/tool_proxy_card }}
     {{/proxies}}

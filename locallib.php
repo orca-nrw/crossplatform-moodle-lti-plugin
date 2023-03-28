@@ -14,26 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 //
-// This file is part of BasicLTI4Moodle
+// This file is part of BasicORCALTI4Moodle
 //
-// BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)
-// consumer for Moodle 1.9 and Moodle 2.0. BasicLTI is a IMS Standard that allows web
-// based learning tools to be easily integrated in LMS as native ones. The IMS BasicLTI
+// BasicORCALTI4Moodle is an IMS BasicORCALTI (Basic Learning Tools for Interoperability)
+// consumer for Moodle 1.9 and Moodle 2.0. BasicORCALTI is a IMS Standard that allows web
+// based learning tools to be easily integrated in LMS as native ones. The IMS BasicORCALTI
 // specification is part of the IMS standard Common Cartridge 1.1 Sakai and other main LMS
-// are already supporting or going to support BasicLTI. This project Implements the consumer
+// are already supporting or going to support BasicORCALTI. This project Implements the consumer
 // for Moodle. Moodle is a Free Open source Learning Management System by Martin Dougiamas.
-// BasicLTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
+// BasicORCALTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
 // at the GESSI research group at UPC.
-// SimpleLTI consumer for Moodle is an implementation of the early specification of LTI
+// SimpleORCALTI consumer for Moodle is an implementation of the early specification of ORCALTI
 // by Charles Severance (Dr Chuck) htp://dr-chuck.com , developed by Jordi Piguillem in a
 // Google Summer of Code 2008 project co-mentored by Charles Severance and Marc Alier.
 //
-// BasicLTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
+// BasicORCALTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
 // of the Universitat Politecnica de Catalunya http://www.upc.edu
 // Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
 
 /**
- * This file contains the library of functions and constants for the lti module
+ * This file contains the library of functions and constants for the orcalti module
  *
  * @package mod_orcalti
  * @copyright  2009 Marc Alier, Jordi Piguillem, Nikolas Galanis
@@ -51,9 +51,13 @@
 defined('MOODLE_INTERNAL') || die;
 
 // TODO: Switch to core oauthlib once implemented - MDL-30149.
-use moodle\mod\orcalti as lti;
+use mod_orcalti\helper;
+use moodle\mod\orcalti as orcalti;
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
+use Firebase\JWT\Key;
+use mod_orcalti\local\orcaltiopenid\jwks_helper;
+use mod_orcalti\local\orcaltiopenid\registration_helper;
 
 global $CFG;
 require_once($CFG->dirroot.'/mod/orcalti/OAuth.php');
@@ -112,6 +116,7 @@ function orcalti_get_jwt_message_type_mapping() {
         'basic-lti-launch-request' => 'LtiResourceLinkRequest',
         'ContentItemSelectionRequest' => 'LtiDeepLinkingRequest',
         'LtiDeepLinkingResponse' => 'ContentItemSelection',
+        'LtiSubmissionReviewRequest' => 'LtiSubmissionReviewRequest',
     );
 }
 
@@ -135,10 +140,10 @@ function orcalti_get_jwt_claim_mapping() {
             'claim' => 'accept_media_types',
             'isarray' => true
         ],
-        'accept_multiple' => [
+        'accept_muorcaltiple' => [
             'suffix' => 'dl',
             'group' => 'deep_linking_settings',
-            'claim' => 'accept_multiple',
+            'claim' => 'accept_muorcaltiple',
             'isarray' => false,
             'type' => 'boolean'
         ],
@@ -205,25 +210,25 @@ function orcalti_get_jwt_claim_mapping() {
             'claim' => 'title',
             'isarray' => false
         ],
-        'lti_msg' => [
+        'orcalti_msg' => [
             'suffix' => 'dl',
             'group' => '',
             'claim' => 'msg',
             'isarray' => false
         ],
-        'lti_log' => [
+        'orcalti_log' => [
             'suffix' => 'dl',
             'group' => '',
             'claim' => 'log',
             'isarray' => false
         ],
-        'lti_errormsg' => [
+        'orcalti_errormsg' => [
             'suffix' => 'dl',
             'group' => '',
             'claim' => 'errormsg',
             'isarray' => false
         ],
-        'lti_errorlog' => [
+        'orcalti_errorlog' => [
             'suffix' => 'dl',
             'group' => '',
             'claim' => 'errorlog',
@@ -252,6 +257,12 @@ function orcalti_get_jwt_claim_mapping() {
             'group' => 'context',
             'claim' => 'type',
             'isarray' => true
+        ],
+        'for_user_id' => [
+            'suffix' => '',
+            'group' => 'for_user',
+            'claim' => 'user_id',
+            'isarray' => false
         ],
         'lis_course_offering_sourcedid' => [
             'suffix' => '',
@@ -433,7 +444,7 @@ function orcalti_get_jwt_claim_mapping() {
             'claim' => 'url',
             'isarray' => false
         ],
-        'custom_context_memberships_url' => [
+        'custom_context_memberships_v2_url' => [
             'suffix' => 'nrps',
             'group' => 'namesroleservice',
             'claim' => 'context_memberships_url',
@@ -523,13 +534,13 @@ function orcalti_get_instance_type(object $instance) : ?object {
  * Return the launch data required for opening the external tool.
  *
  * @param  stdClass $instance the external tool activity settings
- * @param  string $nonce  the nonce value to use (applies to LTI 1.3 only)
+ * @param  string $nonce  the nonce value to use (applies to ORCALTI 1.3 only)
  * @return array the endpoint URL and parameters (including the signature)
  * @since  Moodle 3.0
  */
-function orcalti_get_launch_data($instance, $nonce = '') {
+function orcalti_get_launch_data($instance, $nonce = '', $messagetype = 'basic-lti-launch-request', $foruserid = 0) {
     global $PAGE, $CFG, $USER;
-
+    $messagetype = $messagetype ? $messagetype : 'basic-lti-launch-request';
     $tool = orcalti_get_instance_type($instance);
     if ($tool) {
         $typeid = $tool->id;
@@ -542,7 +553,7 @@ function orcalti_get_launch_data($instance, $nonce = '') {
     if ($typeid) {
         $typeconfig = orcalti_get_type_config($typeid);
     } else {
-        // There is no admin configuration for this tool. Use configuration in the lti instance record plus some defaults.
+        // There is no admin configuration for this tool. Use configuration in the orcalti instance record plus some defaults.
         $typeconfig = (array)$instance;
 
         $typeconfig['sendname'] = $instance->instructorchoicesendname;
@@ -598,33 +609,35 @@ function orcalti_get_launch_data($instance, $nonce = '') {
             $endpoint = trim($instance->securetoolurl);
         }
 
-        $endpoint = orcalti_ensure_url_is_https($endpoint);
-    } else {
-        if (!strstr($endpoint, '://')) {
-            $endpoint = 'http://' . $endpoint;
+        if ($endpoint !== '') {
+            $endpoint = orcalti_ensure_url_is_https($endpoint);
         }
+    } else if ($endpoint !== '' && !strstr($endpoint, '://')) {
+        $endpoint = 'http://' . $endpoint;
     }
 
     $orgid = orcalti_get_organizationid($typeconfig);
 
     $course = $PAGE->course;
-    $islti2 = isset($tool->toolproxyid);
-    $allparams = orcalti_build_request($instance, $typeconfig, $course, $typeid, $islti2);
-    if ($islti2) {
-        $requestparams = orcalti_build_request_lti2($tool, $allparams);
+    $isorcalti2 = isset($tool->toolproxyid);
+    $allparams = orcalti_build_request($instance, $typeconfig, $course, $typeid, $isorcalti2, $messagetype, $foruserid);
+    if ($isorcalti2) {
+        $requestparams = orcalti_build_request_orcalti2($tool, $allparams);
     } else {
         $requestparams = $allparams;
     }
-    $requestparams = array_merge($requestparams, orcalti_build_standard_message($instance, $orgid, $ltiversion));
+    $requestparams = array_merge($requestparams, orcalti_build_standard_message($instance, $orgid, $ltiversion, $messagetype));
     $customstr = '';
     if (isset($typeconfig['customparameters'])) {
         $customstr = $typeconfig['customparameters'];
     }
-    $requestparams = array_merge(
-        $requestparams,
-        orcalti_build_custom_parameters($toolproxy, $tool, $instance, $allparams, $customstr,
-        $instance->instructorcustomparameters, $islti2)
-    );
+    $services = orcalti_get_services();
+    foreach ($services as $service) {
+        [$endpoint, $customstr] = $service->override_endpoint($messagetype,
+            $endpoint, $customstr, $instance->course, $instance);
+    }
+    $requestparams = array_merge($requestparams, orcalti_build_custom_parameters($toolproxy, $tool, $instance, $allparams, $customstr,
+        $instance->instructorcustomparameters, $isorcalti2));
 
     $launchcontainer = orcalti_get_launch_container($instance, $typeconfig);
     $returnurlparams = array('course' => $course->id,
@@ -659,20 +672,15 @@ function orcalti_get_launch_data($instance, $nonce = '') {
 
     $requestparams['launch_presentation_return_url'] = $returnurl;
 
-    // Add the parameters configured by the LTI services.
-    if ($typeid && !$islti2) {
+    // Add the parameters configured by the ORCALTI services.
+    if ($typeid && !$isorcalti2) {
         $services = orcalti_get_services();
         foreach ($services as $service) {
             $serviceparameters = $service->get_launch_parameters('basic-lti-launch-request',
                     $course->id, $USER->id , $typeid, $instance->id);
             foreach ($serviceparameters as $paramkey => $paramvalue) {
-                $requestparams['custom_' . $paramkey] = orcalti_parse_custom_parameter(
-                    $toolproxy,
-                    $tool,
-                    $requestparams,
-                    $paramvalue,
-                    $islti2
-                );
+                $requestparams['custom_' . $paramkey] = orcalti_parse_custom_parameter($toolproxy, $tool, $requestparams, $paramvalue,
+                    $isorcalti2);
             }
         }
     }
@@ -719,12 +727,13 @@ function orcalti_get_launch_data($instance, $nonce = '') {
 /**
  * Launch an external tool activity.
  *
- * @param  stdClass $instance the external tool activity settings
+ * @param stdClass $instance the external tool activity settings
+ * @param int $foruserid for user param, optional
  * @return string The HTML code containing the javascript code for the launch
  */
-function orcalti_launch_tool($instance) {
+function orcalti_launch_tool($instance, $foruserid=0) {
 
-    list($endpoint, $parms) = orcalti_get_launch_data($instance);
+    list($endpoint, $parms) = orcalti_get_launch_data($instance, '', '', $foruserid);
     $debuglaunch = ( $instance->debuglaunch == 1 );
 
     $content = orcalti_post_launch_html($parms, $endpoint, $debuglaunch);
@@ -733,7 +742,7 @@ function orcalti_launch_tool($instance) {
 }
 
 /**
- * Prepares an LTI registration request message
+ * Prepares an ORCALTI registration request message
  *
  * @param object $toolproxy  Tool Proxy instance object
  */
@@ -839,22 +848,25 @@ function orcalti_build_sourcedid($instanceid, $userid, $servicesalt, $typeid = n
 /**
  * This function builds the request that must be sent to the tool producer
  *
- * @param object    $instance       Basic LTI instance object
- * @param array     $typeconfig     Basic LTI tool configuration
+ * @param object    $instance       Basic ORCALTI instance object
+ * @param array     $typeconfig     Basic ORCALTI tool configuration
  * @param object    $course         Course object
- * @param int|null  $typeid         Basic LTI tool ID
- * @param boolean   $islti2         True if an LTI 2 tool is being launched
+ * @param int|null  $typeid         Basic ORCALTI tool ID
+ * @param boolean   $isorcalti2         True if an ORCALTI 2 tool is being launched
+ * @param string    $messagetype    ORCALTI Message Type for this launch
+ * @param int       $foruserid      User targeted by this launch
  *
  * @return array                    Request details
  */
-function orcalti_build_request($instance, $typeconfig, $course, $typeid = null, $islti2 = false) {
+function orcalti_build_request($instance, $typeconfig, $course, $typeid = null, $isorcalti2 = false,
+    $messagetype = 'basic-lti-launch-request', $foruserid = 0) {
     global $USER, $CFG;
 
     if (empty($instance->cmid)) {
         $instance->cmid = 0;
     }
 
-    $role = orcalti_get_ims_role($USER, $instance->cmid, $instance->course, $islti2);
+    $role = orcalti_get_ims_role($USER, $instance->cmid, $instance->course, $isorcalti2);
 
     $requestparams = array(
         'user_id' => $USER->id,
@@ -864,6 +876,12 @@ function orcalti_build_request($instance, $typeconfig, $course, $typeid = null, 
         'context_label' => trim(html_to_text($course->shortname, 0)),
         'context_title' => trim(html_to_text($course->fullname, 0)),
     );
+    if ($foruserid) {
+        $requestparams['for_user_id'] = $foruserid;
+    }
+    if ($messagetype) {
+        $requestparams['lti_message_type'] = $messagetype;
+    }
     if (!empty($instance->name)) {
         $requestparams['resource_link_title'] = trim(html_to_text($instance->name, 0));
     }
@@ -889,10 +907,9 @@ function orcalti_build_request($instance, $typeconfig, $course, $typeid = null, 
         $requestparams['lis_course_section_sourcedid'] = $course->idnumber;
     }
 
-    if (!empty($instance->id) && !empty($instance->servicesalt) && ($islti2 ||
+    if (!empty($instance->id) && !empty($instance->servicesalt) && ($isorcalti2 ||
             $typeconfig['acceptgrades'] == ORCALTI_SETTING_ALWAYS ||
-            ($typeconfig['acceptgrades'] == ORCALTI_SETTING_DELEGATE && 
-            $instance->instructorchoiceacceptgrades == ORCALTI_SETTING_ALWAYS))
+            ($typeconfig['acceptgrades'] == ORCALTI_SETTING_DELEGATE && $instance->instructorchoiceacceptgrades == ORCALTI_SETTING_ALWAYS))
     ) {
         $placementsecret = $instance->servicesalt;
         $sourcedid = json_encode(orcalti_build_sourcedid($instance->id, $USER->id, $placementsecret, $typeid));
@@ -907,7 +924,7 @@ function orcalti_build_request($instance, $typeconfig, $course, $typeid = null, 
             $forcessl = true;
         }
 
-        if ((isset($typeconfig['forcessl']) && ($typeconfig['forcessl'] == '1')) || $forcessl) {
+        if ((isset($typeconfig['forcessl']) && ($typeconfig['forcessl'] == '1')) or $forcessl) {
             $serviceurl = orcalti_ensure_url_is_https($serviceurl);
         }
 
@@ -915,7 +932,7 @@ function orcalti_build_request($instance, $typeconfig, $course, $typeid = null, 
     }
 
     // Send user's name and email data if appropriate.
-    if ($islti2 || $typeconfig['sendname'] == ORCALTI_SETTING_ALWAYS ||
+    if ($isorcalti2 || $typeconfig['sendname'] == ORCALTI_SETTING_ALWAYS ||
         ($typeconfig['sendname'] == ORCALTI_SETTING_DELEGATE && isset($instance->instructorchoicesendname)
             && $instance->instructorchoicesendname == ORCALTI_SETTING_ALWAYS)
     ) {
@@ -925,7 +942,7 @@ function orcalti_build_request($instance, $typeconfig, $course, $typeid = null, 
         $requestparams['ext_user_username'] = $USER->username;
     }
 
-    if ($islti2 || $typeconfig['sendemailaddr'] == ORCALTI_SETTING_ALWAYS ||
+    if ($isorcalti2 || $typeconfig['sendemailaddr'] == ORCALTI_SETTING_ALWAYS ||
         ($typeconfig['sendemailaddr'] == ORCALTI_SETTING_DELEGATE && isset($instance->instructorchoicesendemailaddr)
             && $instance->instructorchoicesendemailaddr == ORCALTI_SETTING_ALWAYS)
     ) {
@@ -936,14 +953,14 @@ function orcalti_build_request($instance, $typeconfig, $course, $typeid = null, 
 }
 
 /**
- * This function builds the request that must be sent to an LTI 2 tool provider
+ * This function builds the request that must be sent to an ORCALTI 2 tool provider
  *
- * @param object    $tool           Basic LTI tool object
+ * @param object    $tool           Basic ORCALTI tool object
  * @param array     $params         Custom launch parameters
  *
  * @return array                    Request details
  */
-function orcalti_build_request_lti2($tool, $params) {
+function orcalti_build_request_orcalti2($tool, $params) {
 
     $requestparams = array();
 
@@ -965,19 +982,19 @@ function orcalti_build_request_lti2($tool, $params) {
 }
 
 /**
- * This function builds the standard parameters for an LTI 1 or 2 request that must be sent to the tool producer
+ * This function builds the standard parameters for an ORCALTI 1 or 2 request that must be sent to the tool producer
  *
- * @param stdClass  $instance       Basic LTI instance object
+ * @param stdClass  $instance       Basic ORCALTI instance object
  * @param string    $orgid          Organisation ID
- * @param boolean   $islti2         True if an LTI 2 tool is being launched
+ * @param boolean   $isorcalti2         True if an ORCALTI 2 tool is being launched
  * @param string    $messagetype    The request message type. Defaults to basic-lti-launch-request if empty.
  *
  * @return array                    Request details
  * @deprecated since Moodle 3.7 MDL-62599 - please do not use this function any more.
  * @see orcalti_build_standard_message()
  */
-function orcalti_build_standard_request($instance, $orgid, $islti2, $messagetype = 'basic-lti-launch-request') {
-    if (!$islti2) {
+function orcalti_build_standard_request($instance, $orgid, $isorcalti2, $messagetype = 'basic-lti-launch-request') {
+    if (!$isorcalti2) {
         $ltiversion = ORCALTI_VERSION_1;
     } else {
         $ltiversion = ORCALTI_VERSION_2;
@@ -986,11 +1003,11 @@ function orcalti_build_standard_request($instance, $orgid, $islti2, $messagetype
 }
 
 /**
- * This function builds the standard parameters for an LTI message that must be sent to the tool producer
+ * This function builds the standard parameters for an ORCALTI message that must be sent to the tool producer
  *
- * @param stdClass  $instance       Basic LTI instance object
+ * @param stdClass  $instance       Basic ORCALTI instance object
  * @param string    $orgid          Organisation ID
- * @param boolean   $ltiversion     LTI version to be used for tool messages
+ * @param boolean   $ltiversion     ORCALTI version to be used for tool messages
  * @param string    $messagetype    The request message type. Defaults to basic-lti-launch-request if empty.
  *
  * @return array                    Message parameters
@@ -1002,7 +1019,7 @@ function orcalti_build_standard_message($instance, $orgid, $ltiversion, $message
 
     if ($instance) {
         $requestparams['resource_link_id'] = $instance->id;
-        if (property_exists($instance, 'resource_link_id') && !empty($instance->resource_link_id)) {
+        if (property_exists($instance, 'resource_link_id') and !empty($instance->resource_link_id)) {
             $requestparams['resource_link_id'] = $instance->resource_link_id;
         }
     }
@@ -1039,27 +1056,27 @@ function orcalti_build_standard_message($instance, $orgid, $ltiversion, $message
  * @param object    $toolproxy      Tool proxy instance object
  * @param object    $tool           Tool instance object
  * @param object    $instance       Tool placement instance object
- * @param array     $params         LTI launch parameters
+ * @param array     $params         ORCALTI launch parameters
  * @param string    $customstr      Custom parameters defined for tool
  * @param string    $instructorcustomstr      Custom parameters defined for this placement
- * @param boolean   $islti2         True if an LTI 2 tool is being launched
+ * @param boolean   $isorcalti2         True if an ORCALTI 2 tool is being launched
  *
  * @return array                    Custom parameters
  */
-function orcalti_build_custom_parameters($toolproxy, $tool, $instance, $params, $customstr, $instructorcustomstr, $islti2) {
+function orcalti_build_custom_parameters($toolproxy, $tool, $instance, $params, $customstr, $instructorcustomstr, $isorcalti2) {
 
     // Concatenate the custom parameters from the administrator and the instructor
     // Instructor parameters are only taken into consideration if the administrator
     // has given permission.
     $custom = array();
     if ($customstr) {
-        $custom = orcalti_split_custom_parameters($toolproxy, $tool, $params, $customstr, $islti2);
+        $custom = orcalti_split_custom_parameters($toolproxy, $tool, $params, $customstr, $isorcalti2);
     }
     if ($instructorcustomstr) {
         $custom = array_merge(orcalti_split_custom_parameters($toolproxy, $tool, $params,
-            $instructorcustomstr, $islti2), $custom);
+            $instructorcustomstr, $isorcalti2), $custom);
     }
-    if ($islti2) {
+    if ($isorcalti2) {
         $custom = array_merge(orcalti_split_custom_parameters($toolproxy, $tool, $params,
             $tool->parameter, true), $custom);
         $settings = orcalti_get_tool_settings($tool->toolproxyid);
@@ -1078,7 +1095,7 @@ function orcalti_build_custom_parameters($toolproxy, $tool, $instance, $params, 
 }
 
 /**
- * Builds a standard LTI Content-Item selection request.
+ * Builds a standard ORCALTI Content-Item selection request.
  *
  * @param int $id The tool type ID.
  * @param stdClass $course The course object.
@@ -1086,12 +1103,12 @@ function orcalti_build_custom_parameters($toolproxy, $tool, $instance, $params, 
  *                              will use to return the Content-Item message.
  * @param string $title The tool's title, if available.
  * @param string $text The text to display to represent the content item. This value may be a long description of the content item.
- * @param array $mediatypes Array of MIME types types supported by the TC. If empty, the TC will support ltilink by default.
+ * @param array $mediatypes Array of MIME types types supported by the TC. If empty, the TC will support orcaltilink by default.
  * @param array $presentationtargets Array of ways in which the selected content item(s) can be requested to be opened
  *                                   (via the presentationDocumentTarget element for a returned content item).
  *                                   If empty, "frame", "iframe", and "window" will be supported by default.
  * @param bool $autocreate Indicates whether any content items returned by the TP would be automatically persisted without
- * @param bool $multiple Indicates whether the user should be permitted to select more than one item. False by default.
+ * @param bool $muorcaltiple Indicates whether the user should be permitted to select more than one item. False by default.
  *                         any option for the user to cancel the operation. False by default.
  * @param bool $unsigned Indicates whether the TC is willing to accept an unsigned return message, or not.
  *                       A signed message should always be required when the content item is being created automatically in the
@@ -1100,12 +1117,11 @@ function orcalti_build_custom_parameters($toolproxy, $tool, $instance, $params, 
  * @param bool $copyadvice Indicates whether the TC is able and willing to make a local copy of a content item. False by default.
  * @param string $nonce
  * @return stdClass The object containing the signed request parameters and the URL to the TP's Content-Item selection interface.
- * @throws moodle_exception When the LTI tool type does not exist.`
+ * @throws moodle_exception When the ORCALTI tool type does not exist.`
  * @throws coding_exception For invalid media type and presentation target parameters.
  */
-function orcalti_build_content_item_selection_request($id, $course, moodle_url $returnurl, 
-                                                  $title = '', $text = '', $mediatypes = [],
-                                                  $presentationtargets = [], $autocreate = false, $multiple = false,
+function orcalti_build_content_item_selection_request($id, $course, moodle_url $returnurl, $title = '', $text = '', $mediatypes = [],
+                                                  $presentationtargets = [], $autocreate = false, $muorcaltiple = true,
                                                   $unsigned = false, $canconfirm = false, $copyadvice = false, $nonce = '') {
     global $USER;
 
@@ -1129,19 +1145,19 @@ function orcalti_build_content_item_selection_request($id, $course, moodle_url $
     $typeconfig = orcalti_get_type_config($id);
     $key = '';
     $secret = '';
-    $islti2 = false;
-    $islti13 = false;
+    $isorcalti2 = false;
+    $isorcalti13 = false;
     if (isset($tool->toolproxyid)) {
-        $islti2 = true;
+        $isorcalti2 = true;
         $toolproxy = orcalti_get_tool_proxy($tool->toolproxyid);
         $key = $toolproxy->guid;
         $secret = $toolproxy->secret;
     } else {
-        $islti13 = $tool->ltiversion === ORCALTI_VERSION_1P3;
+        $isorcalti13 = $tool->ltiversion === ORCALTI_VERSION_1P3;
         $toolproxy = null;
-        if ($islti13 && !empty($tool->clientid)) {
+        if ($isorcalti13 && !empty($tool->clientid)) {
             $key = $tool->clientid;
-        } else if (!$islti13 && !empty($typeconfig['resourcekey'])) {
+        } else if (!$isorcalti13 && !empty($typeconfig['resourcekey'])) {
             $key = $typeconfig['resourcekey'];
         }
         if (!empty($typeconfig['password'])) {
@@ -1181,12 +1197,12 @@ function orcalti_build_content_item_selection_request($id, $course, moodle_url $
     // Get base request parameters.
     $instance = new stdClass();
     $instance->course = $course->id;
-    $requestparams = orcalti_build_request($instance, $typeconfig, $course, $id, $islti2);
+    $requestparams = orcalti_build_request($instance, $typeconfig, $course, $id, $isorcalti2);
 
-    // Get LTI2-specific request parameters and merge to the request parameters if applicable.
-    if ($islti2) {
-        $lti2params = orcalti_build_request_lti2($tool, $requestparams);
-        $requestparams = array_merge($requestparams, $lti2params);
+    // Get ORCALTI2-specific request parameters and merge to the request parameters if applicable.
+    if ($isorcalti2) {
+        $orcalti2params = orcalti_build_request_orcalti2($tool, $requestparams);
+        $requestparams = array_merge($requestparams, $orcalti2params);
     }
 
     // Get standard request parameters and merge to the request parameters.
@@ -1199,53 +1215,43 @@ function orcalti_build_content_item_selection_request($id, $course, moodle_url $
     if (!empty($typeconfig['customparameters'])) {
         $customstr = $typeconfig['customparameters'];
     }
-    $customparams = orcalti_build_custom_parameters($toolproxy, $tool, $instance, $requestparams, $customstr, '', $islti2);
+    $customparams = orcalti_build_custom_parameters($toolproxy, $tool, $instance, $requestparams, $customstr, '', $isorcalti2);
     $requestparams = array_merge($requestparams, $customparams);
 
-    // Add the parameters configured by the LTI services.
-    if ($id && !$islti2) {
+    // Add the parameters configured by the ORCALTI services.
+    if ($id && !$isorcalti2) {
         $services = orcalti_get_services();
         foreach ($services as $service) {
             $serviceparameters = $service->get_launch_parameters('ContentItemSelectionRequest',
                 $course->id, $USER->id , $id);
             foreach ($serviceparameters as $paramkey => $paramvalue) {
-                $requestparams['custom_' . $paramkey] = orcalti_parse_custom_parameter(
-                    $toolproxy,
-                    $tool,
-                    $requestparams,
-                    $paramvalue,
-                    $islti2
-                );
+                $requestparams['custom_' . $paramkey] = orcalti_parse_custom_parameter($toolproxy, $tool, $requestparams, $paramvalue,
+                    $isorcalti2);
             }
         }
     }
 
     // Allow request params to be updated by sub-plugins.
     $plugins = core_component::get_plugin_list('orcaltisource');
-
     foreach (array_keys($plugins) as $plugin) {
-        $pluginparams = component_callback(
-            'orcaltisource_' . $plugin, 'before_launch',
-            [$instance, $toolurlout, $requestparams],
-            []
-        );
+        $pluginparams = component_callback('orcaltisource_' . $plugin, 'before_launch', [$instance, $toolurlout, $requestparams], []);
 
         if (!empty($pluginparams) && is_array($pluginparams)) {
             $requestparams = array_merge($requestparams, $pluginparams);
         }
     }
 
-    if (!$islti13) {
-        // Media types. Set to ltilink by default if empty.
+    if (!$isorcalti13) {
+        // Media types. Set to orcaltilink by default if empty.
         if (empty($mediatypes)) {
             $mediatypes = [
-                'application/vnd.ims.lti.v1.ltilink',
+                'application/vnd.ims.lti.v1.orcaltilink',
             ];
         }
         $requestparams['accept_media_types'] = implode(',', $mediatypes);
     } else {
-        // Only LTI links are currently supported.
-        $requestparams['accept_types'] = 'ltiResourceLink';
+        // Only ORCALTI links are currently supported.
+        $requestparams['accept_types'] = 'orcaltiResourceLink';
     }
 
     // Presentation targets. Supports frame, iframe, window by default if empty.
@@ -1260,14 +1266,14 @@ function orcalti_build_content_item_selection_request($id, $course, moodle_url $
 
     // Other request parameters.
     $requestparams['accept_copy_advice'] = $copyadvice === true ? 'true' : 'false';
-    $requestparams['accept_multiple'] = $multiple === true ? 'true' : 'false';
+    $requestparams['accept_muorcaltiple'] = $muorcaltiple === true ? 'true' : 'false';
     $requestparams['accept_unsigned'] = $unsigned === true ? 'true' : 'false';
     $requestparams['auto_create'] = $autocreate === true ? 'true' : 'false';
     $requestparams['can_confirm'] = $canconfirm === true ? 'true' : 'false';
     $requestparams['content_item_return_url'] = $returnurl->out(false);
     $requestparams['title'] = $title;
     $requestparams['text'] = $text;
-    if (!$islti13) {
+    if (!$isorcalti13) {
         $signedparams = orcalti_sign_parameters($requestparams, $toolurlout, 'POST', $key, $secret);
     } else {
         $signedparams = orcalti_sign_jwt($requestparams, $toolurlout, $key, $id, $nonce);
@@ -1312,7 +1318,7 @@ function orcalti_build_content_item_selection_request($id, $course, moodle_url $
  * @param string $consumerkey The consumer key.
  * @return stdClass Tool type
  * @throws moodle_exception
- * @throws lti\OAuthException
+ * @throws orcalti\OAuthException
  */
 function orcalti_verify_oauth_signature($typeid, $consumerkey) {
     $tool = orcalti_get_type($typeid);
@@ -1344,16 +1350,16 @@ function orcalti_verify_oauth_signature($typeid, $consumerkey) {
         throw new moodle_exception('errorincorrectconsumerkey', 'mod_orcalti');
     }
 
-    $store = new lti\TrivialOAuthDataStore();
+    $store = new orcalti\TrivialOAuthDataStore();
     $store->add_consumer($key, $secret);
-    $server = new lti\OAuthServer($store);
-    $method = new lti\OAuthSignatureMethod_HMAC_SHA1();
+    $server = new orcalti\OAuthServer($store);
+    $method = new orcalti\OAuthSignatureMethod_HMAC_SHA1();
     $server->add_signature_method($method);
-    $request = lti\OAuthRequest::from_request();
+    $request = orcalti\OAuthRequest::from_request();
     try {
         $server->verify_request($request);
-    } catch (lti\OAuthException $e) {
-        throw new lti\OAuthException("OAuth signature failed: " . $e->getMessage());
+    } catch (orcalti\OAuthException $e) {
+        throw new orcalti\OAuthException("OAuth signature failed: " . $e->getMessage());
     }
 
     return $tool;
@@ -1384,14 +1390,16 @@ function orcalti_verify_with_keyset($jwtparam, $keyseturl, $clientid) {
             throw new moodle_exception('errornocachedkeysetfound', 'mod_orcalti');
         }
         $keysetarr = json_decode($keyset, true);
+        // JWK::parseKeySet uses RS256 algorithm by default.
         $keys = JWK::parseKeySet($keysetarr);
-        $jwt = JWT::decode($jwtparam, $keys, ['RS256']);
+        $jwt = JWT::decode($jwtparam, $keys);
     } catch (Exception $e) {
         // Something went wrong, so attempt to update cached keyset and then try again.
         $keyset = file_get_contents($keyseturl);
         $keysetarr = json_decode($keyset, true);
+        // JWK::parseKeySet uses RS256 algorithm by default.
         $keys = JWK::parseKeySet($keysetarr);
-        $jwt = JWT::decode($jwtparam, $keys, ['RS256']);
+        $jwt = JWT::decode($jwtparam, $keys);
         // If sucessful, updates the cached keyset.
         $cache->set($clientid, $keyset);
     }
@@ -1421,7 +1429,7 @@ function orcalti_verify_jwt_signature($typeid, $consumerkey, $jwtparam) {
         throw new moodle_exception('errortooltypenotfound', 'mod_orcalti');
     }
     if (isset($tool->toolproxyid)) {
-        throw new moodle_exception('JWT security not supported with LTI 2');
+        throw new moodle_exception('JWT security not supported with ORCALTI 2');
     }
 
     $typeconfig = orcalti_get_type_config($typeid);
@@ -1438,7 +1446,7 @@ function orcalti_verify_jwt_signature($typeid, $consumerkey, $jwtparam) {
             throw new moodle_exception('No public key configured');
         }
         // Attemps to verify jwt with RSA key.
-        JWT::decode($jwtparam, $publickey, ['RS256']);
+        JWT::decode($jwtparam, new Key($publickey, 'RS256'));
     } else if ($typeconfig['keytype'] === ORCALTI_JWK_KEYSET) {
         $keyseturl = $typeconfig['publickeyset'] ?? '';
         if (empty($keyseturl)) {
@@ -1454,6 +1462,130 @@ function orcalti_verify_jwt_signature($typeid, $consumerkey, $jwtparam) {
 }
 
 /**
+ * Converts an array of custom parameters to a new line separated string.
+ *
+ * @param object $params list of params to concatenate
+ *
+ * @return string
+ */
+function orcalti_params_to_string(object $params) {
+    $customparameters = [];
+    foreach ($params as $key => $value) {
+        $customparameters[] = "{$key}={$value}";
+    }
+    return implode("\n", $customparameters);
+}
+
+/**
+ * Converts ORCALTI 1.1 Content Item for ORCALTI Link to Form data.
+ *
+ * @param object $tool Tool for which the item is created for.
+ * @param object $typeconfig The tool configuration.
+ * @param object $item Item populated from JSON to be converted to Form form
+ *
+ * @return stdClass Form config for the item
+ */
+function orcalti_content_item_to_form(object $tool, object $typeconfig, object $item) : stdClass {
+    $config = new stdClass();
+    $config->name = '';
+    if (isset($item->title)) {
+        $config->name = $item->title;
+    }
+    if (empty($config->name)) {
+        $config->name = $tool->name;
+    }
+    if (isset($item->text)) {
+        $config->introeditor = [
+            'text' => $item->text,
+            'format' => FORMAT_PLAIN
+        ];
+    } else {
+        $config->introeditor = [
+            'text' => '',
+            'format' => FORMAT_PLAIN
+        ];
+    }
+    if (isset($item->icon->{'@id'})) {
+        $iconurl = new moodle_url($item->icon->{'@id'});
+        // Assign item's icon URL to secureicon or icon depending on its scheme.
+        if (strtolower($iconurl->get_scheme()) === 'https') {
+            $config->secureicon = $iconurl->out(false);
+        } else {
+            $config->icon = $iconurl->out(false);
+        }
+    }
+    if (isset($item->url)) {
+        $url = new moodle_url($item->url);
+        $config->toolurl = $url->out(false);
+        $config->typeid = 0;
+    } else {
+        $config->typeid = $tool->id;
+    }
+    $config->instructorchoiceacceptgrades = ORCALTI_SETTING_NEVER;
+    $isorcalti2 = $tool->ltiversion === ORCALTI_VERSION_2;
+    if (!$isorcalti2 && isset($typeconfig->orcalti_acceptgrades)) {
+        $acceptgrades = $typeconfig->orcalti_acceptgrades;
+        if ($acceptgrades == ORCALTI_SETTING_ALWAYS) {
+            // We create a line item regardless if the definition contains one or not.
+            $config->instructorchoiceacceptgrades = ORCALTI_SETTING_ALWAYS;
+            $config->grade_modgrade_point = 100;
+        }
+        if ($acceptgrades == ORCALTI_SETTING_DELEGATE || $acceptgrades == ORCALTI_SETTING_ALWAYS) {
+            if (isset($item->lineItem)) {
+                $lineitem = $item->lineItem;
+                $config->instructorchoiceacceptgrades = ORCALTI_SETTING_ALWAYS;
+                $maxscore = 100;
+                if (isset($lineitem->scoreConstraints)) {
+                    $sc = $lineitem->scoreConstraints;
+                    if (isset($sc->totalMaximum)) {
+                        $maxscore = $sc->totalMaximum;
+                    } else if (isset($sc->normalMaximum)) {
+                        $maxscore = $sc->normalMaximum;
+                    }
+                }
+                $config->grade_modgrade_point = $maxscore;
+                $config->lineitemresourceid = '';
+                $config->lineitemtag = '';
+                $config->lineitemsubreviewurl = '';
+                $config->lineitemsubreviewparams = '';
+                if (isset($lineitem->assignedActivity) && isset($lineitem->assignedActivity->activityId)) {
+                    $config->lineitemresourceid = $lineitem->assignedActivity->activityId?:'';
+                }
+                if (isset($lineitem->tag)) {
+                    $config->lineitemtag = $lineitem->tag?:'';
+                }
+                if (isset($lineitem->submissionReview)) {
+                    $subreview = $lineitem->submissionReview;
+                    $config->lineitemsubreviewurl = 'DEFAULT';
+                    if (!empty($subreview->url)) {
+                        $config->lineitemsubreviewurl = $subreview->url;
+                    }
+                    if (isset($subreview->custom)) {
+                        $config->lineitemsubreviewparams = orcalti_params_to_string($subreview->custom);
+                    }
+                }
+            }
+        }
+    }
+    $config->instructorchoicesendname = ORCALTI_SETTING_NEVER;
+    $config->instructorchoicesendemailaddr = ORCALTI_SETTING_NEVER;
+    $config->launchcontainer = ORCALTI_LAUNCH_CONTAINER_DEFAULT;
+    if (isset($item->placementAdvice->presentationDocumentTarget)) {
+        if ($item->placementAdvice->presentationDocumentTarget === 'window') {
+            $config->launchcontainer = ORCALTI_LAUNCH_CONTAINER_WINDOW;
+        } else if ($item->placementAdvice->presentationDocumentTarget === 'frame') {
+            $config->launchcontainer = ORCALTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS;
+        } else if ($item->placementAdvice->presentationDocumentTarget === 'iframe') {
+            $config->launchcontainer = ORCALTI_LAUNCH_CONTAINER_EMBED;
+        }
+    }
+    if (isset($item->custom)) {
+        $config->instructorcustomparameters = orcalti_params_to_string($item->custom);
+    }
+    return $config;
+}
+
+/**
  * Processes the tool provider's response to the ContentItemSelectionRequest and builds the configuration data from the
  * selected content item. This configuration data can be then used when adding a tool into the course.
  *
@@ -1464,7 +1596,7 @@ function orcalti_verify_jwt_signature($typeid, $consumerkey, $jwtparam) {
  * @param string $contentitemsjson The JSON string for the content_items parameter.
  * @return stdClass The array of module information objects.
  * @throws moodle_exception
- * @throws lti\OAuthException
+ * @throws orcalti\OAuthException
  */
 function orcalti_tool_configuration_from_content_item($typeid, $messagetype, $ltiversion, $consumerkey, $contentitemsjson) {
     $tool = orcalti_get_type($typeid);
@@ -1479,11 +1611,11 @@ function orcalti_tool_configuration_from_content_item($typeid, $messagetype, $lt
             DEBUG_DEVELOPER);
     }
 
-    $typeconfig = orcalti_get_type_config($typeid);
+    $typeconfig = lti_get_type_config($typeid);
 
     if (isset($tool->toolproxyid)) {
         $islti2 = true;
-        $toolproxy = orcalti_get_tool_proxy($tool->toolproxyid);
+        $toolproxy = lti_get_tool_proxy($tool->toolproxyid);
         $key = $toolproxy->guid;
         $secret = $toolproxy->secret;
     } else {
@@ -1501,10 +1633,10 @@ function orcalti_tool_configuration_from_content_item($typeid, $messagetype, $lt
         }
     }
 
-    // Check LTI versions from our side and the response's side. Show debugging if they don't match.
-    // No need to throw exceptions for now since LTI version does not seem to be used in this processing at the moment.
+    // Check ORCALTI versions from our side and the response's side. Show debugging if they don't match.
+    // No need to throw exceptions for now since ORCALTI version does not seem to be used in this processing at the moment.
     $expectedversion = $tool->ltiversion;
-    $islti2 = ($expectedversion === ORCALTI_VERSION_2);
+    $isorcalti2 = ($expectedversion === ORCALTI_VERSION_2);
     if ($ltiversion !== $expectedversion) {
         debugging("lti_version from response does not match the tool's configuration. Tool: {$expectedversion}," .
             " Response: {$ltiversion}", DEBUG_DEVELOPER);
@@ -1514,97 +1646,24 @@ function orcalti_tool_configuration_from_content_item($typeid, $messagetype, $lt
     if (empty($items)) {
         throw new moodle_exception('errorinvaliddata', 'mod_orcalti', '', $contentitemsjson);
     }
-    if (!isset($items->{'@graph'}) || !is_array($items->{'@graph'}) || (count($items->{'@graph'}) > 1)) {
+    if (!isset($items->{'@graph'}) || !is_array($items->{'@graph'})) {
         throw new moodle_exception('errorinvalidresponseformat', 'mod_orcalti');
     }
 
     $config = null;
-    if (!empty($items->{'@graph'})) {
-        $item = $items->{'@graph'}[0];
+    $items = $items->{'@graph'};
+    if (!empty($items)) {
         $typeconfig = orcalti_get_type_type_config($tool->id);
-
-        $config = new stdClass();
-        $config->name = '';
-        if (isset($item->title)) {
-            $config->name = $item->title;
-        }
-        if (empty($config->name)) {
-            $config->name = $tool->name;
-        }
-        if (isset($item->text)) {
-            $config->introeditor = [
-                'text' => $item->text,
-                'format' => FORMAT_PLAIN
-            ];
-        }
-        if (isset($item->icon->{'@id'})) {
-            $iconurl = new moodle_url($item->icon->{'@id'});
-            // Assign item's icon URL to secureicon or icon depending on its scheme.
-            if (strtolower($iconurl->get_scheme()) === 'https') {
-                $config->secureicon = $iconurl->out(false);
-            } else {
-                $config->icon = $iconurl->out(false);
-            }
-        }
-        if (isset($item->url)) {
-            $url = new moodle_url($item->url);
-            $config->toolurl = $url->out(false);
-            $config->typeid = 0;
+        if (count($items) == 1) {
+            $config = orcalti_content_item_to_form($tool, $typeconfig, $items[0]);
         } else {
-            $config->typeid = $tool->id;
-        }
-        $config->instructorchoiceacceptgrades = ORCALTI_SETTING_NEVER;
-        if (!$islti2 && isset($typeconfig->lti_acceptgrades)) {
-            $acceptgrades = $typeconfig->lti_acceptgrades;
-            if ($acceptgrades == ORCALTI_SETTING_ALWAYS) {
-                // We create a line item regardless if the definition contains one or not.
-                $config->instructorchoiceacceptgrades = ORCALTI_SETTING_ALWAYS;
+            $muorcaltiple = [];
+            foreach ($items as $item) {
+                $muorcaltiple[] = orcalti_content_item_to_form($tool, $typeconfig, $item);
             }
-            if ($acceptgrades == ORCALTI_SETTING_DELEGATE || $acceptgrades == ORCALTI_SETTING_ALWAYS) {
-                if (isset($item->lineItem)) {
-                    $lineitem = $item->lineItem;
-                    $config->instructorchoiceacceptgrades = ORCALTI_SETTING_ALWAYS;
-                    $maxscore = 100;
-                    if (isset($lineitem->scoreConstraints)) {
-                        $sc = $lineitem->scoreConstraints;
-                        if (isset($sc->totalMaximum)) {
-                            $maxscore = $sc->totalMaximum;
-                        } else if (isset($sc->normalMaximum)) {
-                            $maxscore = $sc->normalMaximum;
-                        }
-                    }
-                    $config->grade_modgrade_point = $maxscore;
-                    $config->lineitemresourceid = '';
-                    $config->lineitemtag = '';
-                    if (isset($lineitem->assignedActivity) && isset($lineitem->assignedActivity->activityId)) {
-                        $config->lineitemresourceid = $lineitem->assignedActivity->activityId ? : '';
-                    }
-                    if (isset($lineitem->tag)) {
-                        $config->lineitemtag = $lineitem->tag ? : '';
-                    }
-                }
-            }
+            $config = new stdClass();
+            $config->muorcaltiple = $muorcaltiple;
         }
-        $config->instructorchoicesendname = ORCALTI_SETTING_NEVER;
-        $config->instructorchoicesendemailaddr = ORCALTI_SETTING_NEVER;
-        $config->launchcontainer = ORCALTI_LAUNCH_CONTAINER_DEFAULT;
-        if (isset($item->placementAdvice->presentationDocumentTarget)) {
-            if ($item->placementAdvice->presentationDocumentTarget === 'window') {
-                $config->launchcontainer = ORCALTI_LAUNCH_CONTAINER_WINDOW;
-            } else if ($item->placementAdvice->presentationDocumentTarget === 'frame') {
-                $config->launchcontainer = ORCALTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS;
-            } else if ($item->placementAdvice->presentationDocumentTarget === 'iframe') {
-                $config->launchcontainer = ORCALTI_LAUNCH_CONTAINER_EMBED;
-            }
-        }
-        if (isset($item->custom)) {
-            $customparameters = [];
-            foreach ($item->custom as $key => $value) {
-                $customparameters[] = "{$key}={$value}";
-            }
-            $config->instructorcustomparameters = implode("\n", $customparameters);
-        }
-        $config->contentitemjson = json_encode($item);
     }
     return $config;
 }
@@ -1623,9 +1682,9 @@ function orcalti_convert_content_items($param) {
             if (isset($item->type)) {
                 $newitem = clone $item;
                 switch ($item->type) {
-                    case 'ltiResourceLink':
+                    case 'orcaltiResourceLink':
                         $newitem->{'@type'} = 'LtiLinkItem';
-                        $newitem->mediaType = 'application\/vnd.ims.lti.v1.ltilink';
+                        $newitem->mediaType = 'application\/vnd.ims.lti.v1.orcaltilink';
                         break;
                     case 'link':
                     case 'rich':
@@ -1641,7 +1700,35 @@ function orcalti_convert_content_items($param) {
                     $newitem->text = $item->html;
                     unset($newitem->html);
                 }
-                if (isset($item->presentation)) {
+                if (isset($item->iframe)) {
+                    // DeepLinking allows muorcaltiple options to be declared as supported.
+                    // We favor iframe over new window if both are specified.
+                    $newitem->placementAdvice = new stdClass();
+                    $newitem->placementAdvice->presentationDocumentTarget = 'iframe';
+                    if (isset($item->iframe->width)) {
+                        $newitem->placementAdvice->displayWidth = $item->iframe->width;
+                    }
+                    if (isset($item->iframe->height)) {
+                        $newitem->placementAdvice->displayHeight = $item->iframe->height;
+                    }
+                    unset($newitem->iframe);
+                    unset($newitem->window);
+                } else if (isset($item->window)) {
+                    $newitem->placementAdvice = new stdClass();
+                    $newitem->placementAdvice->presentationDocumentTarget = 'window';
+                    if (isset($item->window->targetName)) {
+                        $newitem->placementAdvice->windowTarget = $item->window->targetName;
+                    }
+                    if (isset($item->window->width)) {
+                        $newitem->placementAdvice->displayWidth = $item->window->width;
+                    }
+                    if (isset($item->window->height)) {
+                        $newitem->placementAdvice->displayHeight = $item->window->height;
+                    }
+                    unset($newitem->window);
+                } else if (isset($item->presentation)) {
+                    // This may have been part of an early draft but is not in the final spec
+                    // so keeping it around for now in case it's actually been used.
                     $newitem->placementAdvice = new stdClass();
                     if (isset($item->presentation->documentTarget)) {
                         $newitem->placementAdvice->presentationDocumentTarget = $item->presentation->documentTarget;
@@ -1685,6 +1772,9 @@ function orcalti_convert_content_items($param) {
                         $newitem->lineItem->scoreConstraints->{'@type'} = 'NumericLimits';
                         $newitem->lineItem->scoreConstraints->totalMaximum = $item->lineItem->scoreMaximum;
                     }
+                    if (isset($item->lineItem->submissionReview)) {
+                        $newitem->lineItem->submissionReview = $item->lineItem->submissionReview;
+                    }
                 }
                 $items[] = $newitem;
             }
@@ -1692,7 +1782,7 @@ function orcalti_convert_content_items($param) {
     }
 
     $newitems = new stdClass();
-    $newitems->{'@context'} = 'http://purl.imsglobal.org/ctx/lti/v1/ContentItem';
+    $newitems->{'@context'} = 'http://purl.imsglobal.org/ctx/orcalti/v1/ContentItem';
     $newitems->{'@graph'} = $items;
 
     return json_encode($newitems);
@@ -1858,8 +1948,7 @@ EOD;
                 $accepthtml = '';
             }
 
-            if (($toolproxy->state == ORCALTI_TOOL_PROXY_STATE_CONFIGURED) || 
-                ($toolproxy->state == ORCALTI_TOOL_PROXY_STATE_PENDING)) {
+            if (($toolproxy->state == ORCALTI_TOOL_PROXY_STATE_CONFIGURED) || ($toolproxy->state == ORCALTI_TOOL_PROXY_STATE_PENDING)) {
                 $delete = get_string('cancel', 'orcalti');
             }
 
@@ -1938,17 +2027,13 @@ function orcalti_get_enabled_capabilities($tool) {
 }
 
 /**
- * Splits the custom parameters field to the various parameters
+ * Splits the custom parameters
  *
- * @param object    $toolproxy      Tool proxy instance object
- * @param object    $tool           Tool instance object
- * @param array     $params         LTI launch parameters
  * @param string    $customstr      String containing the parameters
- * @param boolean   $islti2         True if an LTI 2 tool is being launched
  *
  * @return array of custom parameters
  */
-function orcalti_split_custom_parameters($toolproxy, $tool, $params, $customstr, $islti2 = false) {
+function orcalti_split_parameters($customstr) {
     $customstr = str_replace("\r\n", "\n", $customstr);
     $customstr = str_replace("\n\r", "\n", $customstr);
     $customstr = str_replace("\r", "\n", $customstr);
@@ -1961,10 +2046,30 @@ function orcalti_split_custom_parameters($toolproxy, $tool, $params, $customstr,
         }
         $key = trim(core_text::substr($line, 0, $pos));
         $val = trim(core_text::substr($line, $pos + 1, strlen($line)));
-        $val = orcalti_parse_custom_parameter($toolproxy, $tool, $params, $val, $islti2);
+        $retval[$key] = $val;
+    }
+    return $retval;
+}
+
+/**
+ * Splits the custom parameters field to the various parameters
+ *
+ * @param object    $toolproxy      Tool proxy instance object
+ * @param object    $tool           Tool instance object
+ * @param array     $params         ORCALTI launch parameters
+ * @param string    $customstr      String containing the parameters
+ * @param boolean   $isorcalti2         True if an ORCALTI 2 tool is being launched
+ *
+ * @return array of custom parameters
+ */
+function orcalti_split_custom_parameters($toolproxy, $tool, $params, $customstr, $isorcalti2 = false) {
+    $splitted = orcalti_split_parameters($customstr);
+    $retval = array();
+    foreach ($splitted as $key => $val) {
+        $val = orcalti_parse_custom_parameter($toolproxy, $tool, $params, $val, $isorcalti2);
         $key2 = orcalti_map_keyname($key);
         $retval['custom_'.$key2] = $val;
-        if (($islti2 || ($tool->ltiversion === ORCALTI_VERSION_1P3)) && ($key != $key2)) {
+        if (($isorcalti2 || ($tool->ltiversion === ORCALTI_VERSION_1P3)) && ($key != $key2)) {
             $retval['custom_'.$key] = $val;
         }
     }
@@ -1976,7 +2081,7 @@ function orcalti_split_custom_parameters($toolproxy, $tool, $params, $customstr,
  *
  * @param object    $toolproxy      Tool proxy instance object
  * @param object    $tool           Tool instance object
- * @param array     $params         LTI launch parameters
+ * @param array     $params         ORCALTI launch parameters
  * @param array     $parameters     Array containing the parameters
  *
  * @return array    Array of custom parameters
@@ -1999,13 +2104,13 @@ function orcalti_get_custom_parameters($toolproxy, $tool, $params, $parameters) 
  *
  * @param object    $toolproxy      Tool proxy instance object
  * @param object    $tool           Tool instance object
- * @param array     $params         LTI launch parameters
+ * @param array     $params         ORCALTI launch parameters
  * @param string    $value          Custom parameter value
- * @param boolean   $islti2         True if an LTI 2 tool is being launched
+ * @param boolean   $isorcalti2         True if an ORCALTI 2 tool is being launched
  *
  * @return string Parsed value of custom parameter
  */
-function orcalti_parse_custom_parameter($toolproxy, $tool, $params, $value, $islti2) {
+function orcalti_parse_custom_parameter($toolproxy, $tool, $params, $value, $isorcalti2) {
     // This is required as {${$valarr[0]}->{$valarr[1]}}" may be using the USER or COURSE var.
     global $USER, $COURSE;
 
@@ -2015,7 +2120,7 @@ function orcalti_parse_custom_parameter($toolproxy, $tool, $params, $value, $isl
         } else if (substr($value, 0, 1) == '$') {
             $value1 = substr($value, 1);
             $enabledcapabilities = orcalti_get_enabled_capabilities($tool);
-            if (!$islti2 || in_array($value1, $enabledcapabilities)) {
+            if (!$isorcalti2 || in_array($value1, $enabledcapabilities)) {
                 $capabilities = orcalti_get_capabilities();
                 if (array_key_exists($value1, $capabilities)) {
                     $val = $capabilities[$value1];
@@ -2063,8 +2168,40 @@ function orcalti_calculate_custom_parameter($value) {
     switch ($value) {
         case 'Moodle.Person.userGroupIds':
             return implode(",", groups_get_user_groups($COURSE->id, $USER->id)[0]);
+        case 'Context.id.history':
+            return implode(",", orcalti_get_course_history($COURSE));
+        case 'CourseSection.timeFrame.begin':
+            if (empty($COURSE->startdate)) {
+                return "";
+            }
+            $dt = new DateTime("@$COURSE->startdate", new DateTimeZone('UTC'));
+            return $dt->format(DateTime::ATOM);
+        case 'CourseSection.timeFrame.end':
+            if (empty($COURSE->enddate)) {
+                return "";
+            }
+            $dt = new DateTime("@$COURSE->enddate", new DateTimeZone('UTC'));
+            return $dt->format(DateTime::ATOM);
     }
     return null;
+}
+
+/**
+ * Build the history chain for this course using the course originalcourseid.
+ *
+ * @param object $course course for which the history is returned.
+ *
+ * @return array ids of the source course in ancestry order, immediate parent 1st.
+ */
+function orcalti_get_course_history($course) {
+    global $DB;
+    $history = [];
+    $parentid = $course->originalcourseid;
+    while (!empty($parentid) && !in_array($parentid, $history)) {
+        $history[] = $parentid;
+        $parentid = $DB->get_field('course', 'originalcourseid', array('id' => $parentid));
+    }
+    return $history;
 }
 
 /**
@@ -2092,22 +2229,22 @@ function orcalti_map_keyname($key, $tolower = true) {
 }
 
 /**
- * Gets the IMS role string for the specified user and LTI course module.
+ * Gets the IMS role string for the specified user and ORCALTI course module.
  *
  * @param mixed    $user      User object or user id
- * @param int      $cmid      The course module id of the LTI activity
- * @param int      $courseid  The course id of the LTI activity
- * @param boolean  $islti2    True if an LTI 2 tool is being launched
+ * @param int      $cmid      The course module id of the ORCALTI activity
+ * @param int      $courseid  The course id of the ORCALTI activity
+ * @param boolean  $isorcalti2    True if an ORCALTI 2 tool is being launched
  *
- * @return string A role string suitable for passing with an LTI launch
+ * @return string A role string suitable for passing with an ORCALTI launch
  */
-function orcalti_get_ims_role($user, $cmid, $courseid, $islti2) {
+function orcalti_get_ims_role($user, $cmid, $courseid, $isorcalti2) {
     $roles = array();
 
     if (empty($cmid)) {
         // If no cmid is passed, check if the user is a teacher in the course
         // This allows other modules to programmatically "fake" a launch without
-        // a real LTI instance.
+        // a real ORCALTI instance.
         $context = context_course::instance($courseid);
 
         if (has_capability('moodle/course:manageactivities', $context, $user)) {
@@ -2125,10 +2262,10 @@ function orcalti_get_ims_role($user, $cmid, $courseid, $islti2) {
         }
     }
 
-    if (is_siteadmin($user) || has_capability('mod/orcalti:admin', $context)) {
+    if (!is_role_switched($courseid) && (is_siteadmin($user)) || has_capability('mod/orcalti:admin', $context)) {
         // Make sure admins do not have the Learner role, then set admin role.
         $roles = array_diff($roles, array('Learner'));
-        if (!$islti2) {
+        if (!$isorcalti2) {
             array_push($roles, 'urn:lti:sysrole:ims/lis/Administrator', 'urn:lti:instrole:ims/lis/Administrator');
         } else {
             array_push($roles, 'http://purl.imsglobal.org/vocab/lis/v2/person#Administrator');
@@ -2141,7 +2278,7 @@ function orcalti_get_ims_role($user, $cmid, $courseid, $islti2) {
 /**
  * Returns configuration details for the tool
  *
- * @param int $typeid   Basic LTI tool typeid
+ * @param int $typeid   Basic ORCALTI tool typeid
  *
  * @return array        Tool Configuration
  */
@@ -2149,19 +2286,19 @@ function orcalti_get_type_config($typeid) {
     global $DB;
 
     $query = "SELECT name, value
-                FROM {orcalti_types_config}
+                FROM {lti_types_config}
                WHERE typeid = :typeid1
            UNION ALL
               SELECT 'toolurl' AS name, baseurl AS value
-                FROM {orcalti_types}
+                FROM {lti_types}
                WHERE id = :typeid2
            UNION ALL
               SELECT 'icon' AS name, icon AS value
-                FROM {orcalti_types}
+                FROM {lti_types}
                WHERE id = :typeid3
            UNION ALL
               SELECT 'secureicon' AS name, secureicon AS value
-                FROM {orcalti_types}
+                FROM {lti_types}
                WHERE id = :typeid4";
 
     $typeconfig = array();
@@ -2198,7 +2335,7 @@ function orcalti_get_tools_by_domain($domain, $state = null, $courseid = null) {
     }
 
     $query = "SELECT *
-                FROM {orcalti_types}
+                FROM {lti_types}
                WHERE tooldomain = :tooldomain
                  AND (course = :siteid $coursefilter)
                  $statefilter";
@@ -2212,7 +2349,7 @@ function orcalti_get_tools_by_domain($domain, $state = null, $courseid = null) {
 }
 
 /**
- * Returns all basicLTI tools configured by the administrator
+ * Returns all basicORCALTI tools configured by the administrator
  *
  * @param int $course
  *
@@ -2229,7 +2366,7 @@ function orcalti_filter_get_types($course) {
         $params = array();
     }
     $query = "SELECT t.id, t.name, t.baseurl, t.state, t.toolproxyid, t.timecreated, tp.name tpname
-                FROM {orcalti_types} t LEFT OUTER JOIN {orcalti_tool_proxies} tp ON t.toolproxyid = tp.id
+                FROM {lti_types} t LEFT OUTER JOIN {orcalti_tool_proxies} tp ON t.toolproxyid = tp.id
                 {$where}";
     return $DB->get_records_sql($query, $params);
 }
@@ -2252,12 +2389,12 @@ function orcalti_filter_tool_types(array $tools, $state) {
 }
 
 /**
- * Returns all lti types visible in this course
+ * Returns all orcalti types visible in this course
  *
  * @param int $courseid The id of the course to retieve types for
  * @param array $coursevisible options for 'coursevisible' field,
  *        default [ORCALTI_COURSEVISIBLE_PRECONFIGURED, ORCALTI_COURSEVISIBLE_ACTIVITYCHOOSER]
- * @return stdClass[] All the lti types visible in the given course
+ * @return stdClass[] All the orcalti types visible in the given course
  */
 function orcalti_get_orcalti_types_by_course($courseid, $coursevisible = null) {
     global $DB, $SITE;
@@ -2279,19 +2416,20 @@ function orcalti_get_orcalti_types_by_course($courseid, $coursevisible = null) {
     }
     $coursecond = implode(" OR ", $courseconds);
     $query = "SELECT *
-                FROM {orcalti_types}
+                FROM {lti_types}
                WHERE coursevisible $coursevisiblesql
                  AND ($coursecond)
-                 AND state = :active";
+                 AND state = :active
+            ORDER BY name ASC";
 
     return $DB->get_records_sql($query,
         array('siteid' => $SITE->id, 'courseid' => $courseid, 'active' => ORCALTI_TOOL_STATE_CONFIGURED) + $coursevisparams);
 }
 
 /**
- * Returns tool types for lti add instance and edit page
+ * Returns tool types for orcalti add instance and edit page
  *
- * @return array Array of lti types
+ * @return array Array of orcalti types
  */
 function orcalti_get_types_for_add_instance() {
     global $COURSE;
@@ -2314,29 +2452,29 @@ function orcalti_get_types_for_add_instance() {
  *
  * @param int $courseid The id of the course to retieve types for
  * @param int $sectionreturn section to return to for forming the URLs
- * @return array Array of lti types. Each element is object with properties: name, title, icon, help, helplink, link
+ * @return array Array of orcalti types. Each element is object with properties: name, title, icon, help, helplink, link
  */
 function orcalti_get_configured_types($courseid, $sectionreturn = 0) {
     global $OUTPUT;
     $types = array();
     $admintypes = orcalti_get_orcalti_types_by_course($courseid, [ORCALTI_COURSEVISIBLE_ACTIVITYCHOOSER]);
 
-    foreach ($admintypes as $ltitype) {
+    foreach ($admintypes as $orcaltitype) {
         $type           = new stdClass();
-        $type->id       = $ltitype->id;
+        $type->id       = $orcaltitype->id;
         $type->modclass = MOD_CLASS_ACTIVITY;
-        $type->name     = 'lti_type_' . $ltitype->id;
+        $type->name     = 'orcalti_type_' . $orcaltitype->id;
         // Clean the name. We don't want tags here.
-        $type->title    = clean_param($ltitype->name, PARAM_NOTAGS);
-        $trimmeddescription = trim($ltitype->description);
+        $type->title    = clean_param($orcaltitype->name, PARAM_NOTAGS);
+        $trimmeddescription = trim($orcaltitype->description);
         if ($trimmeddescription != '') {
             // Clean the description. We don't want tags here.
             $type->help     = clean_param($trimmeddescription, PARAM_NOTAGS);
             $type->helplink = get_string('modulename_shortcut_link', 'orcalti');
         }
-        $type->icon = html_writer::empty_tag('img', ['src' => get_tool_type_icon_url($ltitype), 'alt' => '', 'class' => 'icon']);
+        $type->icon = html_writer::empty_tag('img', ['src' => orcalti_get_tool_type_icon_url($orcaltitype), 'alt' => '', 'class' => 'icon']);
         $type->link = new moodle_url('/course/modedit.php', array('add' => 'orcalti', 'return' => 0, 'course' => $courseid,
-            'sr' => $sectionreturn, 'typeid' => $ltitype->id));
+            'sr' => $sectionreturn, 'typeid' => $orcaltitype->id));
         $types[] = $type;
     }
     return $types;
@@ -2437,14 +2575,38 @@ function orcalti_get_shared_secrets_by_key($key) {
     global $DB;
 
     // Look up the shared secret for the specified key in both the types_config table (for configured tools)
-    // And in the lti resource table for ad-hoc tools.
-    $lti13 = ORCALTI_VERSION_1P3;
+    // And in the orcalti resource table for ad-hoc tools.
+
+    // $orcalti13 = ORCALTI_VERSION_1P3;
+    // $query = "SELECT " . $DB->sql_compare_text('t2.value', 256) . " AS value
+    //             FROM {lti_types_config} t1
+    //             JOIN {lti_types_config} t2 ON t1.typeid = t2.typeid
+    //             JOIN {lti_types} type ON t2.typeid = type.id
+    //           WHERE t1.name = 'resourcekey'
+    //             AND " . $DB->sql_compare_text('t1.value', 256) . " = :key1
+    //             AND t2.name = 'password'
+    //             AND type.state = :configured1
+    //             AND type.ltiversion <> :ltiversion
+    //            UNION
+    //           SELECT tp.secret AS value
+    //             FROM {orcalti_tool_proxies} tp
+    //             JOIN {lti_types} t ON tp.id = t.toolproxyid
+    //           WHERE tp.guid = :key2
+    //             AND t.state = :configured2
+    //            UNION
+    //           SELECT password AS value
+    //            FROM {orcalti}
+    //           WHERE resourcekey = :key3";
+
+    // $sharedsecrets = $DB->get_records_sql($query, array('configured1' => ORCALTI_TOOL_STATE_CONFIGURED, 'ltiversion' => $orcalti13,
+    //     'configured2' => ORCALTI_TOOL_STATE_CONFIGURED, 'key1' => $key, 'key2' => $key, 'key3' => $key));
+
     $query = "SELECT password AS value
                FROM {orcalti}
               WHERE resourcekey = :key3";
 
     $sharedsecrets = $DB->get_records_sql($query, array('key3' => $key));
-
+    
     $values = array_map(function($item) {
         return $item->value;
     }, $sharedsecrets);
@@ -2455,7 +2617,7 @@ function orcalti_get_shared_secrets_by_key($key) {
 }
 
 /**
- * Delete a Basic LTI configuration
+ * Delete a Basic ORCALTI configuration
  *
  * @param int $id   Configuration id
  */
@@ -2470,26 +2632,26 @@ function orcalti_delete_type($id) {
         $DB->update_record('orcalti', $instance);
     }*/
 
-    $DB->delete_records('orcalti_types', array('id' => $id));
-    $DB->delete_records('orcalti_types_config', array('typeid' => $id));
+    $DB->delete_records('lti_types', array('id' => $id));
+    $DB->delete_records('lti_types_config', array('typeid' => $id));
 }
 
 function orcalti_set_state_for_type($id, $state) {
     global $DB;
 
-    $DB->update_record('orcalti_types', (object)array('id' => $id, 'state' => $state));
+    $DB->update_record('lti_types', (object)array('id' => $id, 'state' => $state));
 }
 
 /**
- * Transforms a basic LTI object to an array
+ * Transforms a basic ORCALTI object to an array
  *
- * @param object $ltiobject    Basic LTI object
+ * @param object $orcaltiobject    Basic ORCALTI object
  *
- * @return array Basic LTI configuration details
+ * @return array Basic ORCALTI configuration details
  */
-function orcalti_get_config($ltiobject) {
-    $typeconfig = (array)$ltiobject;
-    $additionalconfig = orcalti_get_type_config($ltiobject->typeid);
+function orcalti_get_config($orcaltiobject) {
+    $typeconfig = (array)$orcaltiobject;
+    $additionalconfig = orcalti_get_type_config($orcaltiobject->typeid);
     $typeconfig = array_merge($typeconfig, $additionalconfig);
     return $typeconfig;
 }
@@ -2510,25 +2672,25 @@ function orcalti_get_type_config_from_instance($id) {
     $config = orcalti_get_config($instance);
 
     $type = new \stdClass();
-    $type->lti_fix = $id;
+    $type->orcalti_fix = $id;
     if (isset($config['toolurl'])) {
-        $type->lti_toolurl = $config['toolurl'];
+        $type->orcalti_toolurl = $config['toolurl'];
     }
     if (isset($config['instructorchoicesendname'])) {
-        $type->lti_sendname = $config['instructorchoicesendname'];
+        $type->orcalti_sendname = $config['instructorchoicesendname'];
     }
     if (isset($config['instructorchoicesendemailaddr'])) {
-        $type->lti_sendemailaddr = $config['instructorchoicesendemailaddr'];
+        $type->orcalti_sendemailaddr = $config['instructorchoicesendemailaddr'];
     }
     if (isset($config['instructorchoiceacceptgrades'])) {
-        $type->lti_acceptgrades = $config['instructorchoiceacceptgrades'];
+        $type->orcalti_acceptgrades = $config['instructorchoiceacceptgrades'];
     }
     if (isset($config['instructorchoiceallowroster'])) {
-        $type->lti_allowroster = $config['instructorchoiceallowroster'];
+        $type->orcalti_allowroster = $config['instructorchoiceallowroster'];
     }
 
     if (isset($config['instructorcustomparameters'])) {
-        $type->lti_allowsetting = $config['instructorcustomparameters'];
+        $type->orcalti_allowsetting = $config['instructorcustomparameters'];
     }
     return $type;
 }
@@ -2543,31 +2705,31 @@ function orcalti_get_type_config_from_instance($id) {
 function orcalti_get_type_type_config($id) {
     global $DB;
 
-    $basicltitype = $DB->get_record('orcalti_types', array('id' => $id));
+    $basicorcaltitype = $DB->get_record('lti_types', array('id' => $id));
     $config = orcalti_get_type_config($id);
 
     $type = new \stdClass();
 
-    $type->lti_typename = $basicltitype->name;
+    $type->lti_typename = $basicorcaltitype->name;
 
-    $type->typeid = $basicltitype->id;
+    $type->typeid = $basicorcaltitype->id;
 
-    $type->toolproxyid = $basicltitype->toolproxyid;
+    $type->toolproxyid = $basicorcaltitype->toolproxyid;
 
-    $type->lti_toolurl = $basicltitype->baseurl;
+    $type->lti_toolurl = $basicorcaltitype->baseurl;
 
-    $type->lti_ltiversion = $basicltitype->ltiversion;
+    $type->lti_ltiversion = $basicorcaltitype->ltiversion;
 
-    $type->lti_clientid = $basicltitype->clientid;
+    $type->lti_clientid = $basicorcaltitype->clientid;
     $type->lti_clientid_disabled = $type->lti_clientid;
 
-    $type->lti_description = $basicltitype->description;
+    $type->lti_description = $basicorcaltitype->description;
 
-    $type->lti_parameters = $basicltitype->parameter;
+    $type->lti_parameters = $basicorcaltitype->parameter;
 
-    $type->lti_icon = $basicltitype->icon;
+    $type->lti_icon = $basicorcaltitype->icon;
 
-    $type->lti_secureicon = $basicltitype->secureicon;
+    $type->lti_secureicon = $basicorcaltitype->secureicon;
 
     if (isset($config['resourcekey'])) {
         $type->lti_resourcekey = $config['resourcekey'];
@@ -2663,9 +2825,9 @@ function orcalti_get_type_type_config($id) {
         $type->lti_module_class_type = $config['module_class_type'];
     }
 
-    // Get the parameters from the LTI services.
+    // Get the parameters from the ORCALTI services.
     foreach ($config as $name => $value) {
-        if (strpos($name, 'orcaltiservice_') === 0) {
+        if (strpos($name, 'ltiservice_') === 0) {
             $type->{$name} = $config[$name];
         }
     }
@@ -2676,7 +2838,11 @@ function orcalti_get_type_type_config($id) {
 function orcalti_prepare_type_for_save($type, $config) {
     if (isset($config->lti_toolurl)) {
         $type->baseurl = $config->lti_toolurl;
-        $type->tooldomain = orcalti_get_domain_from_url($config->lti_toolurl);
+        if (isset($config->lti_tooldomain)) {
+            $type->tooldomain = $config->lti_tooldomain;
+        } else {
+            $type->tooldomain = orcalti_get_domain_from_url($config->lti_toolurl);
+        }
     }
     if (isset($config->lti_description)) {
         $type->description = $config->lti_description;
@@ -2691,7 +2857,7 @@ function orcalti_prepare_type_for_save($type, $config) {
         $type->clientid = $config->lti_clientid;
     }
     if ((!empty($type->ltiversion) && $type->ltiversion === ORCALTI_VERSION_1P3) && empty($type->clientid)) {
-        $type->clientid = random_string(15);
+        $type->clientid = registration_helper::get()->new_clientid();
     } else if (empty($type->clientid)) {
         $type->clientid = null;
     }
@@ -2744,7 +2910,7 @@ function orcalti_update_type($type, $config) {
     }
     unset($config->oldicon);
 
-    if ($DB->update_record('orcalti_types', $type)) {
+    if ($DB->update_record('lti_types', $type)) {
         foreach ($config as $key => $value) {
             if (substr($key, 0, 4) == 'lti_' && !is_null($value)) {
                 $record = new \StdClass();
@@ -2753,7 +2919,7 @@ function orcalti_update_type($type, $config) {
                 $record->value = $value;
                 orcalti_update_config($record);
             }
-            if (substr($key, 0, 11) == 'orcaltiservice_' && !is_null($value)) {
+            if (substr($key, 0, 11) == 'ltiservice_' && !is_null($value)) {
                 $record = new \StdClass();
                 $record->typeid = $type->id;
                 $record->name = $key;
@@ -2761,16 +2927,33 @@ function orcalti_update_type($type, $config) {
                 orcalti_update_config($record);
             }
         }
+        if (isset($type->toolproxyid) && $type->ltiversion === ORCALTI_VERSION_1P3) {
+            // We need to remove the tool proxy for this tool to function under 1.3.
+            $toolproxyid = $type->toolproxyid;
+            $DB->delete_records('orcalti_tool_settings', array('toolproxyid' => $toolproxyid));
+            $DB->delete_records('orcalti_tool_proxies', array('id' => $toolproxyid));
+            $type->toolproxyid = null;
+            $DB->update_record('lti_types', $type);
+        }
         require_once($CFG->libdir.'/modinfolib.php');
         if ($clearcache) {
-            $sql = "SELECT DISTINCT course
-                      FROM {orcalti}
-                     WHERE typeid = ?";
+            $sql = "SELECT cm.id, cm.course
+                      FROM {course_modules} cm
+                      JOIN {modules} m ON cm.module = m.id
+                      JOIN {orcalti} l ON l.course = cm.course
+                     WHERE m.name = :name AND l.typeid = :typeid";
 
-            $courses = $DB->get_fieldset_sql($sql, array($type->id));
+            $rs = $DB->get_recordset_sql($sql, ['name' => 'orcalti', 'typeid' => $type->id]);
 
-            foreach ($courses as $courseid) {
-                rebuild_course_cache($courseid, true);
+            $courseids = [];
+            foreach ($rs as $record) {
+                $courseids[] = $record->course;
+                \course_modinfo::purge_course_module_cache($record->course, $record->id);
+            }
+            $rs->close();
+            $courseids = array_unique($courseids);
+            foreach ($courseids as $courseid) {
+                rebuild_course_cache($courseid, false, true);
             }
         }
     }
@@ -2803,20 +2986,21 @@ function orcalti_add_type($type, $config) {
 
     // Create a salt value to be used for signing passed data to extension services
     // The outcome service uses the service salt on the instance. This can be used
-    // for communication with services not related to a specific LTI instance.
+    // for communication with services not related to a specific ORCALTI instance.
     $config->lti_servicesalt = uniqid('', true);
 
-    $id = $DB->insert_record('orcalti_types', $type);
+    $id = $DB->insert_record('lti_types', $type);
 
     if ($id) {
         foreach ($config as $key => $value) {
             if (!is_null($value)) {
-                $fieldparts = preg_split("/(lti|spservice)_/i", $key);
-                // If array has only one element, it did not start with the pattern.
-                if (count($fieldparts) < 2) {
+                if (substr($key, 0, 4) === 'lti_') {
+                    $fieldname = substr($key, 4);
+                } else if (substr($key, 0, 11) !== 'ltiservice_') {
                     continue;
+                } else {
+                    $fieldname = $key;
                 }
-                $fieldname = $fieldparts[1];
 
                 $record = new \StdClass();
                 $record->typeid = $id;
@@ -2896,16 +3080,16 @@ function orcalti_get_tool_proxy($id) {
 }
 
 /**
- * Returns lti tool proxies.
+ * Returns orcalti tool proxies.
  *
  * @param bool $orphanedonly Only retrieves tool proxies that have no type associated with them
- * @return array of basicLTI types
+ * @return array of basicORCALTI types
  */
 function orcalti_get_tool_proxies($orphanedonly) {
     global $DB;
 
     if ($orphanedonly) {
-        $usedproxyids = array_values($DB->get_fieldset_select('orcalti_types', 'toolproxyid', 'toolproxyid IS NOT NULL'));
+        $usedproxyids = array_values($DB->get_fieldset_select('lti_types', 'toolproxyid', 'toolproxyid IS NOT NULL'));
         $proxies = $DB->get_records('orcalti_tool_proxies', null, 'state DESC, timemodified DESC');
         foreach ($proxies as $key => $value) {
             if (in_array($value->id, $usedproxyids)) {
@@ -2929,12 +3113,12 @@ function orcalti_get_tool_proxy_config($id) {
     $toolproxy = orcalti_get_tool_proxy($id);
 
     $tp = new \stdClass();
-    $tp->lti_registrationname = $toolproxy->name;
+    $tp->orcalti_registrationname = $toolproxy->name;
     $tp->toolproxyid = $toolproxy->id;
     $tp->state = $toolproxy->state;
-    $tp->lti_registrationurl = $toolproxy->regurl;
-    $tp->lti_capabilities = explode("\n", $toolproxy->capabilityoffered);
-    $tp->lti_services = explode("\n", $toolproxy->serviceoffered);
+    $tp->orcalti_registrationurl = $toolproxy->regurl;
+    $tp->orcalti_capabilities = explode("\n", $toolproxy->capabilityoffered);
+    $tp->orcalti_services = explode("\n", $toolproxy->serviceoffered);
 
     return $tp;
 }
@@ -3017,11 +3201,78 @@ function orcalti_update_tool_proxy($toolproxy) {
 function orcalti_delete_tool_proxy($id) {
     global $DB;
     $DB->delete_records('orcalti_tool_settings', array('toolproxyid' => $id));
-    $tools = $DB->get_records('orcalti_types', array('toolproxyid' => $id));
+    $tools = $DB->get_records('lti_types', array('toolproxyid' => $id));
     foreach ($tools as $tool) {
         orcalti_delete_type($tool->id);
     }
     $DB->delete_records('orcalti_tool_proxies', array('id' => $id));
+}
+
+/**
+ * Get both ORCALTI tool proxies and tool types.
+ *
+ * If limit and offset are not zero, a subset of the tools will be returned. Tool proxies will be counted before tool
+ * types.
+ * For example: If 10 tool proxies and 10 tool types exist, and the limit is set to 15, then 10 proxies and 5 types
+ * will be returned.
+ *
+ * @param int $limit Maximum number of tools returned.
+ * @param int $offset Do not return tools before offset index.
+ * @param bool $orphanedonly If true, only return orphaned proxies.
+ * @param int $toolproxyid If not 0, only return tool types that have this tool proxy id.
+ * @return array list(proxies[], types[]) List containing array of tool proxies and array of tool types.
+ */
+function orcalti_get_orcalti_types_and_proxies(int $limit = 0, int $offset = 0, bool $orphanedonly = false, int $toolproxyid = 0): array {
+    global $DB;
+
+    if ($orphanedonly) {
+        $orphanedproxiessql = helper::get_tool_proxy_sql($orphanedonly, false);
+        $countsql = helper::get_tool_proxy_sql($orphanedonly, true);
+        $proxies  = $DB->get_records_sql($orphanedproxiessql, null, $offset, $limit);
+        $totalproxiescount = $DB->count_records_sql($countsql);
+    } else {
+        $proxies = $DB->get_records('orcalti_tool_proxies', null, 'name ASC, state DESC, timemodified DESC',
+            '*', $offset, $limit);
+        $totalproxiescount = $DB->count_records('orcalti_tool_proxies');
+    }
+
+    // Find new offset and limit for tool types after getting proxies and set up query.
+    $typesoffset = max($offset - $totalproxiescount, 0); // Set to 0 if negative.
+    $typeslimit = max($limit - count($proxies), 0); // Set to 0 if negative.
+    $typesparams = [];
+    if (!empty($toolproxyid)) {
+        $typesparams['toolproxyid'] = $toolproxyid;
+    }
+
+    $types = $DB->get_records('lti_types', $typesparams, 'name ASC, state DESC, timemodified DESC',
+            '*', $typesoffset, $typeslimit);
+
+    return [$proxies, array_map('orcalti_serialise_tool_type', $types)];
+}
+
+/**
+ * Get the total number of ORCALTI tool types and tool proxies.
+ *
+ * @param bool $orphanedonly If true, only count orphaned proxies.
+ * @param int $toolproxyid If not 0, only count tool types that have this tool proxy id.
+ * @return int Count of tools.
+ */
+function orcalti_get_orcalti_types_and_proxies_count(bool $orphanedonly = false, int $toolproxyid = 0): int {
+    global $DB;
+
+    $typessql = "SELECT count(*)
+                   FROM {lti_types}";
+    $typesparams = [];
+    if (!empty($toolproxyid)) {
+        $typessql .= " WHERE toolproxyid = :toolproxyid";
+        $typesparams['toolproxyid'] = $toolproxyid;
+    }
+
+    $proxiessql = helper::get_tool_proxy_sql($orphanedonly, true);
+
+    $countsql = "SELECT ($typessql) + ($proxiessql) as total" . $DB->sql_null_from_clause();
+
+    return $DB->count_records_sql($countsql, $typesparams);
 }
 
 /**
@@ -3034,7 +3285,7 @@ function orcalti_delete_tool_proxy($id) {
 function orcalti_add_config($config) {
     global $DB;
 
-    return $DB->insert_record('orcalti_types_config', $config);
+    return $DB->insert_record('lti_types_config', $config);
 }
 
 /**
@@ -3047,13 +3298,13 @@ function orcalti_add_config($config) {
 function orcalti_update_config($config) {
     global $DB;
 
-    $old = $DB->get_record('orcalti_types_config', array('typeid' => $config->typeid, 'name' => $config->name));
+    $old = $DB->get_record('lti_types_config', array('typeid' => $config->typeid, 'name' => $config->name));
 
     if ($old) {
         $config->id = $old->id;
-        $return = $DB->update_record('orcalti_types_config', $config);
+        $return = $DB->update_record('lti_types_config', $config);
     } else {
-        $return = $DB->insert_record('orcalti_types_config', $config);
+        $return = $DB->insert_record('lti_types_config', $config);
     }
     return $return;
 }
@@ -3061,7 +3312,7 @@ function orcalti_update_config($config) {
 /**
  * Gets the tool settings
  *
- * @param int  $toolproxyid   Id of tool proxy record
+ * @param int  $toolproxyid   Id of tool proxy record (or tool ID if negative)
  * @param int  $courseid      Id of course (null if system settings)
  * @param int  $instanceid    Id of course module (null if system or context settings)
  *
@@ -3104,11 +3355,7 @@ function orcalti_set_tool_settings($settings, $toolproxyid, $courseid = null, $i
             'course' => $courseid, 'coursemoduleid' => $instanceid));
     }
     if ($record !== false) {
-        $DB->update_record('orcalti_tool_settings', (object)array(
-            'id' => $record->id,
-            'settings' => $json,
-            'timemodified' => time()
-        ));
+        $DB->update_record('orcalti_tool_settings', (object)array('id' => $record->id, 'settings' => $json, 'timemodified' => time()));
     } else {
         $record = new \stdClass();
         if ($toolproxyid > 0) {
@@ -3142,9 +3389,9 @@ function orcalti_sign_parameters($oldparms, $endpoint, $method, $oauthconsumerke
     $testtoken = '';
 
     // TODO: Switch to core oauthlib once implemented - MDL-30149.
-    $hmacmethod = new lti\OAuthSignatureMethod_HMAC_SHA1();
-    $testconsumer = new lti\OAuthConsumer($oauthconsumerkey, $oauthconsumersecret, null);
-    $accreq = lti\OAuthRequest::from_consumer_and_token($testconsumer, $testtoken, $method, $endpoint, $parms);
+    $hmacmethod = new orcalti\OAuthSignatureMethod_HMAC_SHA1();
+    $testconsumer = new orcalti\OAuthConsumer($oauthconsumerkey, $oauthconsumersecret, null);
+    $accreq = orcalti\OAuthRequest::from_consumer_and_token($testconsumer, $testtoken, $method, $endpoint, $parms);
     $accreq->sign_request($hmacmethod, $testconsumer, $testtoken);
 
     $newparms = $accreq->get_parameters();
@@ -3158,7 +3405,7 @@ function orcalti_sign_parameters($oldparms, $endpoint, $method, $oauthconsumerke
  * @param array  $parms        Parameters to be passed for signing
  * @param string $endpoint     url of the external tool
  * @param string $oauthconsumerkey
- * @param string $typeid       ID of LTI tool type
+ * @param string $typeid       ID of ORCALTI tool type
  * @param string $nonce        Nonce value to use
  * @return array|null
  */
@@ -3235,9 +3482,8 @@ function orcalti_sign_jwt($parms, $endpoint, $oauthconsumerkey, $typeid = 0, $no
         }
     }
 
-    $privatekey = get_config('mod_orcalti', 'privatekey');
-    $kid = get_config('mod_orcalti', 'kid');
-    $jwt = JWT::encode($payload, $privatekey, 'RS256', $kid);
+    $privatekey = jwks_helper::get_private_key();
+    $jwt = JWT::encode($payload, $privatekey['key'], 'RS256', $privatekey['kid']);
 
     $newparms = array();
     $newparms['id_token'] = $jwt;
@@ -3285,11 +3531,30 @@ function orcalti_convert_from_jwt($typeid, $jwtparam) {
                 if (empty($mapping['group'])) {
                     $value = $claims[$claim];
                 } else {
-                    $custom = $claims[$claim];
-                    if (is_array($custom)) {
-                        foreach ($custom as $key => $value) {
-                            $params["custom_{$key}"] = $value;
+                    $group = $claims[$claim];
+                    if (is_array($group) && array_key_exists($mapping['claim'], $group)) {
+                        $value = $group[$mapping['claim']];
+                    }
+                }
+                if (!empty($value) && $mapping['isarray']) {
+                    if (is_array($value)) {
+                        if (is_array($value[0])) {
+                            $value = json_encode($value);
+                        } else {
+                            $value = implode(',', $value);
                         }
+                    }
+                }
+                if (!is_null($value) && is_string($value) && (strlen($value) > 0)) {
+                    $params[$key] = $value;
+                }
+            }
+            $claim = ORCALTI_JWT_CLAIM_PREFIX . '/claim/custom';
+            if (isset($claims[$claim])) {
+                $custom = $claims[$claim];
+                if (is_array($custom)) {
+                    foreach ($custom as $key => $value) {
+                        $params["custom_{$key}"] = $value;
                     }
                 }
             }
@@ -3324,12 +3589,12 @@ function orcalti_convert_from_jwt($typeid, $jwtparam) {
  */
 function orcalti_post_launch_html($newparms, $endpoint, $debug=false) {
     $r = "<form action=\"" . $endpoint .
-        "\" name=\"ltiLaunchForm\" id=\"ltiLaunchForm\" method=\"post\" encType=\"application/x-www-form-urlencoded\">\n";
+        "\" name=\"orcaltiLaunchForm\" id=\"orcaltiLaunchForm\" method=\"post\" encType=\"application/x-www-form-urlencoded\">\n";
 
     // Contruct html for the launch parameters.
     foreach ($newparms as $key => $value) {
-        $key = htmlspecialchars($key);
-        $value = htmlspecialchars($value);
+        $key = htmlspecialchars($key, ENT_COMPAT);
+        $value = htmlspecialchars($value, ENT_COMPAT);
         if ( $key == "ext_submit" ) {
             $r .= "<input type=\"submit\"";
         } else {
@@ -3344,7 +3609,7 @@ function orcalti_post_launch_html($newparms, $endpoint, $debug=false) {
         $r .= "<script language=\"javascript\"> \n";
         $r .= "  //<![CDATA[ \n";
         $r .= "function basicorcaltiDebugToggle() {\n";
-        $r .= "    var ele = document.getElementById(\"basicltiDebug\");\n";
+        $r .= "    var ele = document.getElementById(\"basicorcaltiDebug\");\n";
         $r .= "    if (ele.style.display == \"block\") {\n";
         $r .= "        ele.style.display = \"none\";\n";
         $r .= "    }\n";
@@ -3356,13 +3621,13 @@ function orcalti_post_launch_html($newparms, $endpoint, $debug=false) {
         $r .= "</script>\n";
         $r .= "<a id=\"displayText\" href=\"javascript:basicorcaltiDebugToggle();\">";
         $r .= get_string("toggle_debug_data", "orcalti")."</a>\n";
-        $r .= "<div id=\"basicltiDebug\" style=\"display:none\">\n";
-        $r .= "<b>".get_string("basiclti_endpoint", "orcalti")."</b><br/>\n";
+        $r .= "<div id=\"basicorcaltiDebug\" style=\"display:none\">\n";
+        $r .= "<b>".get_string("basicorcalti_endpoint", "orcalti")."</b><br/>\n";
         $r .= $endpoint . "<br/>\n&nbsp;<br/>\n";
-        $r .= "<b>".get_string("basiclti_parameters", "orcalti")."</b><br/>\n";
+        $r .= "<b>".get_string("basicorcalti_parameters", "orcalti")."</b><br/>\n";
         foreach ($newparms as $key => $value) {
-            $key = htmlspecialchars($key);
-            $value = htmlspecialchars($value);
+            $key = htmlspecialchars($key, ENT_COMPAT);
+            $value = htmlspecialchars($value, ENT_COMPAT);
             $r .= "$key = $value<br/>\n";
         }
         $r .= "&nbsp;<br/>\n";
@@ -3370,10 +3635,11 @@ function orcalti_post_launch_html($newparms, $endpoint, $debug=false) {
     }
     $r .= "</form>\n";
 
-    if ( ! $debug ) {
+    // Auto-submit the form if endpoint is set.
+    if ($endpoint !== '' && !$debug) {
         $r .= " <script type=\"text/javascript\"> \n" .
             "  //<![CDATA[ \n" .
-            "    document.ltiLaunchForm.submit(); \n" .
+            "    document.orcaltiLaunchForm.submit(); \n" .
             "  //]]> \n" .
             " </script> \n";
     }
@@ -3381,39 +3647,38 @@ function orcalti_post_launch_html($newparms, $endpoint, $debug=false) {
 }
 
 /**
- * Generate the form for initiating a login request for an LTI 1.3 message
+ * Generate the form for initiating a login request for an ORCALTI 1.3 message
  *
  * @param int            $courseid  Course ID
- * @param int            $id        LTI instance ID
- * @param stdClass|null  $instance  LTI instance
+ * @param int            $cmid        ORCALTI instance ID
+ * @param stdClass|null  $instance  ORCALTI instance
  * @param stdClass       $config    Tool type configuration
- * @param string         $messagetype   LTI message type
+ * @param string         $messagetype   ORCALTI message type
  * @param string         $title     Title of content item
  * @param string         $text      Description of content item
+ * @param int            $foruserid Id of the user targeted by the launch
  * @return string
  */
-function orcalti_initiate_login($courseid, $id, $instance, $config, $messagetype = 'basic-lti-launch-request', $title = '',
-        $text = '') {
+function orcalti_initiate_login($courseid, $cmid, $instance, $config, $messagetype = 'basic-lti-launch-request',
+        $title = '', $text = '', $foruserid = 0) {
     global $SESSION;
 
-    $params = orcalti_build_login_request($courseid, $id, $instance, $config, $messagetype);
-    $SESSION->lti_message_hint = "{$courseid},{$config->typeid},{$id}," . base64_encode($title) . ',' .
-        base64_encode($text);
-
+    $params = orcalti_build_login_request($courseid, $cmid, $instance, $config, $messagetype, $foruserid, $title, $text);
+    
     $r = "<form action=\"" . $config->lti_initiatelogin .
-        "\" name=\"ltiInitiateLoginForm\" id=\"ltiInitiateLoginForm\" method=\"post\" " .
+        "\" name=\"orcaltiInitiateLoginForm\" id=\"orcaltiInitiateLoginForm\" method=\"post\" " .
         "encType=\"application/x-www-form-urlencoded\">\n";
 
     foreach ($params as $key => $value) {
-        $key = htmlspecialchars($key);
-        $value = htmlspecialchars($value);
+        $key = htmlspecialchars($key, ENT_COMPAT);
+        $value = htmlspecialchars($value, ENT_COMPAT);
         $r .= "  <input type=\"hidden\" name=\"{$key}\" value=\"{$value}\"/>\n";
     }
     $r .= "</form>\n";
 
     $r .= "<script type=\"text/javascript\">\n" .
         "//<![CDATA[\n" .
-        "document.ltiInitiateLoginForm.submit();\n" .
+        "document.orcaltiInitiateLoginForm.submit();\n" .
         "//]]>\n" .
         "</script>\n";
 
@@ -3421,28 +3686,43 @@ function orcalti_initiate_login($courseid, $id, $instance, $config, $messagetype
 }
 
 /**
- * Prepares an LTI 1.3 login request
+ * Prepares an ORCALTI 1.3 login request
  *
  * @param int            $courseid  Course ID
- * @param int            $id        LTI instance ID
- * @param stdClass|null  $instance  LTI instance
+ * @param int            $cmid        Course Module instance ID
+ * @param stdClass|null  $instance  ORCALTI instance
  * @param stdClass       $config    Tool type configuration
- * @param string         $messagetype   LTI message type
+ * @param string         $messagetype   ORCALTI message type
+ * @param int            $foruserid Id of the user targeted by the launch
+ * @param string         $title     Title of content item
+ * @param string         $text      Description of content item
  * @return array Login request parameters
  */
-function orcalti_build_login_request($courseid, $id, $instance, $config, $messagetype) {
-    global $USER, $CFG;
+function orcalti_build_login_request($courseid, $cmid, $instance, $config, $messagetype, $foruserid=0, $title = '', $text = '') {
+    global $USER, $CFG, $SESSION;
+    $orcaltihint = [];
 
     if (!empty($instance)) {
         $endpoint = !empty($instance->toolurl) ? $instance->toolurl : $config->lti_toolurl;
+        $launchid = 'ltilaunch'.$instance->id.'_'.rand();
+        $orcaltihint['cmid'] = $cmid;
+        $SESSION->$launchid = "{$courseid},{$config->typeid},{$cmid},{$messagetype},{$foruserid},,";
     } else {
         $endpoint = $config->lti_toolurl;
         if (($messagetype === 'ContentItemSelectionRequest') && !empty($config->lti_toolurl_ContentItemSelectionRequest)) {
             $endpoint = $config->lti_toolurl_ContentItemSelectionRequest;
         }
+        $launchid = "ltilaunch_$messagetype".rand();
+        $SESSION->$launchid =
+            "{$courseid},{$config->typeid},,{$messagetype},{$foruserid}," . base64_encode($title) . ',' . base64_encode($text);
     }
     $endpoint = trim($endpoint);
+    $services = orcalti_get_services();
+    foreach ($services as $service) {
+        [$endpoint] = $service->override_endpoint($messagetype ?? 'basic-lti-launch-request', $endpoint, '', $courseid, $instance);
+    }
 
+    $orcaltihint['launchid'] = $launchid;
     // If SSL is forced make sure https is on the normal launch URL.
     if (isset($config->lti_forcessl) && ($config->lti_forcessl == '1')) {
         $endpoint = orcalti_ensure_url_is_https($endpoint);
@@ -3454,7 +3734,7 @@ function orcalti_build_login_request($courseid, $id, $instance, $config, $messag
     $params['iss'] = $CFG->wwwroot;
     $params['target_link_uri'] = $endpoint;
     $params['login_hint'] = $USER->id;
-    $params['lti_message_hint'] = $id;
+    $params['lti_message_hint'] = json_encode($orcaltihint);
     $params['client_id'] = $config->lti_clientid;
     $params['lti_deployment_id'] = $config->typeid;
     return $params;
@@ -3463,20 +3743,20 @@ function orcalti_build_login_request($courseid, $id, $instance, $config, $messag
 function orcalti_get_type($typeid) {
     global $DB;
 
-    return $DB->get_record('orcalti_types', array('id' => $typeid));
+    return $DB->get_record('lti_types', array('id' => $typeid));
 }
 
-function orcalti_get_launch_container($lti, $toolconfig) {
-    if (empty($lti->launchcontainer)) {
-        $lti->launchcontainer = ORCALTI_LAUNCH_CONTAINER_DEFAULT;
+function orcalti_get_launch_container($orcalti, $toolconfig) {
+    if (empty($orcalti->launchcontainer)) {
+        $orcalti->launchcontainer = ORCALTI_LAUNCH_CONTAINER_DEFAULT;
     }
 
-    if ($lti->launchcontainer == ORCALTI_LAUNCH_CONTAINER_DEFAULT) {
+    if ($orcalti->launchcontainer == ORCALTI_LAUNCH_CONTAINER_DEFAULT) {
         if (isset($toolconfig['launchcontainer'])) {
             $launchcontainer = $toolconfig['launchcontainer'];
         }
     } else {
-        $launchcontainer = $lti->launchcontainer;
+        $launchcontainer = $orcalti->launchcontainer;
     }
 
     if (empty($launchcontainer) || $launchcontainer == ORCALTI_LAUNCH_CONTAINER_DEFAULT) {
@@ -3537,10 +3817,10 @@ function orcalti_should_log_request($rawbody) {
         $ns  = array_shift($ns);
         $xml->registerXPathNamespace('orcalti', $ns);
         $requestuserid = '';
-        if ($node = $xml->xpath('//lti:userId')) {
+        if ($node = $xml->xpath('//orcalti:userId')) {
             $node = $node[0];
             $requestuserid = clean_param((string) $node, PARAM_INT);
-        } else if ($node = $xml->xpath('//lti:sourcedId')) {
+        } else if ($node = $xml->xpath('//orcalti:sourcedId')) {
             $node = $node[0];
             $resultjson = json_decode((string) $node);
             $requestuserid = clean_param($resultjson->data->userid, PARAM_INT);
@@ -3549,7 +3829,7 @@ function orcalti_should_log_request($rawbody) {
         return false;
     }
 
-    if (empty($requestuserid) || !in_array($requestuserid, $logusers)) {
+    if (empty($requestuserid) or !in_array($requestuserid, $logusers)) {
         return false;
     }
 
@@ -3578,7 +3858,7 @@ function orcalti_log_request($rawbody) {
 }
 
 /**
- * Log an LTI response.
+ * Log an ORCALTI response.
  *
  * @param string $responsexml The response XML
  * @param Exception $e If there was an exception, pass that too
@@ -3607,7 +3887,7 @@ function orcalti_log_response($responsexml, $e = null) {
 }
 
 /**
- * Fetches LTI type configuration for an LTI instance
+ * Fetches ORCALTI type configuration for an ORCALTI instance
  *
  * @param stdClass $instance
  * @return array Can be empty if no type is found
@@ -3629,7 +3909,7 @@ function orcalti_get_type_config_by_instance($instance) {
 }
 
 /**
- * Enforce type config settings onto the LTI instance
+ * Enforce type config settings onto the ORCALTI instance
  *
  * @param stdClass $instance
  * @param array $typeconfig
@@ -3649,7 +3929,7 @@ function orcalti_force_type_config_settings($instance, array $typeconfig) {
 }
 
 /**
- * Initializes an array with the capabilities supported by the LTI module
+ * Initializes an array with the capabilities supported by the ORCALTI module
  *
  * @return array List of capability names (without a dollar sign prefix)
  */
@@ -3662,6 +3942,7 @@ function orcalti_get_capabilities() {
        'Context.id' => 'context_id',
        'Context.title' => 'context_title',
        'Context.label' => 'context_label',
+       'Context.id.history' => null,
        'Context.sourcedId' => 'lis_course_section_sourcedid',
        'Context.longDescription' => '$COURSE->summary',
        'Context.timeFrame.begin' => '$COURSE->startdate',
@@ -3669,7 +3950,8 @@ function orcalti_get_capabilities() {
        'CourseSection.label' => 'context_label',
        'CourseSection.sourcedId' => 'lis_course_section_sourcedid',
        'CourseSection.longDescription' => '$COURSE->summary',
-       'CourseSection.timeFrame.begin' => '$COURSE->startdate',
+       'CourseSection.timeFrame.begin' => null,
+       'CourseSection.timeFrame.end' => null,
        'ResourceLink.id' => 'resource_link_id',
        'ResourceLink.title' => 'resource_link_title',
        'ResourceLink.description' => 'resource_link_description',
@@ -3700,7 +3982,7 @@ function orcalti_get_capabilities() {
 }
 
 /**
- * Initializes an array with the services supported by the LTI module
+ * Initializes an array with the services supported by the ORCALTI module
  *
  * @return array List of services
  */
@@ -3709,7 +3991,7 @@ function orcalti_get_services() {
     $services = array();
     $definedservices = core_component::get_plugin_list('orcaltiservice');
     foreach ($definedservices as $name => $location) {
-        $classname = "\\orcaltiservice_{$name}\\local\\service\\{$name}";
+        $classname = "\\ltiservice_{$name}\\local\\service\\{$name}";
         $services[] = new $classname();
     }
 
@@ -3727,7 +4009,7 @@ function orcalti_get_services() {
 function orcalti_get_service_by_name($servicename) {
 
     $service = false;
-    $classname = "\\orcaltiservice_{$servicename}\\local\\service\\{$servicename}";
+    $classname = "\\ltiservice_{$servicename}\\local\\service\\{$servicename}";
     if (class_exists($classname)) {
         $service = new $classname();
     }
@@ -3761,10 +4043,11 @@ function orcalti_get_service_by_resource_id($services, $resourceid) {
 }
 
 /**
- * Initializes an array with the scopes for services supported by the LTI module
+ * Initializes an array with the scopes for services supported by the ORCALTI module
+ * and authorized for this particular tool instance.
  *
- * @param object $type  LTI tool type
- * @param array  $typeconfig  LTI tool type configuration
+ * @param object $type  ORCALTI tool type
+ * @param array  $typeconfig  ORCALTI tool type configuration
  *
  * @return array List of scopes
  */
@@ -3782,7 +4065,6 @@ function orcalti_get_permitted_service_scopes($type, $typeconfig) {
     }
 
     return $scopes;
-
 }
 
 /**
@@ -3829,26 +4111,333 @@ function orcalti_get_fqid($contexts, $id) {
 }
 
 /**
+ * Returns the icon for the given tool type
+ *
+ * @param stdClass $type The tool type
+ *
+ * @return string The url to the tool type's corresponding icon
+ */
+function orcalti_get_tool_type_icon_url(stdClass $type) {
+    global $OUTPUT;
+
+    $iconurl = $type->secureicon;
+
+    if (empty($iconurl)) {
+        $iconurl = $type->icon;
+    }
+
+    if (empty($iconurl)) {
+        $iconurl = $OUTPUT->image_url('monologo', 'orcalti')->out();
+    }
+
+    return $iconurl;
+}
+
+/**
+ * Returns the edit url for the given tool type
+ *
+ * @param stdClass $type The tool type
+ *
+ * @return string The url to edit the tool type
+ */
+function orcalti_get_tool_type_edit_url(stdClass $type) {
+    $url = new moodle_url('/mod/orcalti/typessettings.php',
+                          array('action' => 'update', 'id' => $type->id, 'sesskey' => sesskey(), 'returnto' => 'toolconfigure'));
+    return $url->out();
+}
+
+/**
+ * Returns the edit url for the given tool proxy.
+ *
+ * @param stdClass $proxy The tool proxy
+ *
+ * @return string The url to edit the tool type
+ */
+function orcalti_get_tool_proxy_edit_url(stdClass $proxy) {
+    $url = new moodle_url('/mod/orcalti/registersettings.php',
+                          array('action' => 'update', 'id' => $proxy->id, 'sesskey' => sesskey(), 'returnto' => 'toolconfigure'));
+    return $url->out();
+}
+
+/**
+ * Returns the course url for the given tool type
+ *
+ * @param stdClass $type The tool type
+ *
+ * @return string The url to the course of the tool type, void if it is a site wide type
+ */
+function orcalti_get_tool_type_course_url(stdClass $type) {
+    if ($type->course != 1) {
+        $url = new moodle_url('/course/view.php', array('id' => $type->course));
+        return $url->out();
+    }
+    return null;
+}
+
+/**
+ * Returns the icon and edit urls for the tool type and the course url if it is a course type.
+ *
+ * @param stdClass $type The tool type
+ *
+ * @return array The urls of the tool type
+ */
+function orcalti_get_tool_type_urls(stdClass $type) {
+    $courseurl = orcalti_get_tool_type_course_url($type);
+
+    $urls = array(
+        'icon' => orcalti_get_tool_type_icon_url($type),
+        'edit' => orcalti_get_tool_type_edit_url($type),
+    );
+
+    if ($courseurl) {
+        $urls['course'] = $courseurl;
+    }
+
+    $url = new moodle_url('/mod/orcalti/certs.php');
+    $urls['publickeyset'] = $url->out();
+    $url = new moodle_url('/mod/orcalti/token.php');
+    $urls['accesstoken'] = $url->out();
+    $url = new moodle_url('/mod/orcalti/auth.php');
+    $urls['authrequest'] = $url->out();
+
+    return $urls;
+}
+
+/**
+ * Returns the icon and edit urls for the tool proxy.
+ *
+ * @param stdClass $proxy The tool proxy
+ *
+ * @return array The urls of the tool proxy
+ */
+function orcalti_get_tool_proxy_urls(stdClass $proxy) {
+    global $OUTPUT;
+
+    $urls = array(
+        'icon' => $OUTPUT->image_url('monologo', 'orcalti')->out(),
+        'edit' => orcalti_get_tool_proxy_edit_url($proxy),
+    );
+
+    return $urls;
+}
+
+/**
+ * Returns information on the current state of the tool type
+ *
+ * @param stdClass $type The tool type
+ *
+ * @return array An array with a text description of the state, and boolean for whether it is in each state:
+ * pending, configured, rejected, unknown
+ */
+function orcalti_get_tool_type_state_info(stdClass $type) {
+    $isconfigured = false;
+    $ispending = false;
+    $isrejected = false;
+    $isunknown = false;
+    switch ($type->state) {
+        case ORCALTI_TOOL_STATE_CONFIGURED:
+            $state = get_string('active', 'mod_orcalti');
+            $isconfigured = true;
+            break;
+        case ORCALTI_TOOL_STATE_PENDING:
+            $state = get_string('pending', 'mod_orcalti');
+            $ispending = true;
+            break;
+        case ORCALTI_TOOL_STATE_REJECTED:
+            $state = get_string('rejected', 'mod_orcalti');
+            $isrejected = true;
+            break;
+        default:
+            $state = get_string('unknownstate', 'mod_orcalti');
+            $isunknown = true;
+            break;
+    }
+
+    return array(
+        'text' => $state,
+        'pending' => $ispending,
+        'configured' => $isconfigured,
+        'rejected' => $isrejected,
+        'unknown' => $isunknown
+    );
+}
+
+/**
+ * Returns information on the configuration of the tool type
+ *
+ * @param stdClass $type The tool type
+ *
+ * @return array An array with configuration details
+ */
+function orcalti_get_tool_type_config($type) {
+    global $CFG;
+    $platformid = $CFG->wwwroot;
+    $clientid = $type->clientid;
+    $deploymentid = $type->id;
+    $publickeyseturl = new moodle_url('/mod/orcalti/certs.php');
+    $publickeyseturl = $publickeyseturl->out();
+
+    $accesstokenurl = new moodle_url('/mod/orcalti/token.php');
+    $accesstokenurl = $accesstokenurl->out();
+
+    $authrequesturl = new moodle_url('/mod/orcalti/auth.php');
+    $authrequesturl = $authrequesturl->out();
+
+    return array(
+        'platformid' => $platformid,
+        'clientid' => $clientid,
+        'deploymentid' => $deploymentid,
+        'publickeyseturl' => $publickeyseturl,
+        'accesstokenurl' => $accesstokenurl,
+        'authrequesturl' => $authrequesturl
+    );
+}
+
+/**
+ * Returns a summary of each ORCALTI capability this tool type requires in plain language
+ *
+ * @param stdClass $type The tool type
+ *
+ * @return array An array of text descriptions of each of the capabilities this tool type requires
+ */
+function orcalti_get_tool_type_capability_groups($type) {
+    $capabilities = orcalti_get_enabled_capabilities($type);
+    $groups = array();
+    $hascourse = false;
+    $hasactivities = false;
+    $hasuseraccount = false;
+    $hasuserpersonal = false;
+
+    foreach ($capabilities as $capability) {
+        // Bail out early if we've already found all groups.
+        if (count($groups) >= 4) {
+            continue;
+        }
+
+        if (!$hascourse && preg_match('/^CourseSection/', $capability)) {
+            $hascourse = true;
+            $groups[] = get_string('courseinformation', 'mod_orcalti');
+        } else if (!$hasactivities && preg_match('/^ResourceLink/', $capability)) {
+            $hasactivities = true;
+            $groups[] = get_string('courseactivitiesorresources', 'mod_orcalti');
+        } else if (!$hasuseraccount && preg_match('/^User/', $capability) || preg_match('/^Membership/', $capability)) {
+            $hasuseraccount = true;
+            $groups[] = get_string('useraccountinformation', 'mod_orcalti');
+        } else if (!$hasuserpersonal && preg_match('/^Person/', $capability)) {
+            $hasuserpersonal = true;
+            $groups[] = get_string('userpersonalinformation', 'mod_orcalti');
+        }
+    }
+
+    return $groups;
+}
+
+
+/**
+ * Returns the ids of each instance of this tool type
+ *
+ * @param stdClass $type The tool type
+ *
+ * @return array An array of ids of the instances of this tool type
+ */
+function orcalti_get_tool_type_instance_ids($type) {
+    global $DB;
+
+    return array_keys($DB->get_fieldset_select('orcalti', 'id', 'typeid = ?', array($type->id)));
+}
+
+/**
+ * Serialises this tool type
+ *
+ * @param stdClass $type The tool type
+ *
+ * @return array An array of values representing this type
+ */
+function orcalti_serialise_tool_type(stdClass $type) {
+    global $CFG;
+
+    $capabilitygroups = orcalti_get_tool_type_capability_groups($type);
+    $instanceids = orcalti_get_tool_type_instance_ids($type);
+    // Clean the name. We don't want tags here.
+    $name = clean_param($type->name, PARAM_NOTAGS);
+    if (!empty($type->description)) {
+        // Clean the description. We don't want tags here.
+        $description = clean_param($type->description, PARAM_NOTAGS);
+    } else {
+        $description = get_string('editdescription', 'mod_orcalti');
+    }
+    return array(
+        'id' => $type->id,
+        'name' => $name,
+        'description' => $description,
+        'urls' => orcalti_get_tool_type_urls($type),
+        'state' => orcalti_get_tool_type_state_info($type),
+        'platformid' => $CFG->wwwroot,
+        'clientid' => $type->clientid,
+        'deploymentid' => $type->id,
+        'hascapabilitygroups' => !empty($capabilitygroups),
+        'capabilitygroups' => $capabilitygroups,
+        // Course ID of 1 means it's not linked to a course.
+        'courseid' => $type->course == 1 ? 0 : $type->course,
+        'instanceids' => $instanceids,
+        'instancecount' => count($instanceids)
+    );
+}
+
+/**
+ * Serialises this tool proxy.
+ *
+ * @param stdClass $proxy The tool proxy
+ *
+ * @deprecated since Moodle 3.10
+ * @todo This will be finally removed for Moodle 4.2 as part of MDL-69976.
+ * @return array An array of values representing this type
+ */
+function orcalti_serialise_tool_proxy(stdClass $proxy) {
+    $deprecatedtext = __FUNCTION__ . '() is deprecated. Please remove all references to this method.';
+    debugging($deprecatedtext, DEBUG_DEVELOPER);
+
+    return array(
+        'id' => $proxy->id,
+        'name' => $proxy->name,
+        'description' => get_string('activatetoadddescription', 'mod_orcalti'),
+        'urls' => orcalti_get_tool_proxy_urls($proxy),
+        'state' => array(
+            'text' => get_string('pending', 'mod_orcalti'),
+            'pending' => true,
+            'configured' => false,
+            'rejected' => false,
+            'unknown' => false
+        ),
+        'hascapabilitygroups' => true,
+        'capabilitygroups' => array(),
+        'courseid' => 0,
+        'instanceids' => array(),
+        'instancecount' => 0
+    );
+}
+
+/**
  * Loads the cartridge information into the tool type, if the launch url is for a cartridge file
  *
  * @param stdClass $type The tool type object to be filled in
  * @since Moodle 3.1
  */
 function orcalti_load_type_if_cartridge($type) {
-    if (!empty($type->lti_toolurl) && orcalti_is_cartridge($type->lti_toolurl)) {
-        orcalti_load_type_from_cartridge($type->lti_toolurl, $type);
+    if (!empty($type->orcalti_toolurl) && orcalti_is_cartridge($type->orcalti_toolurl)) {
+        orcalti_load_type_from_cartridge($type->orcalti_toolurl, $type);
     }
 }
 
 /**
  * Loads the cartridge information into the new tool, if the launch url is for a cartridge file
  *
- * @param stdClass $lti The tools config
+ * @param stdClass $orcalti The tools config
  * @since Moodle 3.1
  */
-function orcalti_load_tool_if_cartridge($lti) {
-    if (!empty($lti->toolurl) && orcalti_is_cartridge($lti->toolurl)) {
-        orcalti_load_tool_from_cartridge($lti->toolurl, $lti);
+function orcalti_load_tool_if_cartridge($orcalti) {
+    if (!empty($orcalti->toolurl) && orcalti_is_cartridge($orcalti->toolurl)) {
+        orcalti_load_tool_from_cartridge($orcalti->toolurl, $orcalti);
     }
 }
 
@@ -3895,40 +4484,40 @@ function orcalti_is_cartridge($url) {
 function orcalti_load_type_from_cartridge($url, $type) {
     $toolinfo = orcalti_load_cartridge($url,
         array(
-            "title" => "lti_typename",
-            "launch_url" => "lti_toolurl",
-            "description" => "lti_description",
-            "icon" => "lti_icon",
-            "secure_icon" => "lti_secureicon"
+            "title" => "orcalti_typename",
+            "launch_url" => "orcalti_toolurl",
+            "description" => "orcalti_description",
+            "icon" => "orcalti_icon",
+            "secure_icon" => "orcalti_secureicon"
         ),
         array(
-            "icon_url" => "lti_extension_icon",
-            "secure_icon_url" => "lti_extension_secureicon"
+            "icon_url" => "orcalti_extension_icon",
+            "secure_icon_url" => "orcalti_extension_secureicon"
         )
     );
     // If an activity name exists, unset the cartridge name so we don't override it.
-    if (isset($type->lti_typename)) {
-        unset($toolinfo['lti_typename']);
+    if (isset($type->orcalti_typename)) {
+        unset($toolinfo['orcalti_typename']);
     }
 
     // Always prefer cartridge core icons first, then, if none are found, look at the extension icons.
-    if (empty($toolinfo['lti_icon']) && !empty($toolinfo['lti_extension_icon'])) {
-        $toolinfo['lti_icon'] = $toolinfo['lti_extension_icon'];
+    if (empty($toolinfo['orcalti_icon']) && !empty($toolinfo['orcalti_extension_icon'])) {
+        $toolinfo['orcalti_icon'] = $toolinfo['orcalti_extension_icon'];
     }
-    unset($toolinfo['lti_extension_icon']);
+    unset($toolinfo['orcalti_extension_icon']);
 
-    if (empty($toolinfo['lti_secureicon']) && !empty($toolinfo['lti_extension_secureicon'])) {
-        $toolinfo['lti_secureicon'] = $toolinfo['lti_extension_secureicon'];
+    if (empty($toolinfo['orcalti_secureicon']) && !empty($toolinfo['orcalti_extension_secureicon'])) {
+        $toolinfo['orcalti_secureicon'] = $toolinfo['orcalti_extension_secureicon'];
     }
-    unset($toolinfo['lti_extension_secureicon']);
+    unset($toolinfo['orcalti_extension_secureicon']);
 
     // Ensure Custom icons aren't overridden by cartridge params.
-    if (!empty($type->lti_icon)) {
-        unset($toolinfo['lti_icon']);
+    if (!empty($type->orcalti_icon)) {
+        unset($toolinfo['orcalti_icon']);
     }
 
-    if (!empty($type->lti_secureicon)) {
-        unset($toolinfo['lti_secureicon']);
+    if (!empty($type->orcalti_secureicon)) {
+        unset($toolinfo['orcalti_secureicon']);
     }
 
     foreach ($toolinfo as $property => $value) {
@@ -3940,11 +4529,11 @@ function orcalti_load_type_from_cartridge($url, $type) {
  * Allows you to load in the configuration for an external tool from an IMS cartridge.
  *
  * @param  string   $url    The URL to the cartridge
- * @param  stdClass $lti    LTI object
+ * @param  stdClass $orcalti    ORCALTI object
  * @throws moodle_exception if the cartridge could not be loaded correctly
  * @since Moodle 3.1
  */
-function orcalti_load_tool_from_cartridge($url, $lti) {
+function orcalti_load_tool_from_cartridge($url, $orcalti) {
     $toolinfo = orcalti_load_cartridge($url,
         array(
             "title" => "name",
@@ -3960,7 +4549,7 @@ function orcalti_load_tool_from_cartridge($url, $lti) {
         )
     );
     // If an activity name exists, unset the cartridge name so we don't override it.
-    if (isset($lti->name)) {
+    if (isset($orcalti->name)) {
         unset($toolinfo['name']);
     }
 
@@ -3976,7 +4565,7 @@ function orcalti_load_tool_from_cartridge($url, $lti) {
     unset($toolinfo['extension_secureicon']);
 
     foreach ($toolinfo as $property => $value) {
-        $lti->$property = $value;
+        $orcalti->$property = $value;
     }
 }
 
@@ -3997,13 +4586,20 @@ function orcalti_load_cartridge($url, $map, $propertiesmap = array()) {
     $curl = new curl();
     $response = $curl->get($url);
 
+    // Got a completely empty response (real or error), cannot process this with
+    // DOMDocument::loadXML() because it errors with ValueError. So let's throw
+    // the moodle_exception before waiting to examine the errors later.
+    if (trim($response) === '') {
+        throw new moodle_exception('errorreadingfile', '', '', $url);
+    }
+
     // TODO MDL-46023 Replace this code with a call to the new library.
     $origerrors = libxml_use_internal_errors(true);
-    $origentity = libxml_disable_entity_loader(true);
+    $origentity = orcalti_libxml_disable_entity_loader(true);
     libxml_clear_errors();
 
     $document = new DOMDocument();
-    @$document->loadXML($response, LIBXML_DTDLOAD | LIBXML_DTDATTR);
+    @$document->loadXML($response, LIBXML_NONET);
 
     $cartridge = new DomXpath($document);
 
@@ -4011,7 +4607,7 @@ function orcalti_load_cartridge($url, $map, $propertiesmap = array()) {
 
     libxml_clear_errors();
     libxml_use_internal_errors($origerrors);
-    libxml_disable_entity_loader($origentity);
+    orcalti_libxml_disable_entity_loader($origentity);
 
     if (count($errors) > 0) {
         $message = 'Failed to load cartridge.';
@@ -4023,14 +4619,14 @@ function orcalti_load_cartridge($url, $map, $propertiesmap = array()) {
 
     $toolinfo = array();
     foreach ($map as $tag => $key) {
-        $value = get_tag($tag, $cartridge);
+        $value = orcalti_get_tag($tag, $cartridge);
         if ($value) {
             $toolinfo[$key] = $value;
         }
     }
     if (!empty($propertiesmap)) {
         foreach ($propertiesmap as $property => $key) {
-            $value = get_tag("property", $cartridge, $property);
+            $value = orcalti_get_tag("property", $cartridge, $property);
             if ($value) {
                 $toolinfo[$key] = $value;
             }
@@ -4038,6 +4634,27 @@ function orcalti_load_cartridge($url, $map, $propertiesmap = array()) {
     }
 
     return $toolinfo;
+}
+
+/**
+ * Search for a tag within an XML DOMDocument
+ *
+ * @param  stdClass $tagname The name of the tag to search for
+ * @param  XPath    $xpath   The XML to find the tag in
+ * @param  XPath    $attribute The attribute to search for (if we should search for a child node with the given
+ * value for the name attribute
+ * @since Moodle 3.1
+ */
+function orcalti_get_tag($tagname, $xpath, $attribute = null) {
+    if ($attribute) {
+        $result = $xpath->query('//*[local-name() = \'' . $tagname . '\'][@name="' . $attribute . '"]');
+    } else {
+        $result = $xpath->query('//*[local-name() = \'' . $tagname . '\']');
+    }
+    if ($result->length > 0) {
+        return $result->item(0)->nodeValue;
+    }
+    return null;
 }
 
 /**
@@ -4057,7 +4674,7 @@ function orcalti_new_access_token($typeid, $scopes) {
         $numtries ++;
         $generatedtoken = md5(uniqid(rand(), 1));
         if ($numtries > 5) {
-            throw new moodle_exception('Failed to generate LTI access token');
+            throw new moodle_exception('Failed to generate ORCALTI access token');
         }
     } while ($DB->record_exists('orcalti_access_tokens', array('token' => $generatedtoken)));
     $newtoken = new stdClass();
@@ -4072,4 +4689,23 @@ function orcalti_new_access_token($typeid, $scopes) {
     $DB->insert_record('orcalti_access_tokens', $newtoken);
 
     return $newtoken;
+
+}
+
+
+/**
+ * Wrapper for function libxml_disable_entity_loader() deprecated in PHP 8
+ *
+ * Method was deprecated in PHP 8 and it shows deprecation message. However it is still
+ * required in the previous versions on PHP. While Moodle supports both PHP 7 and 8 we need to keep it.
+ * @see https://php.watch/versions/8.0/libxml_disable_entity_loader-deprecation
+ *
+ * @param bool $value
+ * @return bool
+ */
+function orcalti_libxml_disable_entity_loader(bool $value): bool {
+    if (PHP_VERSION_ID < 80000) {
+        return (bool)libxml_disable_entity_loader($value);
+    }
+    return true;
 }

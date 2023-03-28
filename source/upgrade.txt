@@ -1,5 +1,9 @@
-This files describes API changes in /mod/orcalti/source/* - LTI source plugins,
+This files describes API changes in /mod/orcalti/source/* - ORCALTI source plugins,
 information provided here is intended especially for developers.
+
+=== 4.1 ===
+
+* The callback get_shortcuts() is now removed. Please use get_course_content_items and get_all_content_items instead.
 
 === 3.9 ===
 
@@ -8,5 +12,5 @@ information provided here is intended especially for developers.
 
 === 3.1 ===
 
-* Callback get_types() is deprecated, instead ltisource plugins can define callback get_shortcuts().
+* Callback get_types() is deprecated, instead orcaltisource plugins can define callback get_shortcuts().
   See source code for orcalti_get_shortcuts() and get_module_metadata().

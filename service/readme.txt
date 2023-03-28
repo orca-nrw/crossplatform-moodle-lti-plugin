@@ -22,7 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-LTI Service plugins directory
+ORCALTI Service plugins directory
 ==============================
-This directory contains LTI service plugins which are discoverable from the Tool
+This directory contains ORCALTI service plugins which are discoverable from the Tool
 Consumer Profile.

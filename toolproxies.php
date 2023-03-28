@@ -33,7 +33,7 @@ require_login(0, false);
 $pageurl = new moodle_url('/mod/orcalti/toolproxies.php');
 $PAGE->set_url($pageurl);
 
-admin_externalpage_setup('ltitoolproxies');
+admin_externalpage_setup('orcaltitoolproxies');
 
 $PAGE->set_title("{$SITE->shortname}: " . get_string('toolregistration', 'orcalti'));
 

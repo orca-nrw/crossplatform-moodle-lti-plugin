@@ -14,26 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 //
-// This file is part of BasicLTI4Moodle
+// This file is part of BasicORCALTI4Moodle
 //
-// BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)
-// consumer for Moodle 1.9 and Moodle 2.0. BasicLTI is a IMS Standard that allows web
-// based learning tools to be easily integrated in LMS as native ones. The IMS BasicLTI
+// BasicORCALTI4Moodle is an IMS BasicORCALTI (Basic Learning Tools for Interoperability)
+// consumer for Moodle 1.9 and Moodle 2.0. BasicORCALTI is a IMS Standard that allows web
+// based learning tools to be easily integrated in LMS as native ones. The IMS BasicORCALTI
 // specification is part of the IMS standard Common Cartridge 1.1 Sakai and other main LMS
-// are already supporting or going to support BasicLTI. This project Implements the consumer
+// are already supporting or going to support BasicORCALTI. This project Implements the consumer
 // for Moodle. Moodle is a Free Open source Learning Management System by Martin Dougiamas.
-// BasicLTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
+// BasicORCALTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
 // at the GESSI research group at UPC.
-// SimpleLTI consumer for Moodle is an implementation of the early specification of LTI
+// SimpleORCALTI consumer for Moodle is an implementation of the early specification of ORCALTI
 // by Charles Severance (Dr Chuck) htp://dr-chuck.com , developed by Jordi Piguillem in a
 // Google Summer of Code 2008 project co-mentored by Charles Severance and Marc Alier.
 //
-// BasicLTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
+// BasicORCALTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
 // of the Universitat Politecnica de Catalunya http://www.upc.edu
 // Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
 
 /**
- * This file contains the lti module restore class
+ * This file contains the orcalti module restore class
  *
  * @package mod_orcalti
  * @copyright  2009 Marc Alier, Jordi Piguillem, Nikolas Galanis
@@ -50,7 +50,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/orcalti/backup/moodle2/restore_orcalti_stepslib.php');
 
 /**
- * basiclti restore task that provides all the settings and steps to perform one
+ * basicorcalti restore task that provides all the settings and steps to perform one
  * complete restore of the activity
  */
 class restore_orcalti_activity_task extends restore_activity_task {
@@ -67,14 +67,14 @@ class restore_orcalti_activity_task extends restore_activity_task {
      */
     protected function define_my_steps() {
         // Label only has one structure step.
-        $this->add_step(new restore_orcalti_activity_structure_step('lti_structure', 'lti.xml'));
+        $this->add_step(new restore_orcalti_activity_structure_step('orcalti_structure', 'orcalti.xml'));
     }
 
     /**
      * Define the contents in the activity that must be
      * processed by the link decoder
      */
-    public static function define_decode_contents() {
+    static public function define_decode_contents() {
         $contents = array();
 
         $contents[] = new restore_decode_content('orcalti', array('intro'), 'orcalti');
@@ -86,11 +86,11 @@ class restore_orcalti_activity_task extends restore_activity_task {
      * Define the decoding rules for links belonging
      * to the activity to be executed by the link decoder
      */
-    public static function define_decode_rules() {
+    static public function define_decode_rules() {
         $rules = array();
 
-        $rules[] = new restore_decode_rule('LTIVIEWBYID', '/mod/orcalti/view.php?id=$1', 'course_module');
-        $rules[] = new restore_decode_rule('LTIINDEX', '/mod/orcalti/index.php?id=$1', 'course');
+        $rules[] = new restore_decode_rule('ORCALTIVIEWBYID', '/mod/orcalti/view.php?id=$1', 'course_module');
+        $rules[] = new restore_decode_rule('ORCALTIINDEX', '/mod/orcalti/index.php?id=$1', 'course');
 
         return $rules;
 
@@ -99,10 +99,10 @@ class restore_orcalti_activity_task extends restore_activity_task {
     /**
      * Define the restore log rules that will be applied
      * by the {@link restore_logs_processor} when restoring
-     * basiclti logs. It must return one array
+     * basicorcalti logs. It must return one array
      * of {@link restore_log_rule} objects
      */
-    public static function define_restore_log_rules() {
+    static public function define_restore_log_rules() {
         $rules = array();
 
         $rules[] = new restore_log_rule('orcalti', 'add', 'view.php?id={course_module}', '{orcalti}');
@@ -122,20 +122,11 @@ class restore_orcalti_activity_task extends restore_activity_task {
      * by the restore final task, but are defined here at
      * activity level. All them are rules not linked to any module instance (cmid = 0)
      */
-    public static function define_restore_log_rules_for_course() {
+    static public function define_restore_log_rules_for_course() {
         $rules = array();
 
         $rules[] = new restore_log_rule('orcalti', 'view all', 'index.php?id={course}', null);
 
         return $rules;
-    }
-
-    /**
-     * Getter for orcaltisource plugins.
-     *
-     * @return int
-     */
-    public function get_old_moduleid() {
-        return $this->oldmoduleid;
     }
 }

@@ -14,21 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 //
-// This file is part of BasicLTI4Moodle
+// This file is part of BasicORCALTI4Moodle
 //
-// BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)
-// consumer for Moodle 1.9 and Moodle 2.0. BasicLTI is a IMS Standard that allows web
-// based learning tools to be easily integrated in LMS as native ones. The IMS BasicLTI
+// BasicORCALTI4Moodle is an IMS BasicORCALTI (Basic Learning Tools for Interoperability)
+// consumer for Moodle 1.9 and Moodle 2.0. BasicORCALTI is a IMS Standard that allows web
+// based learning tools to be easily integrated in LMS as native ones. The IMS BasicORCALTI
 // specification is part of the IMS standard Common Cartridge 1.1 Sakai and other main LMS
-// are already supporting or going to support BasicLTI. This project Implements the consumer
+// are already supporting or going to support BasicORCALTI. This project Implements the consumer
 // for Moodle. Moodle is a Free Open source Learning Management System by Martin Dougiamas.
-// BasicLTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
+// BasicORCALTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
 // at the GESSI research group at UPC.
-// SimpleLTI consumer for Moodle is an implementation of the early specification of LTI
+// SimpleORCALTI consumer for Moodle is an implementation of the early specification of ORCALTI
 // by Charles Severance (Dr Chuck) htp://dr-chuck.com , developed by Jordi Piguillem in a
 // Google Summer of Code 2008 project co-mentored by Charles Severance and Marc Alier.
 //
-// BasicLTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
+// BasicORCALTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
 // of the Universitat Politecnica de Catalunya http://www.upc.edu
 // Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
 
@@ -46,14 +46,17 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die;
+
+use mod_orcalti\local\orcaltiopenid\registration_helper;
 
 /**
- * Structure step to restore one lti activity
+ * Structure step to restore one orcalti activity
  */
 class restore_orcalti_activity_structure_step extends restore_activity_structure_step {
 
     /** @var bool */
-    protected $newltitype = false;
+    protected $neworcaltitype = false;
 
     protected function define_structure() {
 
@@ -61,28 +64,23 @@ class restore_orcalti_activity_structure_step extends restore_activity_structure
         // To know if we are including userinfo.
         $userinfo = $this->get_setting_value('userinfo');
 
-        $lti = new restore_path_element('orcalti', '/activity/orcalti');
-        $paths[] = $lti;
+        $orcalti = new restore_path_element('orcalti', '/activity/orcalti');
+        $paths[] = $orcalti;
         $paths[] = new restore_path_element('orcaltitype', '/activity/orcalti/orcaltitype');
-        $paths[] = new restore_path_element('orcaltitypesconfig', '/activity/orcalti/orcaltitype/ltitypesconfigs/ltitypesconfig');
-        $paths[] = new restore_path_element(
-            'orcaltitypesconfigencrypted',
-            '/activity/orcalti/orcaltitype/ltitypesconfigs/ltitypesconfigencrypted'
-        );
-        $paths[] = new restore_path_element('orcaltitoolproxy', '/activity/orcalti/orcaltitype/ltitoolproxy');
-        $paths[] = new restore_path_element(
-            'orcaltitoolsetting',
-            '/activity/orcalti/orcaltitype/ltitoolproxy/ltitoolsettings/ltitoolsetting'
-        );
+        $paths[] = new restore_path_element('orcaltitypesconfig', '/activity/orcalti/orcaltitype/orcaltitypesconfigs/orcaltitypesconfig');
+        $paths[] = new restore_path_element('orcaltitypesconfigencrypted',
+            '/activity/orcalti/orcaltitype/orcaltitypesconfigs/orcaltitypesconfigencrypted');
+        $paths[] = new restore_path_element('orcaltitoolproxy', '/activity/orcalti/orcaltitype/orcaltitoolproxy');
+        $paths[] = new restore_path_element('orcaltitoolsetting', '/activity/orcalti/orcaltitype/orcaltitoolproxy/orcaltitoolsettings/orcaltitoolsetting');
 
         if ($userinfo) {
-            $submission = new restore_path_element('orcaltisubmission', '/activity/orcalti/ltisubmissions/ltisubmission');
+            $submission = new restore_path_element('orcaltisubmission', '/activity/orcalti/orcaltisubmissions/orcaltisubmission');
             $paths[] = $submission;
         }
 
         // Add support for subplugin structures.
-        $this->add_subplugin_structure('orcaltisource', $lti);
-        $this->add_subplugin_structure('orcaltiservice', $lti);
+        $this->add_subplugin_structure('orcaltisource', $orcalti);
+        $this->add_subplugin_structure('orcaltiservice', $orcalti);
 
         // Return the paths wrapped into standard activity structure.
         return $this->prepare_activity_structure($paths);
@@ -116,7 +114,7 @@ class restore_orcalti_activity_structure_step extends restore_activity_structure
     }
 
     /**
-     * Process an lti type restore
+     * Process an orcalti type restore
      * @param mixed $data The data from backup XML file
      * @return void
      */
@@ -132,39 +130,43 @@ class restore_orcalti_activity_structure_step extends restore_activity_structure
         $courseid = $this->get_courseid();
         $data->course = ($this->get_mappingid('course', $data->course) == $courseid) ? $courseid : SITEID;
 
-        // Try to find existing lti type with the same properties.
-        $ltitypeid = $this->find_existing_orcalti_type($data);
+        // Try to find existing orcalti type with the same properties.
+        $orcaltitypeid = $this->find_existing_orcalti_type($data);
 
-        $this->newltitype = false;
-        if (!$ltitypeid && $data->course == $courseid) {
-            unset($data->toolproxyid); // Course tools can not use LTI2.
-            $ltitypeid = $DB->insert_record('orcalti_types', $data);
-            $this->newltitype = true;
-            $this->set_mapping('orcaltitype', $oldid, $ltitypeid);
+        $this->neworcaltitype = false;
+        if (!$orcaltitypeid && $data->course == $courseid) {
+            unset($data->toolproxyid); // Course tools can not use ORCALTI2.
+            if (!empty($data->clientid)) {
+                // Need to rebuild clientid to ensure uniqueness.
+                $data->clientid = registration_helper::get()->new_clientid();
+            }
+            $orcaltitypeid = $DB->insert_record('lti_types', $data);
+            $this->neworcaltitype = true;
+            $this->set_mapping('orcaltitype', $oldid, $orcaltitypeid);
         }
 
-        // Add the typeid entry back to LTI module.
-        $DB->update_record('orcalti', ['id' => $this->get_new_parentid('orcalti'), 'typeid' => $ltitypeid]);
+        // Add the typeid entry back to ORCALTI module.
+        $DB->update_record('orcalti', ['id' => $this->get_new_parentid('orcalti'), 'typeid' => $orcaltitypeid]);
     }
 
     /**
-     * Attempts to find existing record in lti_type
+     * Attempts to find existing record in orcalti_type
      * @param stdClass $data
      * @return int|null field orcalti_types.id or null if tool is not found
      */
     protected function find_existing_orcalti_type($data) {
         global $DB;
-        if ($ltitypeid = $this->get_mappingid('orcaltitype', $data->id)) {
-            return $ltitypeid;
+        if ($orcaltitypeid = $this->get_mappingid('orcaltitype', $data->id)) {
+            return $orcaltitypeid;
         }
 
-        $ltitype = null;
+        $orcaltitype = null;
         $params = (array)$data;
         if ($this->task->is_samesite()) {
-            // If we are restoring on the same site try to find lti type with the same id.
+            // If we are restoring on the same site try to find orcalti type with the same id.
             $sql = 'id = :id AND course = :course';
             $sql .= ($data->toolproxyid) ? ' AND toolproxyid = :toolproxyid' : ' AND toolproxyid IS NULL';
-            if ($DB->record_exists_select('orcalti_types', $sql, $params)) {
+            if ($DB->record_exists_select('lti_types', $sql, $params)) {
                 $this->set_mapping('orcaltitype', $data->id, $data->id);
                 if ($data->toolproxyid) {
                     $this->set_mapping('orcaltitoolproxy', $data->toolproxyid, $data->toolproxyid);
@@ -180,21 +182,21 @@ class restore_orcalti_activity_structure_step extends restore_activity_structure
 
         // Now try to find the same type on the current site available in this course.
         // Compare only fields baseurl, course and name, if they are the same we assume it is the same tool.
-        // LTI2 is not possible in the course so we add "lt.toolproxyid IS NULL" to the query.
+        // ORCALTI2 is not possible in the course so we add "lt.toolproxyid IS NULL" to the query.
         $sql = 'SELECT id
-            FROM {orcalti_types}
+            FROM {lti_types}
            WHERE ' . $DB->sql_compare_text('baseurl', 255) . ' = ' . $DB->sql_compare_text(':baseurl', 255) . ' AND
                  course = :course AND name = :name AND toolproxyid IS NULL';
-        if ($ltitype = $DB->get_record_sql($sql, $params, IGNORE_MULTIPLE)) {
-            $this->set_mapping('orcaltitype', $data->id, $ltitype->id);
-            return $ltitype->id;
+        if ($orcaltitype = $DB->get_record_sql($sql, $params, IGNORE_MUORCALTIPLE)) {
+            $this->set_mapping('orcaltitype', $data->id, $orcaltitype->id);
+            return $orcaltitype->id;
         }
 
         return null;
     }
 
     /**
-     * Process an lti config restore
+     * Process an orcalti config restore
      * @param mixed $data The data from backup XML file
      */
     protected function process_orcaltitypesconfig($data) {
@@ -203,17 +205,17 @@ class restore_orcalti_activity_structure_step extends restore_activity_structure
         $data = (object)$data;
         $data->typeid = $this->get_new_parentid('orcaltitype');
 
-        // Only add configuration if the new lti_type was created.
-        if ($data->typeid && $this->newltitype) {
+        // Only add configuration if the new orcalti_type was created.
+        if ($data->typeid && $this->neworcaltitype) {
             if ($data->name == 'servicesalt') {
                 $data->value = uniqid('', true);
             }
-            $DB->insert_record('orcalti_types_config', $data);
+            $DB->insert_record('lti_types_config', $data);
         }
     }
 
     /**
-     * Process an lti config restore
+     * Process an orcalti config restore
      * @param mixed $data The data from backup XML file
      */
     protected function process_orcaltitypesconfigencrypted($data) {
@@ -222,17 +224,17 @@ class restore_orcalti_activity_structure_step extends restore_activity_structure
         $data = (object)$data;
         $data->typeid = $this->get_new_parentid('orcaltitype');
 
-        // Only add configuration if the new lti_type was created.
-        if ($data->typeid && $this->newltitype) {
+        // Only add configuration if the new orcalti_type was created.
+        if ($data->typeid && $this->neworcaltitype) {
             $data->value = $this->decrypt($data->value);
             if (!is_null($data->value)) {
-                $DB->insert_record('orcalti_types_config', $data);
+                $DB->insert_record('lti_types_config', $data);
             }
         }
     }
 
     /**
-     * Process a restore of LTI tool registration
+     * Process a restore of ORCALTI tool registration
      * This method is empty because we actually process registration as part of process_orcaltitype()
      * @param mixed $data The data from backup XML file
      */
@@ -241,14 +243,14 @@ class restore_orcalti_activity_structure_step extends restore_activity_structure
     }
 
     /**
-     * Process an lti tool registration settings restore (only settings for the current activity)
+     * Process an orcalti tool registration settings restore (only settings for the current activity)
      * @param mixed $data The data from backup XML file
      */
     protected function process_orcaltitoolsetting($data) {
         global $DB;
 
         $data = (object)$data;
-        $data->toolproxyid = $this->get_new_parentid('ltitoolproxy');
+        $data->toolproxyid = $this->get_new_parentid('orcaltitoolproxy');
 
         if (!$data->toolproxyid) {
             return;
@@ -279,11 +281,11 @@ class restore_orcalti_activity_structure_step extends restore_activity_structure
 
         $newitemid = $DB->insert_record('orcalti_submission', $data);
 
-        $this->set_mapping('ltisubmission', $oldid, $newitemid);
+        $this->set_mapping('orcaltisubmission', $oldid, $newitemid);
     }
 
     protected function after_execute() {
-        // Add lti related files, no need to match by itemname (just internally handled context).
+        // Add orcalti related files, no need to match by itemname (just internally handled context).
         $this->add_related_files('mod_orcalti', 'intro', null);
     }
 }

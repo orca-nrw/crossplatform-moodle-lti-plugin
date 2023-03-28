@@ -68,10 +68,10 @@ if ($action == 'edit') {
     $type = orcalti_get_type_type_config($typeid);
 } else {
     $type = new stdClass();
-    $type->lti_clientid = null;
+    $type->orcalti_clientid = null;
 }
 
-$form = new mod_orcalti_edit_types_form($url, (object)array('id' => $typeid, 'clientid' => $type->lti_clientid));
+$form = new mod_orcalti_edit_types_form($url, (object)array('id' => $typeid, 'clientid' => $type->orcalti_clientid));
 
 // If the user just opened an add or edit form.
 if ($action == 'add' || $action == 'edit') {

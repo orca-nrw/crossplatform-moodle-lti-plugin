@@ -30,18 +30,18 @@ require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 $courseid = required_param('course', PARAM_INT);
 $instanceid = optional_param('instanceid', 0, PARAM_INT);
 
-$errormsg = optional_param('lti_errormsg', '', PARAM_TEXT);
-$msg = optional_param('lti_msg', '', PARAM_TEXT);
+$errormsg = optional_param('orcalti_errormsg', '', PARAM_TEXT);
+$msg = optional_param('orcalti_msg', '', PARAM_TEXT);
 $unsigned = optional_param('unsigned', '0', PARAM_INT);
 
 $launchcontainer = optional_param('launch_container', ORCALTI_LAUNCH_CONTAINER_WINDOW, PARAM_INT);
 
 $course = $DB->get_record('course', array('id' => $courseid), '*', MUST_EXIST);
-$lti = null;
+$orcalti = null;
 $context = null;
 if (!empty($instanceid)) {
-    $lti = $DB->get_record('orcalti', array('id' => $instanceid), '*', MUST_EXIST);
-    $cm = get_coursemodule_from_instance('orcalti', $lti->id, $lti->course, false, MUST_EXIST);
+    $orcalti = $DB->get_record('orcalti', array('id' => $instanceid), '*', MUST_EXIST);
+    $cm = get_coursemodule_from_instance('orcalti', $orcalti->id, $orcalti->course, false, MUST_EXIST);
     $context = context_module::instance($cm->id);
 }
 
@@ -65,13 +65,13 @@ if (!empty($errormsg) || !empty($msg)) {
     }
 
     echo $OUTPUT->header();
-    if (!empty($lti) && !empty($context)) {
-        echo $OUTPUT->heading(format_string($lti->name, true, array('context' => $context)));
+    if (!empty($orcalti) and !empty($context)) {
+        echo $OUTPUT->heading(format_string($orcalti->name, true, array('context' => $context)));
     }
 }
 
 if (!empty($errormsg)) {
-    echo get_string('lti_launch_error', 'orcalti');
+    echo get_string('orcalti_launch_error', 'orcalti');
 
     p($errormsg);
 
@@ -86,17 +86,14 @@ if (!empty($errormsg)) {
                 array('course' => $courseid, 'action' => 'add', 'sesskey' => sesskey()));
             $links->course_tool_editor = $coursetooleditor->out(false);
 
-            echo get_string('lti_launch_error_unsigned_help', 'orcalti', $links);
+            echo get_string('orcalti_launch_error_unsigned_help', 'orcalti', $links);
         }
 
-        if (!empty($lti) && has_capability('mod/orcalti:requesttooladd', $contextcourse)) {
-            $adminrequesturl = new moodle_url('/mod/orcalti/request_tool.php', array(
-                'instanceid' => $lti->id,
-                'sesskey' => sesskey()
-            ));
+        if (!empty($orcalti) && has_capability('mod/orcalti:requesttooladd', $contextcourse)) {
+            $adminrequesturl = new moodle_url('/mod/orcalti/request_tool.php', array('instanceid' => $orcalti->id, 'sesskey' => sesskey()));
             $links->admin_request_url = $adminrequesturl->out(false);
 
-            echo get_string('lti_launch_error_tool_request', 'orcalti', $links);
+            echo get_string('orcalti_launch_error_tool_request', 'orcalti', $links);
         }
     }
 

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * LTI service plugin info.
+ * ORCALTI service plugin info.
  *
  * @package    mod_orcalti
  * @copyright  2014 Vital Source Technologies http://vitalsource.com
@@ -25,6 +25,8 @@
 namespace mod_orcalti\plugininfo;
 
 use core\plugininfo\base;
+
+defined('MOODLE_INTERNAL') || die();
 
 
 /**

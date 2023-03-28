@@ -14,26 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 //
-// This file is part of BasicLTI4Moodle
+// This file is part of BasicORCALTI4Moodle
 //
-// BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)
-// consumer for Moodle 1.9 and Moodle 2.0. BasicLTI is a IMS Standard that allows web
-// based learning tools to be easily integrated in LMS as native ones. The IMS BasicLTI
+// BasicORCALTI4Moodle is an IMS BasicORCALTI (Basic Learning Tools for Interoperability)
+// consumer for Moodle 1.9 and Moodle 2.0. BasicORCALTI is a IMS Standard that allows web
+// based learning tools to be easily integrated in LMS as native ones. The IMS BasicORCALTI
 // specification is part of the IMS standard Common Cartridge 1.1 Sakai and other main LMS
-// are already supporting or going to support BasicLTI. This project Implements the consumer
+// are already supporting or going to support BasicORCALTI. This project Implements the consumer
 // for Moodle. Moodle is a Free Open source Learning Management System by Martin Dougiamas.
-// BasicLTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
+// BasicORCALTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
 // at the GESSI research group at UPC.
-// SimpleLTI consumer for Moodle is an implementation of the early specification of LTI
+// SimpleORCALTI consumer for Moodle is an implementation of the early specification of ORCALTI
 // by Charles Severance (Dr Chuck) htp://dr-chuck.com , developed by Jordi Piguillem in a
 // Google Summer of Code 2008 project co-mentored by Charles Severance and Marc Alier.
 //
-// BasicLTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
+// BasicORCALTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
 // of the Universitat Politecnica de Catalunya http://www.upc.edu
 // Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
 
 /**
- * This file defines the main lti configuration form
+ * This file defines the main orcalti configuration form
  *
  * @package mod_orcalti
  * @copyright  2009 Marc Alier, Jordi Piguillem, Nikolas Galanis
@@ -48,8 +48,8 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-require_once($CFG->dirroot . '/course/moodleform_mod.php');
-require_once($CFG->dirroot . '/mod/orcalti/locallib.php');
+require_once($CFG->dirroot.'/course/moodleform_mod.php');
+require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 
 class mod_orcalti_mod_form extends moodleform_mod {
     /**
@@ -140,6 +140,8 @@ class mod_orcalti_mod_form extends moodleform_mod {
             "selected_tool_url_field_name" => "toolurl",
             "selected_tool_id_field_name" => "toolid",
             "selected_tool_toolname_field_name" => "TOOL_NAME",
+            "selected_tool_ltiversion" => "ltiversion",
+            "selected_tool_instructorcustomparameters" => "instructorcustomparameters",
             "asset_base" => $CFG->wwwroot
         );
 
@@ -218,6 +220,8 @@ class mod_orcalti_mod_form extends moodleform_mod {
      * @return array
      */
     public function get_orcalti_tools() {
+        global $DB;
+
         $requestconfig = $this->get_orcalti_request_options();
         $requesturl = $requestconfig["request_url"];
 
@@ -238,6 +242,19 @@ class mod_orcalti_mod_form extends moodleform_mod {
 
             $orcaltitools = array();
             foreach ((array) $toolsdata as $tooldata) {
+
+                // SKIP LTI TOOLS with LTIVERSION 1.3 if not supported
+                if($tooldata->ltiversion && $tooldata->ltiversion === 'LTI-1p3') {
+
+                    $clientID = $DB->get_field_sql('SELECT clientid FROM {lti_types} WHERE baseurl=?', array($tooldata->tool_url));
+                    if($clientID) {
+                        $tooldataKey = $clientID;
+                    }
+
+                } else {
+                    $tooldataKey = $tooldata->key;
+                }
+
                 $orcaltitool = array();
                 if (empty($tooldata->name)) {
                     $orcaltitool['name'] = $tooldata->fullname;
@@ -252,7 +269,7 @@ class mod_orcalti_mod_form extends moodleform_mod {
                 $orcaltitool['category'] = $tooldata->category;
                 $orcaltitool['toolid'] = $tooldata->toolid;
                 $orcaltitool['description'] = $tooldata->description;
-                $orcaltitool['key'] = $tooldata->key;
+                $orcaltitool['key'] = $tooldataKey;
                 $orcaltitools[] = $orcaltitool;
             }
             return json_encode($orcaltitools);
@@ -286,6 +303,17 @@ class mod_orcalti_mod_form extends moodleform_mod {
         return $secret;
     }
 
+    public function get_orcalti_typeid($toolurl) {
+        global $DB;
+
+        $typeid = 0;
+        if($toolurl) {
+            $typeid = $DB->get_field_sql('SELECT id FROM {lti_types} WHERE baseurl=?', array($toolurl));
+        }
+    
+        return $typeid;
+    }
+
     public function definition() {
         global $PAGE, $OUTPUT, $COURSE;
         $ltierror = "";
@@ -296,19 +324,37 @@ class mod_orcalti_mod_form extends moodleform_mod {
             component_callback("orcaltisource_$type", 'add_instance_hook');
         }
 
+        // Type ID parameter being passed when adding an preconfigured tool from activity chooser.
+        $typeid = optional_param('typeid', false, PARAM_INT);
+
+        $showoptions = has_capability('mod/orcalti:addmanualinstance', $this->context);
+        // Show configuration details only if not preset (when new) or user has the capabilities to do so (when editing).
+        if ($this->_instance) {
+            $showtypes = has_capability('mod/orcalti:addpreconfiguredinstance', $this->context);
+            if (!$showoptions && $this->current->typeid == 0) {
+                // If you cannot add a manual instance and this is already a manual instance, then
+                // remove the 'types' selector.
+                $showtypes = false;
+            }
+        } else {
+            $showtypes = !$typeid;
+        }
+
         $this->typeid = 0;
 
-        $mform = &$this->_form;
-        // Adding the "general" fieldset, where all the common settings are shown.
-        $mform->addElement('header', 'general', get_string('general', 'form'));
-        // Adding the standard "name" field.
-        $mform->addElement('text', 'name', get_string('basicltiname', 'orcalti'), array('size' => '64'));
+        $mform =& $this->_form;
 
+        // Adding the "general" fieldset, where all the common settings are shown.
+        $mform->addElement('html', "<div data-attribute='dynamic-import' hidden aria-hidden='true' role='alert'></div>");
+        $mform->addElement('header', 'general', get_string('general', 'form'));
+
+        // Adding the standard "name" field.
+        $mform->addElement('text', 'name', get_string('basicorcaltiname', 'orcalti'), array('size' => '64'));
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
         // Adding the optional "intro" and "introformat" pair of fields.
-        $this->standard_intro_elements(get_string('basicltiintro', 'orcalti'));
+        $this->standard_intro_elements(get_string('basicorcaltiintro', 'orcalti'));
         $mform->setAdvanced('introeditor');
 
         // Display the label to the right of the checkbox so it looks better & matches rest of the form.
@@ -331,7 +377,30 @@ class mod_orcalti_mod_form extends moodleform_mod {
         $mform->setAdvanced('showdescriptionlaunch');
         $mform->addHelpButton('showdescriptionlaunch', 'display_description', 'orcalti');
 
+        $mform->addElement('hidden', 'urlmatchedtypeid', '', array('id' => 'id_urlmatchedtypeid'));
         $mform->setType('urlmatchedtypeid', PARAM_INT);
+
+        $mform->addElement('hidden', 'lineitemresourceid', '', array( 'id' => 'id_lineitemresourceid' ));
+        $mform->setType('lineitemresourceid', PARAM_TEXT);
+
+        $mform->addElement('hidden', 'lineitemtag', '', array( 'id' => 'id_lineitemtag'));
+        $mform->setType('lineitemtag', PARAM_TEXT);
+
+        $mform->addElement('hidden', 'lineitemsubreviewurl', '', array( 'id' => 'id_lineitemsubreviewurl'));
+        $mform->setType('lineitemsubreviewurl', PARAM_URL);
+
+        $mform->addElement('hidden', 'lineitemsubreviewparams', '', array( 'id' => 'id_lineitemsubreviewparams'));
+        $mform->setType('lineitemsubreviewparams', PARAM_TEXT);
+
+        $mform->addElement('hidden', 'typeid', $typeid);
+        $mform->setType('typeid', PARAM_INT);
+        if ($typeid) {
+            $config = orcalti_get_type_config($typeid);
+            if (!empty($config['contentitem'])) {
+                $mform->addElement('hidden', 'contentitem', 1);
+                $mform->setType('contentitem', PARAM_INT);
+            }
+        }
 
         $launchoptions = array();
         $launchoptions[ORCALTI_LAUNCH_CONTAINER_DEFAULT] = get_string('default', 'orcalti');
@@ -341,7 +410,7 @@ class mod_orcalti_mod_form extends moodleform_mod {
         $launchoptions[ORCALTI_LAUNCH_CONTAINER_WINDOW] = get_string('new_window', 'orcalti');
 
         $mform->addElement('select', 'launchcontainer', get_string('launchinpopup', 'orcalti'), $launchoptions);
-        $mform->setDefault('launchcontainer', ORCALTI_LAUNCH_CONTAINER_WINDOW);
+        $mform->setDefault('launchcontainer', ORCALTI_LAUNCH_CONTAINER_DEFAULT);
         $mform->addHelpButton('launchcontainer', 'launchinpopup', 'orcalti');
         $mform->setAdvanced('launchcontainer');
 
@@ -361,6 +430,12 @@ class mod_orcalti_mod_form extends moodleform_mod {
         $configusername = get_config('orcalti', 'orcalti_username');
         $mform->setDefault('resourcekey', $configusername);
 
+        $mform->addElement('hidden', 'ltiversion');
+        $mform->setType('ltiversion', PARAM_TEXT);
+
+        $mform->addElement('hidden', 'instructorcustomparameters');
+        $mform->setType('instructorcustomparameters', PARAM_TEXT);
+
         // Add privacy preferences fieldset where users choose whether to send their data.
         $mform->addElement('header', 'privacy', get_string('privacy', 'orcalti'));
 
@@ -378,14 +453,12 @@ class mod_orcalti_mod_form extends moodleform_mod {
         // Add standard buttons, common to all modules.
         $this->add_action_buttons();
 
-        $editurl = new moodle_url(
-            '/mod/orcalti/instructor_edit_tool_type.php',
-            array('sesskey' => sesskey(), 'course' => $COURSE->id)
-        );
+        $editurl = new moodle_url('/mod/orcalti/instructor_edit_tool_type.php',
+                array('sesskey' => sesskey(), 'course' => $COURSE->id));
         $ajaxurl = new moodle_url('/mod/orcalti/ajax.php');
 
-        // All these icon uses are incorrect. LTI JS needs updating to use AMD modules and templates so it can use
-        // the mustache pix helper - until then LTI will have inconsistent icons.
+        // All these icon uses are incorrect. ORCALTI JS needs updating to use AMD modules and templates so it can use
+        // the mustache pix helper - until then ORCALTI will have inconsistent icons.
         $jsinfo = (object)array(
                         'edit_icon_url' => (string)$OUTPUT->image_url('t/edit'),
                         'add_icon_url' => (string)$OUTPUT->image_url('t/add'),
@@ -479,7 +552,7 @@ class mod_orcalti_mod_form extends moodleform_mod {
         $services = orcalti_get_services();
         if (is_object($defaultvalues)) {
             foreach ($services as $service) {
-                $service->set_instance_form_values($defaultvalues);
+                $service->set_instance_form_values( $defaultvalues );
             }
         }
         parent::set_data($defaultvalues);
@@ -490,7 +563,17 @@ class mod_orcalti_mod_form extends moodleform_mod {
      * @param stdClass $data passed by reference
      */
     public function data_postprocessing($data) {
-        if ($data->toolurl) {
+
+
+        if($data->toolurl && $data->ltiversion === 'LTI-1p3') {
+
+            // set typeid
+            $data->typeid = $this->get_orcalti_typeid($data->toolurl);
+            $secret = $this->get_orcalti_secrets($data->toolid, $data->toolurl);
+            $data->password = $secret;
+
+        } else if ($data->toolurl) {
+            // This case is for LTI 1.1
             $params = [];
             parse_str(parse_url($data->toolurl, PHP_URL_QUERY), $params);
             if(!empty($params["id"])){

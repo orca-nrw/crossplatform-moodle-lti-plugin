@@ -14,26 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 //
-// This file is part of BasicLTI4Moodle
+// This file is part of BasicORCALTI4Moodle
 //
-// BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)
-// consumer for Moodle 1.9 and Moodle 2.0. BasicLTI is a IMS Standard that allows web
-// based learning tools to be easily integrated in LMS as native ones. The IMS BasicLTI
+// BasicORCALTI4Moodle is an IMS BasicORCALTI (Basic Learning Tools for Interoperability)
+// consumer for Moodle 1.9 and Moodle 2.0. BasicORCALTI is a IMS Standard that allows web
+// based learning tools to be easily integrated in LMS as native ones. The IMS BasicORCALTI
 // specification is part of the IMS standard Common Cartridge 1.1 Sakai and other main LMS
-// are already supporting or going to support BasicLTI. This project Implements the consumer
+// are already supporting or going to support BasicORCALTI. This project Implements the consumer
 // for Moodle. Moodle is a Free Open source Learning Management System by Martin Dougiamas.
-// BasicLTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
+// BasicORCALTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
 // at the GESSI research group at UPC.
-// SimpleLTI consumer for Moodle is an implementation of the early specification of LTI
+// SimpleORCALTI consumer for Moodle is an implementation of the early specification of ORCALTI
 // by Charles Severance (Dr Chuck) htp://dr-chuck.com , developed by Jordi Piguillem in a
 // Google Summer of Code 2008 project co-mentored by Charles Severance and Marc Alier.
 //
-// BasicLTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
+// BasicORCALTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
 // of the Universitat Politecnica de Catalunya http://www.upc.edu
 // Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
 
 /**
- * This file contains all necessary code to view a lti activity instance
+ * This file contains all necessary code to view a orcalti activity instance
  *
  * @package mod_orcalti
  * @copyright  2009 Marc Alier, Jordi Piguillem, Nikolas Galanis
@@ -51,29 +51,33 @@ require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->dirroot.'/mod/orcalti/lib.php');
 require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 
-$id = optional_param('id', 0, PARAM_INT); // Course Module ID, or.
-$l  = optional_param('l', 0, PARAM_INT);  // Lti ID.
+$id = optional_param('id', 0, PARAM_INT); // Course Module ID, or
+$l  = optional_param('l', 0, PARAM_INT);  // orcalti ID.
+$action = optional_param('action', '', PARAM_TEXT);
+$foruserid = optional_param('user', 0, PARAM_INT);
 $forceview = optional_param('forceview', 0, PARAM_BOOL);
 
 if ($l) {  // Two ways to specify the module.
-    $lti = $DB->get_record('orcalti', array('id' => $l), '*', MUST_EXIST);
-    $cm = get_coursemodule_from_instance('orcalti', $lti->id, $lti->course, false, MUST_EXIST);
+    $orcalti = $DB->get_record('orcalti', array('id' => $l), '*', MUST_EXIST);
+    $cm = get_coursemodule_from_instance('orcalti', $orcalti->id, $orcalti->course, false, MUST_EXIST);
 
 } else {
     $cm = get_coursemodule_from_id('orcalti', $id, 0, false, MUST_EXIST);
-    $lti = $DB->get_record('orcalti', array('id' => $cm->instance), '*', MUST_EXIST);
+    $orcalti = $DB->get_record('orcalti', array('id' => $cm->instance), '*', MUST_EXIST);
 }
 
 $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
-$typeid = $lti->typeid;
-if (empty($typeid) && ($tool = orcalti_get_tool_by_url_match($lti->toolurl))) {
+$typeid = $orcalti->typeid;
+if (empty($typeid) && ($tool = orcalti_get_tool_by_url_match($orcalti->toolurl))) {
     $typeid = $tool->id;
 }
 if ($typeid) {
     $toolconfig = orcalti_get_type_config($typeid);
+    $toolurl = $toolconfig['toolurl'];
 } else {
     $toolconfig = array();
+    $toolurl = $orcalti->toolurl;
 }
 
 $PAGE->set_cm($cm, $course); // Set's up global $COURSE.
@@ -83,10 +87,14 @@ $PAGE->set_context($context);
 require_login($course, true, $cm);
 require_capability('mod/orcalti:view', $context);
 
+if (!empty($foruserid) && (int)$foruserid !== (int)$USER->id) {
+    require_capability('gradereport/grader:view', $context);
+}
+
 $url = new moodle_url('/mod/orcalti/view.php', array('id' => $cm->id));
 $PAGE->set_url($url);
 
-$launchcontainer = orcalti_get_launch_container($lti, $toolconfig);
+$launchcontainer = orcalti_get_launch_container($orcalti, $toolconfig);
 
 if ($launchcontainer == ORCALTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS) {
     $PAGE->set_pagelayout('incourse');
@@ -100,23 +108,23 @@ if ($launchcontainer == ORCALTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS) {
     $PAGE->set_pagelayout('incourse');
 }
 
-orcalti_view($lti, $course, $cm, $context);
+orcalti_view($orcalti, $course, $cm, $context);
 
-$pagetitle = strip_tags($course->shortname.': '.format_string($lti->name));
+$pagetitle = strip_tags($course->shortname.': '.format_string($orcalti->name));
 $PAGE->set_title($pagetitle);
 $PAGE->set_heading($course->fullname);
 
+$activityheader = $PAGE->activityheader;
+if (!$orcalti->showtitlelaunch) {
+    $header['title'] = '';
+}
+if (!$orcalti->showdescriptionlaunch) {
+    $header['description'] = '';
+}
+$activityheader->set_attrs($header ?? []);
+
 // Print the page header.
 echo $OUTPUT->header();
-
-if ($lti->showtitlelaunch) {
-    // Print the main part of the page.
-    echo $OUTPUT->heading(format_string($lti->name, true, array('context' => $context)));
-}
-
-if ($lti->showdescriptionlaunch && $lti->intro) {
-    echo $OUTPUT->box(format_module_intro('orcalti', $lti, $cm->id), 'generalbox description', 'intro');
-}
 
 if ($typeid) {
     $config = orcalti_get_type_type_config($typeid);
@@ -124,37 +132,37 @@ if ($typeid) {
     $config = new stdClass();
     $config->lti_ltiversion = ORCALTI_VERSION_1;
 }
-
-if (($launchcontainer == ORCALTI_LAUNCH_CONTAINER_WINDOW) &&
-    (($config->lti_ltiversion !== ORCALTI_VERSION_1P3) || isset($SESSION->lti_initiatelogin_status))) {
-    unset($SESSION->lti_initiatelogin_status);
+$launchurl = new moodle_url('/mod/orcalti/launch.php', ['id' => $cm->id, 'triggerview' => 0]);
+if ($action) {
+    $launchurl->param('action', $action);;
+}
+if ($foruserid) {
+    $launchurl->param('user', $foruserid);;
+}
+unset($SESSION->lti_initiatelogin_status);
+if (($launchcontainer == ORCALTI_LAUNCH_CONTAINER_WINDOW)) {
     if (!$forceview) {
         echo "<script language=\"javascript\">//<![CDATA[\n";
-        echo "window.open('launch.php?id=" . $cm->id . "&triggerview=0','lti-" . $cm->id . "');";
+        echo "window.open('{$launchurl->out(true)}','orcalti-$cm->id');";
         echo "//]]\n";
         echo "</script>\n";
-        echo "<p>".get_string("basiclti_in_new_window", "orcalti")."</p>\n";
+        echo "<p>".get_string("basicorcalti_in_new_window", "orcalti")."</p>\n";
     }
-    $url = new moodle_url('/mod/orcalti/launch.php', array('id' => $cm->id));
     echo html_writer::start_tag('p');
-    echo html_writer::link($url, get_string("basiclti_in_new_window_open", "orcalti"), array('target' => '_blank'));
+    echo html_writer::link($launchurl->out(false), get_string("basicorcalti_in_new_window_open", "orcalti"), array('target' => '_blank'));
     echo html_writer::end_tag('p');
 } else {
     $content = '';
-    if ($config->lti_ltiversion === ORCALTI_VERSION_1P3) {
-        $content = orcalti_initiate_login($cm->course, $id, $lti, $config);
-    }
-
-    // Build the allowed URL, since we know what it will be from $lti->toolurl,
+    // Build the allowed URL, since we know what it will be from $orcalti->toolurl,
     // If the specified toolurl is invalid the iframe won't load, but we still want to avoid parse related errors here.
     // So we set an empty default allowed url, and only build a real one if the parse is successful.
-    $ltiallow = '';
-    $urlparts = parse_url($lti->toolurl);
+    $orcaltiallow = '';
+    $urlparts = parse_url($toolurl);
     if ($urlparts && array_key_exists('scheme', $urlparts) && array_key_exists('host', $urlparts)) {
-        $ltiallow = $urlparts['scheme'] . '://' . $urlparts['host'];
+        $orcaltiallow = $urlparts['scheme'] . '://' . $urlparts['host'];
         // If a port has been specified we append that too.
         if (array_key_exists('port', $urlparts)) {
-            $ltiallow .= ':' . $urlparts['port'];
+            $orcaltiallow .= ':' . $urlparts['port'];
         }
     }
 
@@ -163,13 +171,13 @@ if (($launchcontainer == ORCALTI_LAUNCH_CONTAINER_WINDOW) &&
     $attributes['id'] = "contentframe";
     $attributes['height'] = '600px';
     $attributes['width'] = '100%';
-    $attributes['src'] = 'launch.php?id=' . $cm->id . '&triggerview=0';
-    $attributes['allow'] = "microphone $ltiallow; " .
-        "camera $ltiallow; " .
-        "geolocation $ltiallow; " .
-        "midi $ltiallow; " .
-        "encrypted-media $ltiallow; " .
-        "autoplay $ltiallow";
+    $attributes['src'] = $launchurl;
+    $attributes['allow'] = "microphone $orcaltiallow; " .
+        "camera $orcaltiallow; " .
+        "geolocation $orcaltiallow; " .
+        "midi $orcaltiallow; " .
+        "encrypted-media $orcaltiallow; " .
+        "autoplay $orcaltiallow";
     $attributes['allowfullscreen'] = 1;
     $iframehtml = html_writer::tag('iframe', $content, $attributes);
     echo $iframehtml;

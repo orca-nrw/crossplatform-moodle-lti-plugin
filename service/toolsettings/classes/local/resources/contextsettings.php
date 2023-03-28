@@ -127,7 +127,7 @@ class contextsettings extends \mod_orcalti\local\orcaltiservice\resource_base {
                         $json .= "{";
                     } else {
                         $response->set_content_type($this->formats[0]);
-                        $json .= "{\n  \"@context\":\"http://purl.imsglobal.org/ctx/lti/v2/ToolSettings\",\n  \"@graph\":[\n";
+                        $json .= "{\n  \"@context\":\"http://purl.imsglobal.org/ctx/orcalti/v2/ToolSettings\",\n  \"@graph\":[\n";
                     }
                     $settings = toolsettings::settings_to_json($systemsettings, $simpleformat, 'ToolProxy', $systemsetting);
                     $json .= $settings;

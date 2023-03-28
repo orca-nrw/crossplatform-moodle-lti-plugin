@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Utility code for LTI service handling.
+ * Utility code for ORCALTI service handling.
  *
  * @package mod_orcalti
  * @copyright  Copyright (c) 2011 Moodlerooms Inc. (http://www.moodlerooms.com)
@@ -29,7 +29,7 @@ require_once($CFG->dirroot.'/mod/orcalti/OAuthBody.php');
 require_once($CFG->dirroot.'/mod/orcalti/locallib.php');
 
 // TODO: Switch to core oauthlib once implemented - MDL-30149.
-use moodle\mod\orcalti as lti;
+use moodle\mod\orcalti as orcalti;
 
 define('ORCALTI_ITEM_TYPE', 'mod');
 define('ORCALTI_ITEM_MODULE', 'orcalti');
@@ -37,7 +37,7 @@ define('ORCALTI_SOURCE', 'mod/orcalti');
 
 function orcalti_get_response_xml($codemajor, $description, $messageref, $messagetype) {
     $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><imsx_POXEnvelopeResponse />');
-    $xml->addAttribute('xmlns', 'http://www.imsglobal.org/services/ltiv1p1/xsd/imsoms_v1p0');
+    $xml->addAttribute('xmlns', 'http://www.imsglobal.org/services/orcaltiv1p1/xsd/imsoms_v1p0');
 
     $headerinfo = $xml->addChild('imsx_POXHeader')->addChild('imsx_POXResponseHeaderInfo');
 
@@ -137,23 +137,23 @@ function orcalti_parse_grade_delete_message($xml) {
     return $parsed;
 }
 
-function orcalti_accepts_grades($ltiinstance) {
+function orcalti_accepts_grades($orcaltiinstance) {
     global $DB;
 
     $acceptsgrades = true;
-    $ltitype = $DB->get_record('orcalti_types', array('id' => $ltiinstance->typeid));
+    $orcaltitype = $DB->get_record('lti_types', array('id' => $orcaltiinstance->typeid));
 
-    if (empty($ltitype->toolproxyid)) {
-        $typeconfig = orcalti_get_config($ltiinstance);
+    if (empty($orcaltitype->toolproxyid)) {
+        $typeconfig = orcalti_get_config($orcaltiinstance);
 
         $typeacceptgrades = isset($typeconfig['acceptgrades']) ? $typeconfig['acceptgrades'] : ORCALTI_SETTING_DELEGATE;
 
         if (!($typeacceptgrades == ORCALTI_SETTING_ALWAYS ||
-            ($typeacceptgrades == ORCALTI_SETTING_DELEGATE && $ltiinstance->instructorchoiceacceptgrades == ORCALTI_SETTING_ALWAYS))) {
+            ($typeacceptgrades == ORCALTI_SETTING_DELEGATE && $orcaltiinstance->instructorchoiceacceptgrades == ORCALTI_SETTING_ALWAYS))) {
             $acceptsgrades = false;
         }
     } else {
-        $enabledcapabilities = explode("\n", $ltitype->enabledcapability);
+        $enabledcapabilities = explode("\n", $orcaltitype->enabledcapability);
         $acceptsgrades = in_array('Result.autocreate', $enabledcapabilities) || in_array('BasicOutcome.url', $enabledcapabilities);
     }
 
@@ -173,22 +173,22 @@ function orcalti_set_session_user($userid) {
     }
 }
 
-function orcalti_update_grade($ltiinstance, $userid, $launchid, $gradeval) {
+function orcalti_update_grade($orcaltiinstance, $userid, $launchid, $gradeval) {
     global $CFG, $DB;
     require_once($CFG->libdir . '/gradelib.php');
 
     $params = array();
-    $params['itemname'] = $ltiinstance->name;
+    $params['itemname'] = $orcaltiinstance->name;
 
-    $gradeval = $gradeval * floatval($ltiinstance->grade);
+    $gradeval = $gradeval * floatval($orcaltiinstance->grade);
 
     $grade = new stdClass();
     $grade->userid   = $userid;
     $grade->rawgrade = $gradeval;
 
-    $status = grade_update(ORCALTI_SOURCE, $ltiinstance->course, ORCALTI_ITEM_TYPE, ORCALTI_ITEM_MODULE, $ltiinstance->id, 0, $grade, $params);
+    $status = grade_update(ORCALTI_SOURCE, $orcaltiinstance->course, ORCALTI_ITEM_TYPE, ORCALTI_ITEM_MODULE, $orcaltiinstance->id, 0, $grade, $params);
 
-    $record = $DB->get_record('orcalti_submission', array('orcaltiid' => $ltiinstance->id, 'userid' => $userid,
+    $record = $DB->get_record('orcalti_submission', array('orcaltiid' => $orcaltiinstance->id, 'userid' => $userid,
         'launchid' => $launchid), 'id');
     if ($record) {
         $id = $record->id;
@@ -205,7 +205,7 @@ function orcalti_update_grade($ltiinstance, $userid, $launchid, $gradeval) {
         ));
     } else {
         $DB->insert_record('orcalti_submission', array(
-            'orcaltiid' => $ltiinstance->id,
+            'orcaltiid' => $orcaltiinstance->id,
             'userid' => $userid,
             'datesubmitted' => time(),
             'dateupdated' => time(),
@@ -219,25 +219,25 @@ function orcalti_update_grade($ltiinstance, $userid, $launchid, $gradeval) {
     return $status == GRADE_UPDATE_OK;
 }
 
-function orcalti_read_grade($ltiinstance, $userid) {
+function orcalti_read_grade($orcaltiinstance, $userid) {
     global $CFG;
     require_once($CFG->libdir . '/gradelib.php');
 
-    $grades = grade_get_grades($ltiinstance->course, ORCALTI_ITEM_TYPE, ORCALTI_ITEM_MODULE, $ltiinstance->id, $userid);
+    $grades = grade_get_grades($orcaltiinstance->course, ORCALTI_ITEM_TYPE, ORCALTI_ITEM_MODULE, $orcaltiinstance->id, $userid);
 
-    $ltigrade = floatval($ltiinstance->grade);
+    $orcaltigrade = floatval($orcaltiinstance->grade);
 
-    if (!empty($ltigrade) && isset($grades) && isset($grades->items[0]) && is_array($grades->items[0]->grades)) {
+    if (!empty($orcaltigrade) && isset($grades) && isset($grades->items[0]) && is_array($grades->items[0]->grades)) {
         foreach ($grades->items[0]->grades as $agrade) {
             $grade = $agrade->grade;
             if (isset($grade)) {
-                return $grade / $ltigrade;
+                return $grade / $orcaltigrade;
             }
         }
     }
 }
 
-function orcalti_delete_grade($ltiinstance, $userid) {
+function orcalti_delete_grade($orcaltiinstance, $userid) {
     global $CFG;
     require_once($CFG->libdir . '/gradelib.php');
 
@@ -245,7 +245,7 @@ function orcalti_delete_grade($ltiinstance, $userid) {
     $grade->userid   = $userid;
     $grade->rawgrade = null;
 
-    $status = grade_update(ORCALTI_SOURCE, $ltiinstance->course, ORCALTI_ITEM_TYPE, ORCALTI_ITEM_MODULE, $ltiinstance->id, 0, $grade);
+    $status = grade_update(ORCALTI_SOURCE, $orcaltiinstance->course, ORCALTI_ITEM_TYPE, ORCALTI_ITEM_MODULE, $orcaltiinstance->id, 0, $grade);
 
     return $status == GRADE_UPDATE_OK;
 }
@@ -256,9 +256,9 @@ function orcalti_verify_message($key, $sharedsecrets, $body, $headers = null) {
 
         try {
             // TODO: Switch to core oauthlib once implemented - MDL-30149.
-            lti\handle_oauth_body_post($key, $secret, $body, $headers);
+            orcalti\handle_oauth_body_post($key, $secret, $body, $headers);
         } catch (Exception $e) {
-            debugging('LTI message verification failed: '.$e->getMessage());
+            debugging('ORCALTI message verification failed: '.$e->getMessage());
             $signaturefailed = true;
         }
 
@@ -273,13 +273,13 @@ function orcalti_verify_message($key, $sharedsecrets, $body, $headers = null) {
 /**
  * Validate source ID from external request
  *
- * @param object $ltiinstance
+ * @param object $orcaltiinstance
  * @param object $parsed
  * @throws Exception
  */
-function orcalti_verify_sourcedid($ltiinstance, $parsed) {
+function orcalti_verify_sourcedid($orcaltiinstance, $parsed) {
     $sourceid = orcalti_build_sourcedid($parsed->instanceid, $parsed->userid,
-        $ltiinstance->servicesalt, $parsed->typeid, $parsed->launchid);
+        $orcaltiinstance->servicesalt, $parsed->typeid, $parsed->launchid);
 
     if ($sourceid->hash != $parsed->sourcedidhash) {
         throw new Exception('SourcedId hash not valid');
@@ -287,18 +287,18 @@ function orcalti_verify_sourcedid($ltiinstance, $parsed) {
 }
 
 /**
- * Extend the LTI services through the ltisource plugins
+ * Extend the ORCALTI services through the orcaltisource plugins
  *
- * @param stdClass $data LTI request data
+ * @param stdClass $data ORCALTI request data
  * @return bool
  * @throws coding_exception
  */
-function orcalti_extend_lti_services($data) {
-    $plugins = get_plugin_list_with_function('ltisource', $data->messagetype);
+function orcalti_extend_orcalti_services($data) {
+    $plugins = get_plugin_list_with_function('orcaltisource', $data->messagetype);
     if (!empty($plugins)) {
         // There can only be one.
         if (count($plugins) > 1) {
-            throw new coding_exception('More than one ltisource plugin handler found');
+            throw new coding_exception('More than one orcaltisource plugin handler found');
         }
         $data->xml = new SimpleXMLElement($data->body);
         $callback = current($plugins);

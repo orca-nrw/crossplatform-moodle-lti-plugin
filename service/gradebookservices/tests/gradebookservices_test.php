@@ -14,24 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace orcaltisrv_gradebookservices;
+
+use orcaltisrv_gradebookservices\local\service\gradebookservices;
+
 /**
- * Unit tests for mod_orcalti gradebookservices
- * @package    orcaltiservice_gradebookservices
- * @category   external
+ * Unit tests for orcalti gradebookservices.
+ *
+ * @package    orcaltisrv_gradebookservices
+ * @category   test
  * @copyright  2020 Claude Vervoort <claude.vervoort@cengage.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @coversDefaultClass \mod_orcalti\service\gradebookservices\local\gradebookservices
  */
-use orcaltiservice_gradebookservices\local\service\gradebookservices;
-
-defined('MOODLE_INTERNAL') || die();
-
-/**
- * Unit tests for lti gradebookservices.
- */
-class mod_orcalti_gradebookservices_testcase extends advanced_testcase {
+class gradebookservices_test extends \advanced_testcase {
 
     /**
-     * Test saving a graded LTI with resource and tag info (as a result of
+     * @covers ::instance_added
+     *
+     * Test saving a graded ORCALTI with resource and tag info (as a result of
      * content item selection) creates a gradebookservices record
      * that can be retrieved using the gradebook service API.
      */
@@ -48,22 +49,60 @@ class mod_orcalti_gradebookservices_testcase extends advanced_testcase {
         $course = $this->getDataGenerator()->create_course();
         $resourceid = 'test-resource-id';
         $tag = 'tag';
+        $subreviewurl = 'https://subreview.example.com';
+        $subreviewparams = 'a=2';
 
-        $ltiinstance = $this->create_graded_orcalti($typeid, $course, $resourceid, $tag);
+        $orcaltiinstance = $this->create_graded_orcalti($typeid, $course, $resourceid, $tag, $subreviewurl, $subreviewparams);
 
-        $this->assertNotNull($ltiinstance);
+        $this->assertNotNull($orcaltiinstance);
 
-        $gbs = gradebookservices::find_orcaltiservice_gradebookservice_for_lti($ltiinstance->id);
+        $gbs = gradebookservices::find_orcaltiservice_gradebookservice_for_orcalti($orcaltiinstance->id);
 
         $this->assertNotNull($gbs);
         $this->assertEquals($resourceid, $gbs->resourceid);
         $this->assertEquals($tag, $gbs->tag);
-
-        $this->assert_lineitems($course, $typeid, $ltiinstance->name, $ltiinstance, $resourceid, $tag);
+        $this->assertEquals($subreviewurl, $gbs->subreviewurl);
+        $this->assertEquals($subreviewparams, $gbs->subreviewparams);
+        $this->assert_lineitems($course, $typeid, $orcaltiinstance->name,
+            $orcaltiinstance, $resourceid, $tag, $subreviewurl, $subreviewparams);
     }
 
     /**
-     * Test saving a standalone LTI lineitem with resource and tag info
+     * @covers ::instance_added
+     *
+     * Test saving a graded ORCALTI with resource and tag info (as a result of
+     * content item selection) creates a gradebookservices record
+     * that can be retrieved using the gradebook service API.
+     */
+    public function test_orcalti_add_coupled_lineitem_default_subreview() {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/orcalti/locallib.php');
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        // Create a tool type, associated with that proxy.
+
+        $typeid = $this->create_type();
+        $course = $this->getDataGenerator()->create_course();
+        $resourceid = 'test-resource-id';
+        $tag = 'tag';
+
+        $orcaltiinstance = $this->create_graded_orcalti($typeid, $course, $resourceid, $tag, 'DEFAULT');
+
+        $this->assertNotNull($orcaltiinstance);
+
+        $gbs = gradebookservices::find_orcaltiservice_gradebookservice_for_orcalti($orcaltiinstance->id);
+
+        $this->assertNotNull($gbs);
+        $this->assertEquals('DEFAULT', $gbs->subreviewurl);
+        $this->assert_lineitems($course, $typeid, $orcaltiinstance->name, $orcaltiinstance, $resourceid, $tag, 'DEFAULT');
+    }
+
+    /**
+     * @covers ::add_standalone_lineitem
+     *
+     * Test saving a standalone ORCALTI lineitem with resource and tag info
      * that can be retrieved using the gradebook service API.
      */
     public function test_orcalti_add_standalone_lineitem() {
@@ -81,8 +120,10 @@ class mod_orcalti_gradebookservices_testcase extends advanced_testcase {
     }
 
     /**
+     * @covers ::find_orcaltiservice_gradebookservice_for_orcalti
+     *
      * Test line item URL is populated for coupled line item only
-     * if there is not another line item bound to the lti instance,
+     * if there is not another line item bound to the orcalti instance,
      * since in that case there would be no rule to define which of
      * the line items should be actually passed.
      */
@@ -98,25 +139,89 @@ class mod_orcalti_gradebookservices_testcase extends advanced_testcase {
         $typeid = $this->create_type();
         $course = $this->getDataGenerator()->create_course();
 
-        $ltiinstance = $this->create_graded_orcalti($typeid, $course, 'resource-id', 'tag');
+        $orcaltiinstance = $this->create_graded_orcalti($typeid, $course, 'resource-id', 'tag', 'https://subreview.url', 'sub=review');
 
-        $this->assertNotNull($ltiinstance);
+        $this->assertNotNull($orcaltiinstance);
 
         $gbservice = new gradebookservices();
-        $params = $gbservice->get_launch_parameters('basic-lti-launch-request', $course->id, 111, $typeid, $ltiinstance->id);
+        $params = $gbservice->get_launch_parameters('basic-lti-launch-request', $course->id, 111, $typeid, $orcaltiinstance->id);
         $this->assertEquals('$LineItem.url', $params['lineitem_url']);
         $this->assertEquals('$LineItem.url', $params['lineitem_url']);
 
-        $this->create_standalone_lineitem($course->id, $typeid, 'resource-id', 'tag', $ltiinstance->id);
-        $params = $gbservice->get_launch_parameters('basic-lti-launch-request', $course->id, 111, $typeid, $ltiinstance->id);
+        $this->create_standalone_lineitem($course->id, $typeid, 'resource-id', 'tag', $orcaltiinstance->id);
+        $params = $gbservice->get_launch_parameters('basic-lti-launch-request', $course->id, 111, $typeid, $orcaltiinstance->id);
         $this->assertEquals('$LineItems.url', $params['lineitems_url']);
         // 2 line items for a single link, we cannot return a single line item url.
         $this->assertFalse(array_key_exists('$LineItem.url', $params));
     }
 
     /**
+     * @covers ::override_endpoint
+     *
+     * Test Submission Review URL and custom parameter is applied when the
+     * launch is submission review.
+     */
+    public function test_get_launch_parameters_coupled_subreview_override() {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/orcalti/locallib.php');
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        // Create a tool type, associated with that proxy.
+
+        $typeid = $this->create_type();
+        $course = $this->getDataGenerator()->create_course();
+
+        $orcaltiinstance = $this->create_graded_orcalti($typeid, $course, 'resource-id', 'tag',
+            'https://example.com/subreview', 'action=review');
+
+        $this->assertNotNull($orcaltiinstance);
+
+        $gbservice = new gradebookservices();
+        $overrides = $gbservice->override_endpoint('LtiSubmissionReviewRequest', 'https://example.com/orcalti',
+            "color=blue", $course->id, $orcaltiinstance);
+
+        $this->assertEquals('https://example.com/subreview', $overrides[0]);
+        $this->assertEquals("color=blue\naction=review", $overrides[1]);
+    }
+
+    /**
+     * @covers ::override_endpoint
+     *
+     * Test Submission Review URL and custom parameter is applied when the
+     * launch is submission review.
+     */
+    public function test_get_launch_parameters_coupled_subreview_override_default() {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/orcalti/locallib.php');
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        // Create a tool type, associated with that proxy.
+
+        $typeid = $this->create_type();
+        $course = $this->getDataGenerator()->create_course();
+
+        $orcaltiinstance = $this->create_graded_orcalti($typeid, $course, 'resource-id', 'tag',
+            'DEFAULT', '');
+
+        $this->assertNotNull($orcaltiinstance);
+
+        $gbservice = new gradebookservices();
+        $overrides = $gbservice->override_endpoint('LtiSubmissionReviewRequest', 'https://example.com/orcalti',
+            "color=blue", $course->id, $orcaltiinstance);
+
+        $this->assertEquals('https://example.com/orcalti', $overrides[0]);
+        $this->assertEquals("color=blue", $overrides[1]);
+    }
+
+    /**
+     * @covers ::get_launch_parameters
+     *
      * Test line item URL is populated for not coupled line item only
-     * if there is a single line item attached to that lti instance.
+     * if there is a single line item attached to that orcalti instance.
      */
     public function test_get_launch_parameters_decoupled() {
         global $CFG;
@@ -131,23 +236,42 @@ class mod_orcalti_gradebookservices_testcase extends advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
 
-        $ltiinstance = $this->create_notgraded_orcalti($typeid, $course);
+        $orcaltiinstance = $this->create_notgraded_orcalti($typeid, $course);
 
-        $this->assertNotNull($ltiinstance);
+        $this->assertNotNull($orcaltiinstance);
 
         $gbservice = new gradebookservices();
-        $params = $gbservice->get_launch_parameters('basic-lti-launch-request', $course->id, 111, $typeid, $ltiinstance->id);
+        $params = $gbservice->get_launch_parameters('basic-lti-launch-request', $course->id, 111, $typeid, $orcaltiinstance->id);
         $this->assertEquals('$LineItems.url', $params['lineitems_url']);
         $this->assertFalse(array_key_exists('$LineItem.url', $params));
 
-        $this->create_standalone_lineitem($course->id, $typeid, 'resource-id', 'tag', $ltiinstance->id);
-        $params = $gbservice->get_launch_parameters('basic-lti-launch-request', $course->id, 111, $typeid, $ltiinstance->id);
+        $this->create_standalone_lineitem($course->id, $typeid, 'resource-id', 'tag', $orcaltiinstance->id);
+        $params = $gbservice->get_launch_parameters('basic-lti-launch-request', $course->id, 111, $typeid, $orcaltiinstance->id);
         $this->assertEquals('$LineItems.url', $params['lineitems_url']);
         $this->assertEquals('$LineItem.url', $params['lineitem_url']);
 
         // 2 line items for a single link, we cannot return a single line item url.
-        $this->create_standalone_lineitem($course->id, $typeid, 'resource-id', 'tag-2', $ltiinstance->id);
+        $this->create_standalone_lineitem($course->id, $typeid, 'resource-id', 'tag-2', $orcaltiinstance->id);
         $this->assertFalse(array_key_exists('$LineItem.url', $params));
+    }
+
+    /**
+     * @covers ::is_user_gradable_in_course
+     *
+     * Test if a user can be graded in a course.
+     */
+    public function test_is_user_gradable_in_course() {
+        $this->resetAfterTest();
+
+        $generator = $this->getDataGenerator();
+        $course = $generator->create_course();
+        $user1 = $generator->create_user();
+        $user2 = $generator->create_user();
+        $generator->enrol_user($user1->id, $course->id, 'student');
+        $generator->enrol_user($user2->id, $course->id, 'editingteacher');
+
+        $this->assertTrue(gradebookservices::is_user_gradable_in_course($course->id, $user1->id));
+        $this->assertFalse(gradebookservices::is_user_gradable_in_course($course->id, $user2->id));
     }
 
     /**
@@ -156,31 +280,47 @@ class mod_orcalti_gradebookservices_testcase extends advanced_testcase {
      * @param object $course current course
      * @param int $typeid Type id of the tool
      * @param string $label Label of the line item
-     * @param object|null $ltiinstance lti instance related to that line item
+     * @param object|null $orcaltiinstance orcalti instance related to that line item
      * @param string|null $resourceid resourceid the line item should have
      * @param string|null $tag tag the line item should have
+     * @param string|null $subreviewurl submission review url
+     * @param string|null $subreviewparams submission review custom params
      */
     private function assert_lineitems(object $course, int $typeid,
-            string $label, ?object $ltiinstance, ?string $resourceid, ?string $tag) : void {
+            string $label, ?object $orcaltiinstance, ?string $resourceid, ?string $tag,
+            ?string $subreviewurl = null, ?string $subreviewparams = null) : void {
         $gbservice = new gradebookservices();
         $gradeitems = $gbservice->get_lineitems($course->id, null, null, null, null, null, $typeid);
 
         // The 1st item in the array is the items count.
         $this->assertEquals(1, $gradeitems[0]);
-
         $lineitem = gradebookservices::item_for_json($gradeitems[1][0], '', $typeid);
         $this->assertEquals(10, $lineitem->scoreMaximum);
         $this->assertEquals($resourceid, $lineitem->resourceId);
         $this->assertEquals($tag, $lineitem->tag);
         $this->assertEquals($label, $lineitem->label);
+        $this->assertEquals(!empty($subreviewurl), isset($lineitem->submissionReview));
+        if ($subreviewurl) {
+            if ($subreviewurl == 'DEFAULT') {
+                $this->assertFalse(isset($this->submissionReview->url));
+            } else {
+                $this->assertEquals($subreviewurl, $lineitem->submissionReview->url);
+            }
+            if ($subreviewparams) {
+                $custom = $lineitem->submissionReview->custom;
+                $this->assertEquals($subreviewparams, join("\n", array_map(fn($k) => $k.'='.$custom[$k], array_keys($custom))));
+            } else {
+                $this->assertFalse(isset($this->submissionReview->custom));
+            }
+        }
 
         $gradeitems = $gbservice->get_lineitems($course->id, $resourceid, null, null, null, null, $typeid);
         $this->assertEquals(1, $gradeitems[0]);
 
-        if (isset($ltiinstance)) {
-            $gradeitems = $gbservice->get_lineitems($course->id, null, $ltiinstance->id, null, null, null, $typeid);
+        if (isset($orcaltiinstance)) {
+            $gradeitems = $gbservice->get_lineitems($course->id, null, $orcaltiinstance->id, null, null, null, $typeid);
             $this->assertEquals(1, $gradeitems[0]);
-            $gradeitems = $gbservice->get_lineitems($course->id, null, $ltiinstance->id + 1, null, null, null, $typeid);
+            $gradeitems = $gbservice->get_lineitems($course->id, null, $orcaltiinstance->id + 1, null, null, null, $typeid);
             $this->assertEquals(0, $gradeitems[0]);
         }
 
@@ -195,62 +335,67 @@ class mod_orcalti_gradebookservices_testcase extends advanced_testcase {
     }
 
     /**
-     * Inserts a graded lti instance, which should create a grade_item and gradebookservices record.
+     * Inserts a graded orcalti instance, which should create a grade_item and gradebookservices record.
      *
-     * @param int $typeid Type ID of the LTI Tool.
-     * @param object $course course where to add the lti instance.
+     * @param int $typeid Type ID of the ORCALTI Tool.
+     * @param object $course course where to add the orcalti instance.
      * @param string|null $resourceid resource id
      * @param string|null $tag tag
+     * @param string|null $subreviewurl submission review url
+     * @param string|null $subreviewparams submission review custom params
      *
-     * @return object lti instance created
+     * @return object orcalti instance created
      */
-    private function create_graded_orcalti(int $typeid, object $course, ?string $resourceid, ?string $tag) : object {
+    private function create_graded_orcalti(int $typeid, object $course, ?string $resourceid, ?string $tag,
+            ?string $subreviewurl = null, ?string $subreviewparams = null) : object {
 
-        $lti = ['course' => $course->id,
+        $orcalti = ['course' => $course->id,
             'typeid' => $typeid,
             'instructorchoiceacceptgrades' => ORCALTI_SETTING_ALWAYS,
             'grade' => 10,
             'lineitemresourceid' => $resourceid,
-            'lineitemtag' => $tag];
+            'lineitemtag' => $tag,
+            'lineitemsubreviewurl' => $subreviewurl,
+            'lineitemsubreviewparams' => $subreviewparams];
 
-        return $this->getDataGenerator()->create_module('orcalti', $lti, array());
+        return $this->getDataGenerator()->create_module('orcalti', $orcalti, array());
     }
 
      /**
-      * Inserts an lti instance that is not graded.
+      * Inserts an orcalti instance that is not graded.
       *
-      * @param int $typeid Type Id of the LTI Tool.
-      * @param object $course course where to add the lti instance.
+      * @param int $typeid Type Id of the ORCALTI Tool.
+      * @param object $course course where to add the orcalti instance.
       *
-      * @return object lti instance created
+      * @return object orcalti instance created
       */
     private function create_notgraded_orcalti(int $typeid, object $course) : object {
 
-        $lti = ['course' => $course->id,
+        $orcalti = ['course' => $course->id,
             'typeid' => $typeid,
             'instructorchoiceacceptgrades' => ORCALTI_SETTING_NEVER];
 
-        return $this->getDataGenerator()->create_module('orcalti', $lti, array());
+        return $this->getDataGenerator()->create_module('orcalti', $orcalti, array());
     }
 
     /**
      * Inserts a standalone lineitem (gradeitem, gradebookservices entries).
      *
      * @param int $courseid Id of the course where the standalone line item will be added.
-     * @param int $typeid of the LTI Tool
+     * @param int $typeid of the ORCALTI Tool
      * @param string|null $resourceid resource id
      * @param string|null $tag tag
-     * @param int|null $ltiinstanceid Id of the LTI instance the standalone line item will be related to.
+     * @param int|null $orcaltiinstanceid Id of the ORCALTI instance the standalone line item will be related to.
      *
      */
     private function create_standalone_lineitem(int $courseid, int $typeid, ?string $resourceid,
-            ?string $tag, int $ltiinstanceid = null) : void {
+            ?string $tag, int $orcaltiinstanceid = null) : void {
         $gbservice = new gradebookservices();
         $gbservice->add_standalone_lineitem($courseid,
             "manualtest",
             10,
             "https://test.phpunit",
-            $ltiinstanceid,
+            $orcaltiinstanceid,
             $resourceid,
             $tag,
             $typeid,
@@ -258,17 +403,17 @@ class mod_orcalti_gradebookservices_testcase extends advanced_testcase {
     }
 
     /**
-     * Creates a new LTI Tool Type.
+     * Creates a new ORCALTI Tool Type.
      */
     private function create_type() {
-        $type = new stdClass();
+        $type = new \stdClass();
         $type->state = ORCALTI_TOOL_STATE_CONFIGURED;
         $type->name = "Test tool";
         $type->description = "Example description";
         $type->clientid = "Test client ID";
         $type->baseurl = $this->getExternalTestFileUrl('/test.html');
 
-        $config = new stdClass();
+        $config = new \stdClass();
         $config->orcaltiservice_gradesynchronization = 2;
         return orcalti_add_type($type, $config);
     }

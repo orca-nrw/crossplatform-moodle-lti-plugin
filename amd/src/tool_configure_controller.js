@@ -16,40 +16,34 @@
 /**
  * Standard Ajax wrapper for Moodle. It calls the central Ajax script,
  * which can call any existing webservice using the current session.
- * In addition, it can batch multiple requests and return multiple responses.
+ * In addition, it can batch muorcaltiple requests and return muorcaltiple responses.
  *
  * @module     mod_orcalti/tool_configure_controller
- * @class      tool_configure_controller
- * @package    mod_orcalti
  * @copyright  2015 Ryan Wyllie <ryan@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      3.1
  */
-define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcalti/events', 'mod_orcalti/keys', 'mod_orcalti/tool_type',
-        'mod_orcalti/tool_proxy', 'core/str'],
-        function($, ajax, notification, templates, ltiEvents, KEYS, toolType, toolProxy, str) {
+define(['jquery', 'core/ajax', 'core/paged_content_factory', 'core/notification',
+        'core/templates', 'mod_orcalti/events',
+        'mod_orcalti/keys', 'mod_orcalti/tool_types_and_proxies', 'mod_orcalti/tool_type',
+        'mod_orcalti/tool_proxy', 'core/str', 'core/config'],
+        function($, ajax,
+                 pagedContentFactory, notification, templates, orcaltiEvents, KEYS,
+                 toolTypesAndProxies, toolType, toolProxy, str, config) {
 
     var SELECTORS = {
         EXTERNAL_REGISTRATION_CONTAINER: '#external-registration-container',
         EXTERNAL_REGISTRATION_PAGE_CONTAINER: '#external-registration-page-container',
+        EXTERNAL_REGISTRATION_TEMPLATE_CONTAINER: '#external-registration-template-container',
         CARTRIDGE_REGISTRATION_CONTAINER: '#cartridge-registration-container',
         CARTRIDGE_REGISTRATION_FORM: '#cartridge-registration-form',
         ADD_TOOL_FORM: '#add-tool-form',
+        TOOL_CARD_CONTAINER: '#tool-card-container',
         TOOL_LIST_CONTAINER: '#tool-list-container',
         TOOL_CREATE_BUTTON: '#tool-create-button',
+        TOOL_CREATE_ORCALTILEGACY_BUTTON: '#tool-createorcaltilegacy-button',
         REGISTRATION_CHOICE_CONTAINER: '#registration-choice-container',
         TOOL_URL: '#tool-url'
-    };
-
-    /**
-     * Get the tool create button element.
-     *
-     * @method getToolCreateButton
-     * @private
-     * @return {Object} jQuery object
-     */
-    var getToolCreateButton = function() {
-        return $(SELECTORS.TOOL_CREATE_BUTTON);
     };
 
     /**
@@ -61,6 +55,17 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
      */
     var getToolListContainer = function() {
         return $(SELECTORS.TOOL_LIST_CONTAINER);
+    };
+
+    /**
+     * Get the tool card container element.
+     *
+     * @method getToolCardContainer
+     * @private
+     * @return {Object} jQuery object
+     */
+    const getToolCardContainer = function() {
+        return $(SELECTORS.TOOL_CARD_CONTAINER);
     };
 
     /**
@@ -94,6 +99,42 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
      */
     var getRegistrationChoiceContainer = function() {
         return $(SELECTORS.REGISTRATION_CHOICE_CONTAINER);
+    };
+
+    /**
+     * Close the ORCALTI Advantage Registration IFrame.
+     *
+     * @private
+     * @param {Object} e post message event sent from the registration frame.
+     */
+    var closeORCALTIAdvRegistration = function(e) {
+        if (e.data && 'org.imsglobal.lti.close' === e.data.subject) {
+            $(SELECTORS.EXTERNAL_REGISTRATION_TEMPLATE_CONTAINER).empty();
+            hideExternalRegistration();
+            showRegistrationChoices();
+            showToolList();
+            showRegistrationChoices();
+            reloadToolList();
+        }
+    };
+
+    /**
+     * Load the external registration template and render it in the DOM and display it.
+     *
+     * @method initiateRegistration
+     * @private
+     * @param {String} url where to send the registration request
+     */
+    var initiateRegistration = function(url) {
+
+        console.log("initiateRegistration####");
+        // Show the external registration page in an iframe.
+        $(SELECTORS.EXTERNAL_REGISTRATION_PAGE_CONTAINER).removeClass('hidden');
+        var container = $(SELECTORS.EXTERNAL_REGISTRATION_TEMPLATE_CONTAINER);
+        container.append($("<iframe src='startorcaltiadvregistration.php?url="
+                         + encodeURIComponent(url) + "&sesskey=" + config.sesskey + "'></iframe>"));
+        showExternalRegistration();
+        window.addEventListener("message", closeORCALTIAdvRegistration, false);
     };
 
     /**
@@ -262,47 +303,140 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
      * @private
      */
     var reloadToolList = function() {
-        var promise = $.Deferred();
-        var container = getToolListContainer();
-        startLoading(container);
+        // Behat tests should wait for the tool list to load.
+        M.util.js_pending('reloadToolList');
 
-        $.when(
-                toolType.query(),
-                toolProxy.query({'orphanedonly': true})
-            )
-            .done(function(types, proxies) {
-                    templates.render('mod_orcalti/tool_list', {tools: types, proxies: proxies})
-                        .done(function(html, js) {
-                                container.empty();
-                                container.append(html);
-                                templates.runTemplateJS(js);
-                                promise.resolve();
-                            }).fail(promise.reject);
+        const cardContainer = getToolCardContainer();
+        const listContainer = getToolListContainer();
+        const limit = 60;
+        // Get initial data with zero limit and offset.
+        fetchToolCount().done(function(data) {
+            pagedContentFactory.createWithTotalAndLimit(
+                data.count,
+                limit,
+                function(pagesData) {
+                    return pagesData.map(function(pageData) {
+                        return fetchToolData(pageData.limit, pageData.offset)
+                            .then(function(data) {
+                                return renderToolData(data);
+                            });
+                    });
+                },
+                {
+                    'showFirstLast': true
                 })
-            .fail(promise.reject);
-
-        promise.fail(notification.exception)
-            .always(function() {
-                    stopLoading(container);
+                .done(function(html, js) {
+                // Add the paged content into the page.
+                templates.replaceNodeContents(cardContainer, html, js);
+                })
+                .always(function() {
+                    stopLoading(listContainer);
+                    M.util.js_complete('reloadToolList');
                 });
+        });
+        startLoading(listContainer);
+    };
+
+    /**
+     * Fetch the count of tool type and proxy datasets.
+     *
+     * @return {*|void}
+     */
+    const fetchToolCount = function() {
+        return toolTypesAndProxies.count({'orphanedonly': true})
+            .done(function(data) {
+                return data;
+            }).catch(function(error) {
+                // Add debug message, then return empty data.
+                notification.exception(error);
+                return {
+                    'count': 0
+                };
+            });
+    };
+
+    /**
+     * Fetch the data for tool type and proxy cards.
+     *
+     * @param {number} limit Maximum number of datasets to get.
+     * @param {number} offset Offset count for fetching the data.
+     * @return {*|void}
+     */
+    const fetchToolData = function(limit, offset) {
+        const args = {'orphanedonly': true};
+        // Only add limit and offset to args if they are integers and not null, otherwise defaults will be used.
+        if (limit !== null && !Number.isNaN(limit)) {
+            args.limit = limit;
+        }
+        if (offset !== null && !Number.isNaN(offset)) {
+            args.offset = offset;
+        }
+        return toolTypesAndProxies.query(args)
+            .done(function(data) {
+                return data;
+            }).catch(function(error) {
+                // Add debug message, then return empty data.
+                notification.exception(error);
+                return {
+                    'types': [],
+                    'proxies': [],
+                    'limit': limit,
+                    'offset': offset
+                };
+        });
+    };
+
+    /**
+     * Render Tool and Proxy cards from data.
+     *
+     * @param {Object} data Contains arrays of data objects to populate cards.
+     * @return {*}
+     */
+    const renderToolData = function(data) {
+        const context = {
+            tools: data.types,
+            proxies: data.proxies,
+        };
+        return templates.render('mod_orcalti/tool_list', context)
+            .done(function(html, js) {
+                    return {html, js};
+                }
+            );
+    };
+
+    /**
+     * Start the ORCALTI Advantage registration.
+     *
+     * @method addORCALTIAdvTool
+     * @private
+     */
+    var addORCALTIAdvTool = function() {
+        var url = getToolURL().trim();
+
+        console.log(url);
+        if (url) {
+            $(SELECTORS.TOOL_URL).val('');
+            hideToolList();
+            initiateRegistration(url);
+        }
+
     };
 
     /**
      * Trigger appropriate registration process process for the user input
      * URL. It can either be a cartridge or a registration url.
      *
-     * @method addTool
+     * @method addORCALTILegacyTool
      * @private
      * @return {Promise} jQuery Deferred object
      */
-    var addTool = function() {
+    var addORCALTILegacyTool = function() {
         var url = getToolURL().trim();
 
         if (url === "") {
             return $.Deferred().resolve();
         }
-
-        var toolButton = getToolCreateButton();
+        var toolButton = $(SELECTORS.TOOL_CREATE_ORCALTILEGACY_BUTTON);
         startLoading(toolButton);
 
         var promise = toolType.isCartridge(url);
@@ -314,16 +448,16 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
         promise.done(function(result) {
             if (result.iscartridge) {
                 $(SELECTORS.TOOL_URL).val('');
-                $(document).trigger(ltiEvents.START_CARTRIDGE_REGISTRATION, url);
+                $(document).trigger(orcaltiEvents.START_CARTRIDGE_REGISTRATION, url);
             } else {
-                $(document).trigger(ltiEvents.START_EXTERNAL_REGISTRATION, {url: url});
+                $(document).trigger(orcaltiEvents.START_EXTERNAL_REGISTRATION, {url: url});
             }
         });
 
         promise.fail(function() {
             str.get_string('errorbadurl', 'mod_orcalti')
                 .done(function(s) {
-                        $(document).trigger(ltiEvents.REGISTRATION_FEEDBACK, {
+                        $(document).trigger(orcaltiEvents.REGISTRATION_FEEDBACK, {
                                 message: s,
                                 error: true
                             });
@@ -344,38 +478,44 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
 
         // These are events fired by the registration processes. Either
         // the cartridge registration or the external registration url.
-        $(document).on(ltiEvents.NEW_TOOL_TYPE, function() {
+        $(document).on(orcaltiEvents.NEW_TOOL_TYPE, function() {
             reloadToolList();
         });
 
-        $(document).on(ltiEvents.START_EXTERNAL_REGISTRATION, function() {
+        $(document).on(orcaltiEvents.START_EXTERNAL_REGISTRATION, function() {
             showExternalRegistration();
             $(SELECTORS.TOOL_URL).val('');
             hideToolList();
         });
 
-        $(document).on(ltiEvents.STOP_EXTERNAL_REGISTRATION, function() {
+        $(document).on(orcaltiEvents.STOP_EXTERNAL_REGISTRATION, function() {
             showToolList();
             showRegistrationChoices();
         });
 
-        $(document).on(ltiEvents.START_CARTRIDGE_REGISTRATION, function(event, url) {
+        $(document).on(orcaltiEvents.START_CARTRIDGE_REGISTRATION, function(event, url) {
             showCartridgeRegistration(url);
         });
 
-        $(document).on(ltiEvents.STOP_CARTRIDGE_REGISTRATION, function() {
+        $(document).on(orcaltiEvents.STOP_CARTRIDGE_REGISTRATION, function() {
             getCartridgeRegistrationContainer().find(SELECTORS.CARTRIDGE_REGISTRATION_FORM).removeAttr('data-cartridge-url');
             showRegistrationChoices();
         });
 
-        $(document).on(ltiEvents.REGISTRATION_FEEDBACK, function(event, data) {
+        $(document).on(orcaltiEvents.REGISTRATION_FEEDBACK, function(event, data) {
             showRegistrationFeedback(data);
         });
 
-        var form = $(SELECTORS.ADD_TOOL_FORM);
-        form.submit(function(e) {
+        var addLegacyButton = $(SELECTORS.TOOL_CREATE_ORCALTILEGACY_BUTTON);
+        addLegacyButton.click(function(e) {
             e.preventDefault();
-            addTool();
+            addORCALTILegacyTool();
+        });
+
+        var addORCALTIButton = $(SELECTORS.TOOL_CREATE_BUTTON);
+        addORCALTIButton.click(function(e) {
+            e.preventDefault();
+            addORCALTIAdvTool();
         });
 
     };

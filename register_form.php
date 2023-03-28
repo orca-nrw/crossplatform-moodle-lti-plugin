@@ -51,41 +51,41 @@ class mod_orcalti_register_types_form extends moodleform {
         // Tool Provider name.
 
         $strrequired = get_string('required');
-        $mform->addElement('text', 'lti_registrationname', get_string('registrationname', 'orcalti'));
-        $mform->setType('lti_registrationname', PARAM_TEXT);
-        $mform->addHelpButton('lti_registrationname', 'registrationname', 'orcalti');
-        $mform->addRule('lti_registrationname', $strrequired, 'required', null, 'client');
+        $mform->addElement('text', 'orcalti_registrationname', get_string('registrationname', 'orcalti'));
+        $mform->setType('orcalti_registrationname', PARAM_TEXT);
+        $mform->addHelpButton('orcalti_registrationname', 'registrationname', 'orcalti');
+        $mform->addRule('orcalti_registrationname', $strrequired, 'required', null, 'client');
 
         // Registration URL.
 
-        $mform->addElement('text', 'lti_registrationurl', get_string('registrationurl', 'orcalti'), array('size' => '64'));
-        $mform->setType('lti_registrationurl', PARAM_URL);
-        $mform->addHelpButton('lti_registrationurl', 'registrationurl', 'orcalti');
-        $mform->addRule('lti_registrationurl', $strrequired, 'required', null, 'client');
+        $mform->addElement('text', 'orcalti_registrationurl', get_string('registrationurl', 'orcalti'), array('size' => '64'));
+        $mform->setType('orcalti_registrationurl', PARAM_URL);
+        $mform->addHelpButton('orcalti_registrationurl', 'registrationurl', 'orcalti');
+        $mform->addRule('orcalti_registrationurl', $strrequired, 'required', null, 'client');
 
-        // LTI Capabilities.
+        // ORCALTI Capabilities.
 
         $options = array_keys(orcalti_get_capabilities());
         natcasesort($options);
-        $attributes = array( 'multiple' => 1, 'size' => min(count($options), 10) );
-        $mform->addElement('select', 'lti_capabilities', get_string('capabilities', 'orcalti'),
+        $attributes = array( 'muorcaltiple' => 1, 'size' => min(count($options), 10) );
+        $mform->addElement('select', 'orcalti_capabilities', get_string('capabilities', 'orcalti'),
             array_combine($options, $options), $attributes);
-        $mform->setType('lti_capabilities', PARAM_TEXT);
-        $mform->addHelpButton('lti_capabilities', 'capabilities', 'orcalti');
-        $mform->addRule('lti_capabilities', $strrequired, 'required', null, 'client');
+        $mform->setType('orcalti_capabilities', PARAM_TEXT);
+        $mform->addHelpButton('orcalti_capabilities', 'capabilities', 'orcalti');
+        $mform->addRule('orcalti_capabilities', $strrequired, 'required', null, 'client');
 
-        // LTI Services.
+        // ORCALTI Services.
 
         $services = orcalti_get_services();
         $options = array();
         foreach ($services as $service) {
             $options[$service->get_id()] = $service->get_name();
         }
-        $attributes = array( 'multiple' => 1, 'size' => min(count($options), 10) );
-        $mform->addElement('select', 'lti_services', get_string('services', 'orcalti'), $options, $attributes);
-        $mform->setType('lti_services', PARAM_TEXT);
-        $mform->addHelpButton('lti_services', 'services', 'orcalti');
-        $mform->addRule('lti_services', $strrequired, 'required', null, 'client');
+        $attributes = array( 'muorcaltiple' => 1, 'size' => min(count($options), 10) );
+        $mform->addElement('select', 'orcalti_services', get_string('services', 'orcalti'), $options, $attributes);
+        $mform->setType('orcalti_services', PARAM_TEXT);
+        $mform->addHelpButton('orcalti_services', 'services', 'orcalti');
+        $mform->addRule('orcalti_services', $strrequired, 'required', null, 'client');
 
         $mform->addElement('hidden', 'toolproxyid');
         $mform->setType('toolproxyid', PARAM_INT);
@@ -110,9 +110,9 @@ class mod_orcalti_register_types_form extends moodleform {
 
         $mform    =& $this->_form;
 
-        $mform->disabledIf('lti_registrationurl', null);
-        $mform->disabledIf('lti_capabilities', null);
-        $mform->disabledIf('lti_services', null);
+        $mform->disabledIf('orcalti_registrationurl', null);
+        $mform->disabledIf('orcalti_capabilities', null);
+        $mform->disabledIf('orcalti_services', null);
 
     }
 }

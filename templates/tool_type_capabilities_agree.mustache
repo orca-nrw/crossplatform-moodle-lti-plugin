@@ -39,14 +39,14 @@
     <button class="no btn btn-danger">{{#str}} no {{/str}}</button>
 </div>
 {{#js}}
-    require(['jquery', 'mod_orcalti/events', 'mod_orcalti/keys'], function($, ltiEvents, KEYS) {
+    require(['jquery', 'mod_orcalti/events', 'mod_orcalti/keys'], function($, orcaltiEvents, KEYS) {
         var container = $('.capabilities-container.tool-type-{{id}}');
         var yesButton = container.find('button.yes');
         var noButton = container.find('button.no');
 
         yesButton.click(function(e) {
             e.preventDefault();
-            container.trigger(ltiEvents.CAPABILITIES_AGREE);
+            container.trigger(orcaltiEvents.CAPABILITIES_AGREE);
         });
         yesButton.keypress(function(e) {
             if (!e.metaKey && !e.shiftKey && !e.altKey && !e.ctrlKey) {
@@ -59,7 +59,7 @@
 
         noButton.click(function(e) {
             e.preventDefault();
-            container.trigger(ltiEvents.CAPABILITIES_DECLINE);
+            container.trigger(orcaltiEvents.CAPABILITIES_DECLINE);
         });
         noButton.keypress(function(e) {
             if (!e.metaKey && !e.shiftKey && !e.altKey && !e.ctrlKey) {

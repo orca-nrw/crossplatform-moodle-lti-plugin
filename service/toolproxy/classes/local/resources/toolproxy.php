@@ -32,7 +32,7 @@ require_once($CFG->dirroot . '/mod/orcalti/OAuth.php');
 require_once($CFG->dirroot . '/mod/orcalti/TrivialStore.php');
 
 // TODO: Switch to core oauthlib once implemented - MDL-30149.
-use moodle\mod\orcalti as lti;
+use moodle\mod\orcalti as orcalti;
 
 /**
  * A resource implementing the Tool Proxy.
@@ -132,7 +132,7 @@ class toolproxy extends \mod_orcalti\local\orcaltiservice\resource_base {
             $errors = array();
             foreach ($tpservices as $service) {
                 $fqid = orcalti_get_fqid($contexts, $service->service);
-                $requestsbasicoutcomes = $requestsbasicoutcomes || (substr($fqid, -13) === 'Outcomes.LTI1');
+                $requestsbasicoutcomes = $requestsbasicoutcomes || (substr($fqid, -13) === 'Outcomes.ORCALTI1');
                 if (substr($fqid, 0, strlen($context)) !== $context) {
                     $errors[] = $service->service;
                 } else {
@@ -260,7 +260,7 @@ class toolproxy extends \mod_orcalti\local\orcaltiservice\resource_base {
                 $url = $this->get_endpoint();
                 $body = <<< EOD
 {
-  "@context" : "http://purl.imsglobal.org/ctx/lti/v2/ToolProxyId",
+  "@context" : "http://purl.imsglobal.org/ctx/orcalti/v2/ToolProxyId",
   "@type" : "ToolProxy",
   "@id" : "{$url}",
   "tool_proxy_guid" : "{$toolproxy->guid}"

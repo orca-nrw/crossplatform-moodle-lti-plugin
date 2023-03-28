@@ -15,20 +15,19 @@
 
 /**
  * Controls all of the behaviour and interaction with a tool type card. These are
- * listed on the LTI tool type management page.
+ * listed on the ORCALTI tool type management page.
  *
  * See template: mod_orcalti/tool_proxy_card
  *
  * @module     mod_orcalti/tool_proxy_card_controller
- * @class      tool_card_controller
- * @package    mod_orcalti
  * @copyright  2016 John Okely <john@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      3.1
  */
-define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcalti/tool_proxy', 'mod_orcalti/events', 'mod_orcalti/keys',
+define(['jquery', 'core/ajax', 'core/notification', 'core/templates',
+        'mod_orcalti/tool_proxy', 'mod_orcalti/events', 'mod_orcalti/keys',
         'core/str'],
-        function($, ajax, notification, templates, toolProxy, ltiEvents, KEYS, str) {
+        function($, ajax, notification, templates, toolProxy, orcaltiEvents, KEYS, str) {
 
     var SELECTORS = {
         DELETE_BUTTON: '.delete',
@@ -230,7 +229,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'mod_orcal
      */
     var activateToolType = function(element) {
         var data = {proxyid: getTypeId(element)};
-        $(document).trigger(ltiEvents.START_EXTERNAL_REGISTRATION, data);
+        $(document).trigger(orcaltiEvents.START_EXTERNAL_REGISTRATION, data);
     };
 
     /**

@@ -15,16 +15,18 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * LTI subplugin types declaration
+ * This library exposes functions for ORCALTI Dynamic Registration.
  *
  * @package    mod_orcalti
- * @copyright  2012 Mark Nielsen
+ * @copyright  2020 Claude Vervoort (Cengage), Carlos Costa, Adrian Hutchinson (Macgraw Hill)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+namespace mod_orcalti\local\orcaltiopenid;
 
-defined('MOODLE_INTERNAL') || die();
-
-$subplugins = array(
-    'orcaltisource' => 'mod/orcalti/source',
-    'spservice' => 'mod/orcalti/service'
-);
+/**
+ * Exception when transforming the registration to ORCALTI config.
+ *
+ * Code is the HTTP Error code.
+ */
+class registration_exception extends \Exception {
+}

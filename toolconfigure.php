@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This page allows the configuration of external tools that meet the LTI specification.
+ * This page allows the configuration of external tools that meet the ORCALTI specification.
  *
  * @package    mod_orcalti
  * @copyright  2015 Ryan Wyllie <ryan@moodle.com>
@@ -32,13 +32,13 @@ $cartridgeurl = optional_param('cartridgeurl', '', PARAM_URL);
 
 // No guest autologin.
 require_login(0, false);
-admin_externalpage_setup('ltitoolconfigure');
+admin_externalpage_setup('orcaltitoolconfigure');
 
 if ($cartridgeurl) {
     $type = new stdClass();
     $data = new stdClass();
     $type->state = ORCALTI_TOOL_STATE_CONFIGURED;
-    $data->lti_coursevisible = 1;
+    $data->orcalti_coursevisible = 1;
     orcalti_load_type_from_cartridge($cartridgeurl, $data);
     orcalti_add_type($type, $data);
 }

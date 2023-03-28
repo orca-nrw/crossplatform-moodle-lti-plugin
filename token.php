@@ -65,7 +65,7 @@ if ($ok) {
 }
 
 if ($ok) {
-    $tool = $DB->get_record('orcalti_types', array('clientid' => $claims['sub']));
+    $tool = $DB->get_record('lti_types', array('clientid' => $claims['sub']));
     if ($tool) {
         try {
             orcalti_verify_jwt_signature($tool->id, $claims['sub'], $clientassertion);

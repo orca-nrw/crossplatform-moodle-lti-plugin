@@ -20,10 +20,11 @@
  * @copyright  2018 Mark Nelson <markn@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+namespace orcaltiservice_memberships\privacy;
 
 defined('MOODLE_INTERNAL') || die();
 
-use \core_privacy\tests\provider_testcase;
+use core_privacy\tests\provider_testcase;
 
 /**
  * Unit tests for orcaltiservice_memberships privacy provider.
@@ -31,12 +32,12 @@ use \core_privacy\tests\provider_testcase;
  * @copyright  2018 Mark Nelson <markn@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class orcaltiservice_memberships_privacy_provider_testcase extends provider_testcase {
+class provider_test extends provider_testcase {
 
     /**
      * Basic setup for these tests.
      */
-    public function setUp() {
+    public function setUp(): void {
         $this->resetAfterTest(true);
     }
 

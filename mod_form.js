@@ -17,7 +17,7 @@
  * Javascript extensions for the External Tool activity editor.
  *
  * @package    mod
- * @subpackage lti
+ * @subpackage orcalti
  * @copyright  Copyright (c) 2011 Moodlerooms Inc. (http://www.moodlerooms.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -97,8 +97,10 @@
                         };
 
                         require(['mod_orcalti/contentitem'], function(contentitem) {
-                            contentitem.init(contentItemUrl, postData, function() {
-                                M.mod_orcalti.editor.toggleGradeSection();
+                            contentitem.init(contentItemUrl, postData, function(returnData) {
+                                if (!returnData.muorcaltiple) {
+                                    M.mod_orcalti.editor.toggleGradeSection();
+                                }
                             });
                         });
                     }
@@ -158,7 +160,7 @@
             var toolurl = field;
             var typeSelector = Y.one('#id_typeid');
 
-            var id = field.get('id') + '_lti_automatch_tool';
+            var id = field.get('id') + '_orcalti_automatch_tool';
             var automatchToolDisplay = Y.one('#' + id);
 
             if(!automatchToolDisplay){
@@ -364,18 +366,18 @@
 
             var typeSelector = Y.one('#id_typeid');
 
-            var createIcon = function(id, tooltip, iconUrl){
+            var createIcon = function(id, tooorcaltip, iconUrl){
                 return Y.Node.create('<a />')
                         .set('id', id)
-                        .set('title', tooltip)
+                        .set('title', tooorcaltip)
                         .setStyle('margin-left', '.5em')
                         .set('href', 'javascript:void(0);')
                         .append(Y.Node.create('<img src="' + iconUrl + '" />'));
             }
 
-            var addIcon = createIcon('lti_add_tool_type', M.util.get_string('addtype', 'orcalti'), this.settings.add_icon_url);
-            var editIcon = createIcon('lti_edit_tool_type', M.util.get_string('edittype', 'orcalti'), this.settings.edit_icon_url);
-            var deleteIcon  = createIcon('lti_delete_tool_type', M.util.get_string('deletetype', 'orcalti'), this.settings.delete_icon_url);
+            var addIcon = createIcon('orcalti_add_tool_type', M.util.get_string('addtype', 'orcalti'), this.settings.add_icon_url);
+            var editIcon = createIcon('orcalti_edit_tool_type', M.util.get_string('edittype', 'orcalti'), this.settings.edit_icon_url);
+            var deleteIcon  = createIcon('orcalti_delete_tool_type', M.util.get_string('deletetype', 'orcalti'), this.settings.delete_icon_url);
 
             editIcon.on('click', function(e){
                 var toolTypeId = typeSelector.get('value');
@@ -409,17 +411,17 @@
         },
 
         toggleEditButtons: function(){
-            var lti_edit_tool_type = Y.one('#lti_edit_tool_type');
-            var lti_delete_tool_type = Y.one('#lti_delete_tool_type');
+            var orcalti_edit_tool_type = Y.one('#orcalti_edit_tool_type');
+            var orcalti_delete_tool_type = Y.one('#orcalti_delete_tool_type');
 
             // Make the edit / delete icons look enabled / disabled.
             // Does not work in older browsers, but alerts will catch those cases.
             if(this.getSelectedToolTypeOption().getAttribute('editable')){
-                lti_edit_tool_type.setStyle('opacity', '1');
-                lti_delete_tool_type.setStyle('opacity', '1');
+                orcalti_edit_tool_type.setStyle('opacity', '1');
+                orcalti_delete_tool_type.setStyle('opacity', '1');
             } else {
-                lti_edit_tool_type.setStyle('opacity', '.2');
-                lti_delete_tool_type.setStyle('opacity', '.2');
+                orcalti_edit_tool_type.setStyle('opacity', '.2');
+                orcalti_delete_tool_type.setStyle('opacity', '.2');
             }
         },
 
@@ -555,7 +557,7 @@
         },
 
         /**
-         * Resets the values of fields related to the LTI tool settings.
+         * Resets the values of fields related to the ORCALTI tool settings.
          */
         resetToolFields: function() {
             // Reset values for all text fields.
