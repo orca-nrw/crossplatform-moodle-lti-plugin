@@ -22,7 +22,7 @@
  * @author     Dirk Singels, Diego del Blanco, Claude Vervoort
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-namespace orcaltisrv_gradebookservices\task;
+namespace orcaltiservice_gradebookservices\task;
 
 use core\task\scheduled_task;
 use orcaltisrv_gradebookservices\local\service\gradebookservices;
@@ -45,7 +45,7 @@ class cleanup_task extends scheduled_task {
      * @return string
      */
     public function get_name() {
-        return get_string('taskcleanup', 'orcaltisrv_gradebookservices');
+        return get_string('taskcleanup', 'orcaltiservice_gradebookservices');
     }
 
     /**

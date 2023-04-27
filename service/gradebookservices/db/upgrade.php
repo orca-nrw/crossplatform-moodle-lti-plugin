@@ -54,7 +54,7 @@
  *
  * @return boolean
  */
-function xmldb_orcaltisrv_gradebookservices_upgrade($oldversion) {
+function xmldb_orcaltiservice_gradebookservices_upgrade($oldversion) {
     global $CFG, $DB, $OUTPUT;
 
     $dbman = $DB->get_manager();
