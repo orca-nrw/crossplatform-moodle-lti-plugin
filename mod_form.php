@@ -244,7 +244,7 @@ class mod_orcalti_mod_form extends moodleform_mod {
             foreach ((array) $toolsdata as $tooldata) {
 
                 // SKIP LTI TOOLS with LTIVERSION 1.3 if not supported
-                if($tooldata->ltiversion && $tooldata->ltiversion === 'LTI-1p3') {
+                if(isset($tooldata->ltiversion) && $tooldata->ltiversion === 'LTI-1p3') {
 
                     $clientID = $DB->get_field_sql('SELECT clientid FROM {lti_types} WHERE baseurl=?', array($tooldata->tool_url));
                     if($clientID) {
