@@ -28,9 +28,9 @@ defined('MOODLE_INTERNAL') || die();
 
 
 $plugin->version   = 2022112800;
-$plugin->requires  = 2022041200;
+$plugin->requires  = 2022041900;
 $plugin->component = 'orcaltiservice_toolsettings';
 $plugin->dependencies = array(
-    'orcaltiservice_profile' => 2022041200,
-    'orcaltiservice_toolproxy' => 2022041200
+    'orcaltiservice_profile' => 2022041900,
+    'orcaltiservice_toolproxy' => 2022041900
 );
